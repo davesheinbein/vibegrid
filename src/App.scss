@@ -1,0 +1,177 @@
+// --- Modernized, consistent, and SCSS-friendly styles for VibeGrid ---
+.vibegrid-container {
+	max-width: 420px;
+	margin: 2rem auto;
+	padding: 2rem 1.5rem 1.5rem 1.5rem;
+	background: #f8fafc;
+	border-radius: 1.25rem;
+	box-shadow: 0 4px 24px 0 rgba(0, 0, 0, 0.08);
+	min-height: 80vh;
+}
+
+.vibegrid-title {
+	font-size: 2.2rem;
+	font-weight: 700;
+	margin-bottom: 1.5rem;
+	text-align: center;
+	letter-spacing: 0.02em;
+	color: #1e293b;
+}
+
+.vibegrid-grid {
+	display: grid;
+	grid-template-columns: repeat(4, 1fr);
+	gap: 0.75rem;
+	margin-bottom: 1.5rem;
+}
+
+.vibegrid-submit {
+	width: 100%;
+	padding: 0.75rem 0;
+	background: linear-gradient(
+		90deg,
+		#2563eb 0%,
+		#38bdf8 100%
+	);
+	color: #fff;
+	font-size: 1.1rem;
+	font-weight: 600;
+	border: none;
+	border-radius: 0.5rem;
+	margin-bottom: 0.5rem;
+	cursor: pointer;
+	transition: background 0.2s, opacity 0.2s;
+	box-shadow: 0 2px 8px 0 rgba(37, 99, 235, 0.08);
+	&:disabled {
+		opacity: 0.5;
+		cursor: not-allowed;
+	}
+}
+
+.vibegrid-attempts {
+	text-align: center;
+	margin-top: 0.5rem;
+	color: #64748b;
+	font-size: 1rem;
+}
+
+// --- WordButton styles ---
+.word-btn {
+	padding: 0.7rem 0.2rem;
+	border-radius: 0.5rem;
+	border: 2px solid #e2e8f0;
+	text-align: center;
+	font-size: 1.08rem;
+	font-weight: 500;
+	cursor: pointer;
+	background: #f1f5f9;
+	color: #334155;
+	transition: background 0.18s, color 0.18s, border 0.18s;
+	user-select: none;
+	&.selected {
+		background: #facc15;
+		color: #1e293b;
+		border-color: #fde047;
+	}
+	&.locked {
+		background: #22c55e;
+		color: #fff;
+		border-color: #16a34a;
+		cursor: not-allowed;
+		opacity: 0.85;
+	}
+	&:hover:not(.locked) {
+		background: #bae6fd;
+		border-color: #38bdf8;
+	}
+}
+
+// --- FeedbackBanner styles ---
+.feedback-banner {
+	margin: 0.7rem 0 0.2rem 0;
+	text-align: center;
+	font-size: 1.15rem;
+	font-weight: 700;
+	color: #0ea5e9;
+	min-height: 1.5em;
+}
+
+// --- EndGameModal styles ---
+.endgame-modal {
+	position: fixed;
+	inset: 0;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	background: rgba(30, 41, 59, 0.55);
+	z-index: 50;
+	// --- Enhancement: allow modal to close on backdrop click for better UX ---
+	&:before {
+		content: '';
+		display: block;
+		position: absolute;
+		inset: 0;
+		z-index: 0;
+	}
+	.modal-content {
+		position: relative;
+		z-index: 1;
+		background: #fff;
+		padding: 2rem 2.5rem 1.5rem 2.5rem;
+		border-radius: 1rem;
+		box-shadow: 0 8px 32px 0 rgba(16, 24, 40, 0.18);
+		text-align: center;
+		h2 {
+			font-size: 1.35rem;
+			margin-bottom: 1.2rem;
+			color: #0f172a;
+		}
+		button {
+			padding: 0.7rem 2.2rem;
+			background: linear-gradient(
+				90deg,
+				#2563eb 0%,
+				#38bdf8 100%
+			);
+			color: #fff;
+			border: none;
+			border-radius: 0.5rem;
+			font-size: 1.1rem;
+			font-weight: 600;
+			cursor: pointer;
+			transition: background 0.2s;
+			&:hover {
+				background: linear-gradient(
+					90deg,
+					#38bdf8 0%,
+					#2563eb 100%
+				);
+			}
+		}
+	}
+}
+
+// --- Solved groups display ---
+.vibegrid-solved-groups {
+	display: flex;
+	flex-direction: column;
+	gap: 0.5rem;
+	margin-bottom: 1.2rem;
+}
+.vibegrid-solved-group {
+	display: flex;
+	gap: 0.5rem;
+	justify-content: center;
+	background: #e0f2fe;
+	border-radius: 0.5rem;
+	padding: 0.3rem 0.5rem;
+	box-shadow: 0 1px 4px 0 rgba(14, 165, 233, 0.08);
+}
+.vibegrid-solved-word {
+	font-weight: 600;
+	color: #0284c7;
+	background: #f0f9ff;
+	border-radius: 0.3rem;
+	padding: 0.1rem 0.5rem;
+	font-size: 1rem;
+}
