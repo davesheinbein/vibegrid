@@ -14,17 +14,23 @@ interface WordButtonProps {
 }
 
 // --- Modernized: use semantic class names for easier SCSS targeting ---
-const WordButton: React.FC<WordButtonProps> = ({
+const WordButton: React.FC<
+	WordButtonProps & {
+		burnSuspect?: boolean;
+	}
+> = ({
 	word,
 	isSelected,
 	isLocked,
 	onClick,
 	onKeyDown,
+	burnSuspect,
 	...rest
 }) => {
 	let className = 'word-btn';
 	if (isLocked) className += ' locked';
 	else if (isSelected) className += ' selected';
+	if (burnSuspect) className += ' burn-suspect';
 
 	return (
 		<div
