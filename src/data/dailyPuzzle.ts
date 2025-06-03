@@ -1,4 +1,6 @@
 export const dailyPuzzle = {
+	title: 'Moody Indie vs. Cursed 90s Pop',
+	size: { rows: 4, cols: 5 }, // Example: 4 rows x 5 columns (20 words)
 	words: [
 		'Jazz',
 		'Blues',
@@ -21,13 +23,21 @@ export const dailyPuzzle = {
 		'Cactus',
 		'Robot',
 		'Galaxy',
+		// Removed 'Pizza' to make 20 words
 	],
-	groups: {
-		group1: ['Jazz', 'Blues', 'Rock', 'Rap'],
-		group2: ['Apple', 'Orange', 'Grape', 'Pear'],
-		group3: ['Dawn', 'Noon', 'Dusk', 'Midnight'],
-		group4: ['Batman', 'Superman', 'Ironman', 'Spiderman'],
-	},
-	wildcards: ['Banana', 'Cactus', 'Robot', 'Galaxy'], // At least 4 wildcards for 4x4 grid
-	categories: ['Moody Indie', 'Cursed 90s Pop Culture'], // Example categories for VibeScore
+	groups: [
+		['Jazz', 'Blues', 'Rock', 'Rap'],
+		['Apple', 'Orange', 'Grape', 'Pear'],
+		['Dawn', 'Noon', 'Dusk', 'Midnight'],
+		['Batman', 'Superman', 'Ironman', 'Spiderman'],
+	],
+	wildcards: [
+		'Banana',
+		'Cactus',
+		'Robot',
+		'Galaxy',
+		// Removed 'Pizza'
+	],
+	categories: ['Moody Indie', 'Cursed 90s Pop Culture'],
+	theme: 'moody',
 };

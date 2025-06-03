@@ -22,6 +22,12 @@ function shuffle<T>(array: T[]): T[] {
 }
 
 function App() {
+	// --- State declarations (must be at the top) ---
+	const [mode, setMode] = useState<
+		'startup' | 'daily' | 'custom'
+	>('startup');
+	const [showCustomModal, setShowCustomModal] =
+		useState(false);
 	const [selectedWords, setSelectedWords] = useState<
 		string[]
 	>([]);
@@ -53,67 +59,238 @@ function App() {
 	const [endTime, setEndTime] = useState<number | null>(
 		null
 	);
-	// --- State: shuffled words ---
+
+	// --- Get grid size and group size dynamically ---
+	const gridCols = 4;
+	const gridRows = Math.ceil(
+		dailyPuzzle.words.length / gridCols
+	);
+	const gridWordCount = gridRows * gridCols;
+	const groupCount = dailyPuzzle.groups?.length || 4;
+	const groupSize = dailyPuzzle.groups?.[0]?.length || 4;
+	const maxSelectable = groupSize;
+
+	// --- State: shuffled words (dynamic count) ---
 	const [shuffledWords, setShuffledWords] = useState<
 		string[]
-	>(() => shuffle(dailyPuzzle.words));
+	>(() =>
+		shuffle(dailyPuzzle.words.slice(0, gridWordCount))
+	);
 
-	// Use useEffect to avoid repeated setTimeout calls on every render
-	useEffect(() => {
-		if (lockedWords.length === 16 || attemptsLeft === 0) {
-			setEndTime(Date.now());
-			const timer = setTimeout(
-				() => setGameOver(true),
-				500
+	// --- Custom Puzzle Modal Placeholder ---
+	const CustomPuzzleModal = ({
+		open,
+		onClose,
+	}: {
+		open: boolean;
+		onClose: () => void;
+	}) => {
+		if (!open) return null;
+		return (
+			<div
+				className='share-modal'
+				onClick={(e) =>
+					e.target === e.currentTarget && onClose()
+				}
+			>
+				<div className='share-modal-content'>
+					<h2>Custom Puzzle Creator 🛠️</h2>
+					<p>
+						Build and play your own VibeGrid puzzle! (Coming
+						soon)
+					</p>
+					<button
+						className='share-modal-close'
+						onClick={onClose}
+					>
+						Close
+					</button>
+				</div>
+			</div>
+		);
+	};
+
+	// --- Helper functions and variables used in hooks ---
+	const isWildcard = (word: string) =>
+		dailyPuzzle.wildcards?.includes(word);
+
+	const confirmBurn = () => {
+		if (!burnSuspect) return;
+		if (isWildcard(burnSuspect)) {
+			setBurnedWildcards((prev) => [...prev, burnSuspect]);
+			setLockedWords((prev) => [...prev, burnSuspect]);
+			setBurnBonus(
+				(prev) => prev + (attemptsLeft >= 2 ? 10 : 5)
 			);
-			return () => clearTimeout(timer);
-		}
-	}, [lockedWords.length, attemptsLeft]);
-
-	// --- Enhancement: focus management for accessibility ---
-	useEffect(() => {
-		if (!gameOver && selectedWords.length > 0) {
-			const lastSelected =
-				selectedWords[selectedWords.length - 1];
-			const el = document.querySelector(
-				`[data-word='${lastSelected}']`
+			setFeedback('🔥 Correct burn! Bonus awarded.');
+		} else {
+			setAttemptsLeft((prev) => prev - 1);
+			setFeedback(
+				'❌ That word belongs to a group! Penalty.'
 			);
-			if (el) (el as HTMLElement).focus();
 		}
-	}, [selectedWords, gameOver]);
+		setBurnSuspect(null);
+		setSelectedWords([]);
+	};
 
-	// --- Always mix group and wildcard words together ---
-	useEffect(() => {
-		setShuffledWords(shuffle(dailyPuzzle.words));
-		// eslint-disable-next-line
-	}, []);
+	const getVibeScore = () => {
+		const groups = solvedGroups.length;
+		const time = endTime
+			? Math.round((endTime - startTime) / 1000)
+			: 0;
+		const attemptsUsed = 4 - attemptsLeft;
+		const correctGroups = groups * 10;
+		const allGroupsNoMistakes =
+			groups === 4 && attemptsUsed === 0 ? 15 : 0;
+		const correctBurns =
+			burnedWildcards.filter((w) => isWildcard(w)).length *
+			5;
+		const wrongBurns =
+			(burnedWildcards.length -
+				burnedWildcards.filter((w) => isWildcard(w))
+					.length) *
+			-5;
+		const guessPenalty = attemptsUsed * -2;
+		const vibeTimeBonus =
+			groups === 4 && time > 0 && time <= VIBETIME_THRESHOLD
+				? 10
+				: 0;
+		const total =
+			correctGroups +
+			allGroupsNoMistakes +
+			correctBurns +
+			wrongBurns +
+			guessPenalty +
+			vibeTimeBonus;
+		return Math.max(0, total);
+	};
 
-	const handleWordClick = (word: string) => {
-		if (lockedWords.includes(word) || gameOver) return;
-		setSelectedWords((prev) => {
-			if (prev.includes(word)) {
-				// Deselect if already selected
-				return prev.filter((w) => w !== word);
-			} else if (prev.length < 4) {
-				// Select if under 4
-				return [...prev, word];
-			} else {
-				// At max, do not allow more than 4
-				return prev;
+	type VibeCategoryStats = {
+		games: number;
+		wins: number;
+		totalScore: number;
+		totalGroups: number;
+		correctGroups: number;
+		totalBurns: number;
+		correctBurns: number;
+		totalTime: number;
+	};
+	type VibeTrackerStats = Record<string, VibeCategoryStats>;
+
+	function updateVibeTrackerStats({
+		categories,
+		score,
+		correctGroups,
+		totalGroups,
+		correctBurns,
+		totalBurns,
+		time,
+		win,
+	}: {
+		categories: string[];
+		score: number;
+		correctGroups: number;
+		totalGroups: number;
+		correctBurns: number;
+		totalBurns: number;
+		time: number;
+		win: boolean;
+	}) {
+		const statsKey = 'vibegrid-vibetracker-stats';
+		let stats: VibeTrackerStats = {};
+		try {
+			stats = JSON.parse(
+				localStorage.getItem(statsKey) || '{}'
+			);
+		} catch {}
+		categories.forEach((cat) => {
+			if (!stats[cat]) {
+				stats[cat] = {
+					games: 0,
+					wins: 0,
+					totalScore: 0,
+					totalGroups: 0,
+					correctGroups: 0,
+					totalBurns: 0,
+					correctBurns: 0,
+					totalTime: 0,
+				};
 			}
+			stats[cat].games += 1;
+			if (win) stats[cat].wins += 1;
+			stats[cat].totalScore += score;
+			stats[cat].totalGroups += totalGroups;
+			stats[cat].correctGroups += correctGroups;
+			stats[cat].totalBurns += totalBurns;
+			stats[cat].correctBurns += correctBurns;
+			stats[cat].totalTime += time;
 		});
+		localStorage.setItem(statsKey, JSON.stringify(stats));
+	}
+
+	function getVibeTrackerSummary() {
+		const statsKey = 'vibegrid-vibetracker-stats';
+		let stats: VibeTrackerStats = {};
+		try {
+			stats = JSON.parse(
+				localStorage.getItem(statsKey) || '{}'
+			);
+		} catch {}
+		const cats = dailyPuzzle.categories || ['General'];
+		return cats
+			.map((cat) => {
+				const s = stats[cat];
+				if (!s || s.games === 0)
+					return `${cat}: No data yet.`;
+				const winRate = Math.round(
+					(s.wins / s.games) * 100
+				);
+				const burnAcc = s.totalBurns
+					? Math.round(
+							(s.correctBurns / s.totalBurns) * 100
+					  )
+					: 0;
+				const avgTime = s.games
+					? Math.round(s.totalTime / s.games)
+					: 0;
+				return `${cat}: Win Rate ${winRate}%, Burn Accuracy ${burnAcc}%, Avg Time ${Math.floor(
+					avgTime / 60
+				)}:${('0' + (avgTime % 60)).slice(-2)}`;
+			})
+			.join('\n');
+	}
+
+	const PUZZLE_CATEGORIES = dailyPuzzle.categories || [
+		'General',
+	];
+	const VIBETIME_THRESHOLD = 90;
+
+	// --- Event Handlers and Variables ---
+	const handleWordTap = (word: string) => {
+		if (lockedWords.includes(word) || gameOver) return;
+		if (burnSuspect === word) {
+			setBurnSuspect(null);
+			return;
+		}
+		if (selectedWords.includes(word)) {
+			setSelectedWords((prev) =>
+				prev.filter((w) => w !== word)
+			);
+			setBurnSuspect(word);
+		} else if (burnSuspect) {
+			setBurnSuspect(word);
+		} else if (selectedWords.length < groupSize) {
+			setSelectedWords((prev) => [...prev, word]);
+		}
 	};
 
 	const handleSubmit = () => {
 		if (gameOver) return;
-		if (selectedWords.length !== 4) {
-			setFeedback('Select exactly 4 words.');
+		if (selectedWords.length !== groupSize) {
+			setFeedback(`Select exactly ${groupSize} words.`);
 			return;
 		}
-
-		const groupMatch = Object.values(
-			dailyPuzzle.groups
-		).find((group) =>
+		const groupMatch = dailyPuzzle.groups.find((group) =>
 			selectedWords.every((word) => group.includes(word))
 		);
 		if (
@@ -134,7 +311,9 @@ function App() {
 			setFeedback(
 				partialMatchFeedback(
 					selectedWords,
-					dailyPuzzle.groups
+					Object.fromEntries(
+						dailyPuzzle.groups.map((g, i) => [i, g])
+					)
 				)
 			);
 			setShake(true);
@@ -152,18 +331,10 @@ function App() {
 		setSolvedGroups([]);
 	};
 
-	// --- Enhancement: keyboard navigation for accessibility ---
-	const handleKeyDown = (
-		e: React.KeyboardEvent<HTMLDivElement>
-	) => {
-		if (gameOver) return;
-		if (e.key === 'Enter' || e.key === ' ') {
-			const word = e.currentTarget.textContent || '';
-			if (word) handleWordClick(word);
-		}
+	const handleRandomize = () => {
+		setShuffledWords(shuffle(dailyPuzzle.words));
 	};
 
-	// --- Enhancement: Share functionality ---
 	const getShareText = () => {
 		const solved = solvedGroups.length;
 		const attempts = 4 - attemptsLeft;
@@ -212,49 +383,36 @@ function App() {
 		},
 	];
 
-	const isWildcard = (word: string) =>
-		dailyPuzzle.wildcards?.includes(word);
-
-	// --- Double-tap/burn suspect logic ---
-	const handleWordTap = (word: string) => {
-		if (lockedWords.includes(word) || gameOver) return;
-		if (burnSuspect === word) {
-			setBurnSuspect(null);
-			return;
-		}
-		if (selectedWords.includes(word)) {
-			setSelectedWords((prev) =>
-				prev.filter((w) => w !== word)
+	// --- All hooks must be called unconditionally (move all useEffect here) ---
+	useEffect(() => {
+		if (lockedWords.length === 16 || attemptsLeft === 0) {
+			setEndTime(Date.now());
+			const timer = setTimeout(
+				() => setGameOver(true),
+				500
 			);
-			setBurnSuspect(word);
-		} else if (burnSuspect) {
-			setBurnSuspect(word);
-		} else if (selectedWords.length < 4) {
-			setSelectedWords((prev) => [...prev, word]);
+			return () => clearTimeout(timer);
 		}
-	};
+	}, [lockedWords.length, attemptsLeft]);
 
-	// --- Burn action: called when burnSuspect is confirmed ---
-	const confirmBurn = () => {
-		if (!burnSuspect) return;
-		if (isWildcard(burnSuspect)) {
-			setBurnedWildcards((prev) => [...prev, burnSuspect]);
-			setLockedWords((prev) => [...prev, burnSuspect]);
-			setBurnBonus(
-				(prev) => prev + (attemptsLeft >= 2 ? 10 : 5)
+	useEffect(() => {
+		if (!gameOver && selectedWords.length > 0) {
+			const lastSelected =
+				selectedWords[selectedWords.length - 1];
+			const el = document.querySelector(
+				`[data-word='${lastSelected}']`
 			);
-			setFeedback('🔥 Correct burn! Bonus awarded.');
-		} else {
-			setAttemptsLeft((prev) => prev - 1);
-			setFeedback(
-				'❌ That word belongs to a group! Penalty.'
-			);
+			if (el) (el as HTMLElement).focus();
 		}
-		setBurnSuspect(null);
-		setSelectedWords([]);
-	};
+	}, [selectedWords, gameOver]);
 
-	// --- Pro Mode: auto-burn if only one word left and in burn mode ---
+	useEffect(() => {
+		setShuffledWords(
+			shuffle(dailyPuzzle.words.slice(0, gridWordCount))
+		);
+		// eslint-disable-next-line
+	}, [gridWordCount]);
+
 	useEffect(() => {
 		const ungrouped = dailyPuzzle.words.filter(
 			(w) =>
@@ -271,51 +429,138 @@ function App() {
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [lockedWords, burnedWildcards, burnSuspect, gameOver]);
 
-	// --- VibeScore Calculation (Full Breakdown) ---
-	const VIBETIME_THRESHOLD = 90; // seconds for 4x4
-	const PUZZLE_CATEGORIES = dailyPuzzle.categories || [
-		'General',
-	];
+	useEffect(() => {
+		if (gameOver && endTime) {
+			const groups = solvedGroups.length;
+			const totalGroups = groupCount;
+			const time = Math.round((endTime - startTime) / 1000);
+			const correctBurns = burnedWildcards.filter((w) =>
+				isWildcard(w)
+			).length;
+			const totalBurns = burnedWildcards.length;
+			const win = lockedWords.length === gridWordCount;
+			const score = getVibeScore();
+			updateVibeTrackerStats({
+				categories: dailyPuzzle.categories || ['General'],
+				score,
+				correctGroups: groups,
+				totalGroups,
+				correctBurns,
+				totalBurns,
+				time,
+				win,
+			});
+		}
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [gameOver, endTime]);
 
-	const getVibeScore = () => {
-		const groups = solvedGroups.length;
-		const time = endTime
-			? Math.round((endTime - startTime) / 1000)
-			: 0;
-		const attemptsUsed = 4 - attemptsLeft;
-		const correctGroups = groups * 10;
-		const allGroupsNoMistakes =
-			groups === 4 && attemptsUsed === 0 ? 15 : 0;
-		const correctBurns =
-			burnedWildcards.filter((w) => isWildcard(w)).length *
-			5;
-		const wrongBurns =
-			(burnedWildcards.length -
-				burnedWildcards.filter((w) => isWildcard(w))
-					.length) *
-			-5;
-		const guessPenalty = attemptsUsed * -2;
-		const vibeTimeBonus =
-			groups === 4 && time > 0 && time <= VIBETIME_THRESHOLD
-				? 10
-				: 0;
-		const total =
-			correctGroups +
-			allGroupsNoMistakes +
-			correctBurns +
-			wrongBurns +
-			guessPenalty +
-			vibeTimeBonus;
-		return Math.max(0, total);
-	};
+	// --- Reset state when switching modes (must be before any return) ---
+	useEffect(() => {
+		if (mode === 'daily') {
+			setSelectedWords([]);
+			setLockedWords([]);
+			setFeedback('');
+			setAttemptsLeft(4);
+			setGameOver(false);
+			setSolvedGroups([]);
+			setShuffledWords(
+				shuffle(dailyPuzzle.words.slice(0, gridWordCount))
+			);
+		}
+		// eslint-disable-next-line
+	}, [mode]);
 
-	// --- Handler: randomize button ---
-	const handleRandomize = () => {
-		setShuffledWords(shuffle(dailyPuzzle.words));
-	};
+	// --- Startup screen UI ---
+	if (mode === 'startup') {
+		return (
+			<div
+				className='vibegrid-container'
+				style={{
+					display: 'flex',
+					flexDirection: 'column',
+					alignItems: 'center',
+					justifyContent: 'center',
+					minHeight: '100vh',
+				}}
+			>
+				<h1
+					className='vibegrid-title'
+					style={{ marginBottom: '1.5rem' }}
+				>
+					VibeGrid 2.0 🎛️
+				</h1>
+				<div
+					style={{
+						display: 'flex',
+						flexDirection: 'column',
+						gap: '1.5rem',
+						width: '100%',
+						maxWidth: 340,
+					}}
+				>
+					<button
+						className='vibegrid-submit'
+						style={{
+							fontSize: '1.3rem',
+							padding: '1.2rem 0',
+						}}
+						onClick={() => setMode('daily')}
+					>
+						Play Daily Puzzle
+					</button>
+					<button
+						className='vibegrid-submit'
+						style={{
+							fontSize: '1.15rem',
+							background:
+								'linear-gradient(90deg,#f43f5e 0%,#facc15 100%)',
+							color: '#fff',
+							padding: '1.2rem 0',
+						}}
+						onClick={() => setShowCustomModal(true)}
+					>
+						🛠️ Custom Puzzle Mode
+					</button>
+				</div>
+				<CustomPuzzleModal
+					open={showCustomModal}
+					onClose={() => setShowCustomModal(false)}
+				/>
+			</div>
+		);
+	}
 
 	return (
 		<div className='vibegrid-container'>
+			{/* Add a floating custom puzzle button (🛠️) in daily mode only */}
+			{mode === 'daily' && (
+				<button
+					style={{
+						position: 'fixed',
+						bottom: 24,
+						right: 24,
+						zIndex: 100,
+						background:
+							'linear-gradient(90deg,#f43f5e 0%,#facc15 100%)',
+						color: '#fff',
+						border: 'none',
+						borderRadius: '50%',
+						width: 56,
+						height: 56,
+						fontSize: 32,
+						boxShadow: '0 2px 12px 0 rgba(244,63,94,0.15)',
+						cursor: 'pointer',
+					}}
+					aria-label='Create or play a custom puzzle'
+					onClick={() => setShowCustomModal(true)}
+				>
+					🛠️
+				</button>
+			)}
+			<CustomPuzzleModal
+				open={showCustomModal}
+				onClose={() => setShowCustomModal(false)}
+			/>
 			<div className='vibegrid-header'>
 				<div>
 					<h1 className='vibegrid-title'>VibeGrid 🎛️</h1>
@@ -353,7 +598,13 @@ function App() {
 				</div>
 			)}
 
-			<div className='vibegrid-grid'>
+			<div
+				className='vibegrid-grid'
+				style={{
+					gridTemplateColumns: `repeat(4, 1fr)`,
+					gridTemplateRows: `repeat(${gridRows}, 1fr)`,
+				}}
+			>
 				{shuffledWords.map((word) => (
 					<WordButton
 						key={word}
@@ -491,13 +742,13 @@ function App() {
 			{gameOver && (
 				<EndGameModal
 					message={
-						lockedWords.length === 16
+						lockedWords.length === gridWordCount
 							? `You nailed it! 🔥\nVibeScore: ${getVibeScore()}\nCategories: ${PUZZLE_CATEGORIES.join(
 									', '
-							  )}`
+							  )}\n\nVibeTracker:\n${getVibeTrackerSummary()}`
 							: `Vibe check failed.\nVibeScore: ${getVibeScore()}\nCategories: ${PUZZLE_CATEGORIES.join(
 									', '
-							  )}`
+							  )}\n\nVibeTracker:\n${getVibeTrackerSummary()}`
 					}
 					onRestart={handleRestart}
 				/>
