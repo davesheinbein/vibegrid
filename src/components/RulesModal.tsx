@@ -17,7 +17,10 @@ const RulesModal: React.FC<RulesModalProps> = ({
 				e.target === e.currentTarget && onClose()
 			}
 		>
-			<div className='rules-modal-content'>
+			<div
+				className='rules-modal-content'
+				style={{ color: '#334155' }}
+			>
 				<h2>How to Play</h2>
 				<ul>
 					<li>
