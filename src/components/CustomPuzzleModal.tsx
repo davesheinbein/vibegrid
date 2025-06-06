@@ -170,12 +170,25 @@ interface CustomPuzzleModalProps {
 	setMode: (
 		mode: 'startup' | 'daily' | 'custom' | 'browse'
 	) => void;
+	user?: {
+		name: string;
+		email: string;
+		photoUrl?: string;
+	} | null;
+	setShowSignInModal?: (open: boolean) => void;
 }
 
 // --- Main Component ---
 const CustomPuzzleModal: React.FC<
 	CustomPuzzleModalProps
-> = ({ open, onClose, setCustomPuzzle, setMode }) => {
+> = ({
+	open,
+	onClose,
+	setCustomPuzzle,
+	setMode,
+	user,
+	setShowSignInModal,
+}) => {
 	const [step, setStep] = useState(0);
 	const [puzzleTitle, setPuzzleTitle] = useState('');
 	const [numRows, setNumRows] = useState(4);
@@ -199,6 +212,7 @@ const CustomPuzzleModal: React.FC<
 	const [error, setError] = useState<string | null>(null);
 	const [wildcardsToggle, setWildcardsToggle] =
 		useState(true);
+	const [loading, setLoading] = useState(false);
 
 	// --- Live preview ---
 	const groups = parseGroupsFromInputs(
@@ -260,41 +274,105 @@ const CustomPuzzleModal: React.FC<
 		setStep(steps.length); // Go to preview step
 	};
 
-	// Save puzzle to localStorage
-	const handleSave = () => {
-		if (!jsonResult) return;
-		try {
-			const puzzles = JSON.parse(
-				localStorage.getItem('customPuzzles') || '[]'
-			);
-			const puzzle = JSON.parse(jsonResult);
-			puzzle._id = Date.now().toString();
-			puzzles.push(puzzle);
-			localStorage.setItem(
-				'customPuzzles',
-				JSON.stringify(puzzles)
-			);
-			setSaveStatus('Saved!');
-			setShareId(puzzle._id);
-		} catch (e) {
-			setSaveStatus('Failed to save.');
-		}
-	};
+	// --- Validate puzzle JSON structure ---
+	function validatePuzzleJson(json: any) {
+		if (!json) return false;
+		if (!json.title || typeof json.title !== 'string')
+			return false;
+		if (
+			!json.size ||
+			typeof json.size.rows !== 'number' ||
+			typeof json.size.cols !== 'number'
+		)
+			return false;
+		if (
+			!Array.isArray(json.groups) ||
+			json.groups.length === 0
+		)
+			return false;
+		if (
+			!Array.isArray(json.words) ||
+			json.words.length === 0
+		)
+			return false;
+		return true;
+	}
 
-	// Play the generated puzzle immediately
-	const handlePlayNow = () => {
+	// --- Save puzzle to backend ---
+	async function savePuzzleToBackend(
+		puzzle: any,
+		playAfter = false
+	) {
+		setLoading(true);
+		setError(null);
+		try {
+			const payload = {
+				...puzzle,
+				creatorId: user?.email || null,
+				visibility: 'public',
+			};
+			const res = await fetch('/api/custom-puzzles', {
+				method: 'POST',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify(payload),
+			});
+			if (!res.ok) throw new Error('Failed to save puzzle');
+			const saved = await res.json();
+			setSaveStatus('Saved!');
+			setShareId(saved._id || saved.id || null);
+			if (playAfter) {
+				setCustomPuzzle(saved);
+				setMode('custom');
+				onClose();
+			}
+		} catch (e: any) {
+			setError(e.message || 'Failed to save.');
+		} finally {
+			setLoading(false);
+		}
+	}
+
+	// --- Play Now handler ---
+	const handlePlayNow = async () => {
 		if (!jsonResult) return;
 		try {
 			const puzzle = JSON.parse(jsonResult);
-			setCustomPuzzle(puzzle);
-			setMode('custom');
-			onClose();
-		} catch (e) {
+			if (!validatePuzzleJson(puzzle)) {
+				setError('Puzzle JSON is invalid.');
+				return;
+			}
+			if (!user) {
+				setError('Sign in required to play and save.');
+				setShowSignInModal && setShowSignInModal(true);
+				return;
+			}
+			await savePuzzleToBackend(puzzle, true);
+		} catch (e: any) {
 			setError('Could not start puzzle.');
 		}
 	};
 
-	// Copy shareable link to clipboard
+	// --- Save handler ---
+	const handleSave = async () => {
+		if (!jsonResult) return;
+		try {
+			const puzzle = JSON.parse(jsonResult);
+			if (!validatePuzzleJson(puzzle)) {
+				setError('Puzzle JSON is invalid.');
+				return;
+			}
+			if (!user) {
+				setError('Sign in required to save.');
+				setShowSignInModal && setShowSignInModal(true);
+				return;
+			}
+			await savePuzzleToBackend(puzzle, false);
+		} catch (e: any) {
+			setError('Could not save puzzle.');
+		}
+	};
+
+	// --- Copy shareable link to clipboard
 	const handleCopyLink = () => {
 		if (!shareId) return;
 		const url = `${window.location.origin}/?puzzle=${shareId}`;
@@ -619,28 +697,24 @@ const CustomPuzzleModal: React.FC<
 							>
 								<button
 									className='vibegrid-submit'
-									onClick={() => {
-										/* ...save logic... */
-									}}
+									onClick={handleSave}
 									type='button'
+									disabled={loading}
 								>
-									Save
+									{loading ? 'Saving...' : 'Save'}
 								</button>
 								<button
 									className='vibegrid-submit'
-									onClick={() => {
-										/* ...play logic... */
-									}}
+									onClick={handlePlayNow}
 									type='button'
+									disabled={loading}
 								>
-									Play Now
+									{loading ? 'Loading...' : 'Play Now'}
 								</button>
 								{shareId && (
 									<button
 										className='vibegrid-submit'
-										onClick={() => {
-											/* ...copy logic... */
-										}}
+										onClick={handleCopyLink}
 										type='button'
 									>
 										Copy Link
