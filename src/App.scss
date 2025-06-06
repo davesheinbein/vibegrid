@@ -718,40 +718,26 @@ body.dark-mode,
 		90deg,
 		#fffbe6 0%,
 		#ffe5b4 100%
-	);
+	) !important; /* Peach/Yellow */
 }
 .vibegrid-solved-group-medium {
 	background: linear-gradient(
 		90deg,
 		#f0fff4 0%,
 		#e6ffe6 100%
-	);
+	) !important; /* Mint Cream/Green */
 }
 .vibegrid-solved-group-hard {
 	background: linear-gradient(
 		90deg,
 		#e6f0ff 0%,
 		#e0e7ff 100%
-	);
+	) !important; /* Pale Apricot/Blue */
 }
 .vibegrid-solved-group-expert {
 	background: linear-gradient(
 		90deg,
 		#f8e6ff 0%,
 		#fbe6ff 100%
-	);
-}
-
-// --- Dark mode difficulty backgrounds ---
-.dark-mode .vibegrid-solved-group-easy {
-	background: linear-gradient(90deg, #665c3c 0%, #bfa76a 100%); /* Muted gold/peach for dark */
-}
-.dark-mode .vibegrid-solved-group-medium {
-	background: linear-gradient(90deg, #23403a 0%, #4fd1b3 100%); /* Muted mint/green for dark */
-}
-.dark-mode .vibegrid-solved-group-hard {
-	background: linear-gradient(90deg, #2a3550 0%, #6b7fd7 100%); /* Muted blue/apricot for dark */
-}
-.dark-mode .vibegrid-solved-group-expert {
-	background: linear-gradient(90deg, #4a3550 0%, #b97fd7 100%); /* Muted purple/blush for dark */
+	) !important; /* Creamy Blush/Purple */
 }

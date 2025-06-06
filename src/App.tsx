@@ -1,10 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import { dailyPuzzle } from './data/dailyPuzzle';
 import { partialMatchFeedback } from './utils/gameLogic';
+import { shuffle } from './utils/helpers';
 import WordButton from './components/WordButton';
 import FeedbackBanner from './components/FeedbackBanner';
 import EndGameModal from './components/EndGameModal';
 import RulesModal from './components/RulesModal';
+import SignInModal from './components/SignInModal';
+import StatisticsModal from './components/StatisticsModal';
+import CustomPuzzleModal from './components/CustomPuzzleModal';
+import BrowseCustomPuzzles from './pages/BrowseCustomPuzzles';
 import './App.scss';
 import { v4 as uuidv4 } from 'uuid';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
@@ -16,17 +21,10 @@ import {
 	faTiktok,
 	faInstagram,
 } from '@fortawesome/free-brands-svg-icons';
-import { faShareAlt } from '@fortawesome/free-solid-svg-icons';
-
-// --- Utility: shuffle array (Fisher-Yates) ---
-function shuffle<T>(array: T[]): T[] {
-	const arr = [...array];
-	for (let i = arr.length - 1; i > 0; i--) {
-		const j = Math.floor(Math.random() * (i + 1));
-		[arr[i], arr[j]] = [arr[j], arr[i]];
-	}
-	return arr;
-}
+import {
+	faShareAlt,
+	faChartBar,
+} from '@fortawesome/free-solid-svg-icons';
 
 function App() {
 	// --- State declarations (must be at the top) ---
@@ -82,6 +80,20 @@ function App() {
 	>([]);
 	const [activePuzzle, setActivePuzzle] =
 		useState<any>(dailyPuzzle);
+	const [showStats, setShowStats] = useState(false);
+	const [user, setUser] = useState<null | {
+		name: string;
+		email: string;
+		photoUrl?: string;
+	}>({
+		name: 'Jane Doe',
+		email: 'jane@example.com',
+		photoUrl: '',
+	}); // set to null to simulate logged out
+	const [dailyCompleted, setDailyCompleted] =
+		useState(true); // set to false to simulate not completed
+	const [showSignInModal, setShowSignInModal] =
+		useState(false);
 
 	// --- Get grid size and group size dynamically ---
 	const gridCols = activePuzzle.size?.cols || 4;
@@ -118,358 +130,6 @@ function App() {
 		setBurnBonus(0);
 		setEndTime(null);
 	}, [activePuzzle]);
-
-	// --- Custom Puzzle Modal with Form ---
-	const CustomPuzzleModal = ({
-		open,
-		onClose,
-	}: {
-		open: boolean;
-		onClose: () => void;
-	}) => {
-		const [title, setTitle] = useState('');
-		const [rows, setRows] = useState(4);
-		const [cols, setCols] = useState(5);
-		const [words, setWords] = useState(''); // comma or newline separated
-		const [groups, setGroups] = useState(['', '', '', '']); // 4 groups
-		const [wildcards, setWildcards] = useState(''); // comma or newline separated
-		const [categories, setCategories] = useState(''); // comma separated
-		const [theme, setTheme] = useState('');
-		const [jsonResult, setJsonResult] = useState('');
-		const [saveStatus, setSaveStatus] = useState<
-			string | null
-		>(null);
-		const [shareId, setShareId] = useState<string | null>(
-			null
-		);
-		const [copyStatus, setCopyStatus] = useState<
-			string | null
-		>(null);
-
-		if (!open) return null;
-
-		const handleSubmit = (e: React.FormEvent) => {
-			e.preventDefault();
-			const wordList = words
-				.split(/[\n,]+/)
-				.map((w) => w.trim())
-				.filter(Boolean);
-			const groupArr = groups.map((g) =>
-				g
-					.split(/[\n,]+/)
-					.map((w) => w.trim())
-					.filter(Boolean)
-			);
-			const wildcardArr = wildcards
-				.split(/[\n,]+/)
-				.map((w) => w.trim())
-				.filter(Boolean);
-			const categoryArr = categories
-				.split(',')
-				.map((c) => c.trim())
-				.filter(Boolean);
-			const json = {
-				date: new Date().toLocaleDateString('en-GB'),
-				title,
-				size: { rows, cols },
-				words: wordList,
-				groups: groupArr,
-				wildcards: wildcardArr,
-				categories: categoryArr,
-				theme,
-			};
-			setJsonResult(JSON.stringify(json, null, 2));
-			setSaveStatus(null);
-		};
-
-		const handleSave = async () => {
-			if (!jsonResult) return;
-			setSaveStatus('Saving...');
-			try {
-				const res = await fetch('/api/custom-grid', {
-					method: 'POST',
-					headers: { 'Content-Type': 'application/json' },
-					body: jsonResult,
-				});
-				if (res.ok) {
-					setSaveStatus(
-						'Saved! Your puzzle is now in the database.'
-					);
-				} else {
-					setSaveStatus('Error saving puzzle.');
-				}
-			} catch {
-				setSaveStatus('Error saving puzzle.');
-			}
-		};
-
-		const handlePlayNow = () => {
-			if (!jsonResult) return;
-			try {
-				const puzzle = JSON.parse(jsonResult);
-				setCustomPuzzle(puzzle);
-				setMode('custom');
-				onClose();
-				// Generate a shareable ID and store in localStorage
-				const id = uuidv4();
-				localStorage.setItem(
-					'vibegrid-custom-' + id,
-					JSON.stringify(puzzle)
-				);
-				setShareId(id);
-				window.location.hash = '#/play/custom/' + id;
-			} catch {
-				setSaveStatus('Invalid puzzle JSON.');
-			}
-		};
-
-		const handleCopyLink = () => {
-			if (!shareId) return;
-			const url =
-				window.location.origin +
-				'/#/play/custom/' +
-				shareId;
-			navigator.clipboard.writeText(url).then(() => {
-				setCopyStatus('Link copied!');
-				setTimeout(() => setCopyStatus(null), 1500);
-			});
-		};
-
-		return (
-			<div
-				className='share-modal'
-				onClick={(e) =>
-					e.target === e.currentTarget && onClose()
-				}
-			>
-				<div
-					className='share-modal-content'
-					style={{
-						maxWidth: 520,
-						background: '#fff',
-						color: '#334155',
-					}}
-				>
-					<h2>Create Your Custom VibeGrid Puzzle</h2>
-					<form
-						onSubmit={handleSubmit}
-						style={{
-							display: 'flex',
-							flexDirection: 'column',
-							gap: 12,
-						}}
-					>
-						<label>
-							Title
-							<input
-								type='text'
-								value={title}
-								onChange={(e) => setTitle(e.target.value)}
-								required
-								style={{ width: '100%' }}
-								placeholder='e.g. Moody Indie vs. Cursed 90s Pop'
-							/>
-						</label>
-						<div style={{ display: 'flex', gap: 8 }}>
-							<label>
-								Rows
-								<input
-									type='number'
-									min={1}
-									max={10}
-									value={rows}
-									onChange={(e) =>
-										setRows(Number(e.target.value))
-									}
-									style={{ width: 60 }}
-									placeholder='4'
-								/>
-							</label>
-							<label>
-								Cols
-								<input
-									type='number'
-									min={1}
-									max={10}
-									value={cols}
-									onChange={(e) =>
-										setCols(Number(e.target.value))
-									}
-									style={{ width: 60 }}
-									placeholder='5'
-								/>
-							</label>
-						</div>
-						<label>
-							Words (comma or newline separated, total: rows
-							x cols)
-							<textarea
-								value={words}
-								onChange={(e) => setWords(e.target.value)}
-								rows={3}
-								style={{ width: '100%' }}
-								required
-								placeholder={
-									'Jazz, Blues, Rock, Rap, Apple, Orange, Grape, Pear, Dawn, Noon, Dusk, Midnight, Batman, Superman, Ironman, Spiderman, Banana, Cactus, Robot, Galaxy'
-								}
-							/>
-						</label>
-						{groups.map((g, i) => (
-							<label key={i}>
-								Group {i + 1} (comma or newline separated,{' '}
-								{cols} words)
-								<textarea
-									value={g}
-									onChange={(e) =>
-										setGroups(
-											groups.map((v, idx) =>
-												idx === i ? e.target.value : v
-											)
-										)
-									}
-									rows={2}
-									style={{ width: '100%' }}
-									required
-									placeholder={
-										i === 0
-											? 'Jazz, Blues, Rock, Rap'
-											: i === 1
-											? 'Apple, Orange, Grape, Pear'
-											: i === 2
-											? 'Dawn, Noon, Dusk, Midnight'
-											: 'Batman, Superman, Ironman, Spiderman'
-									}
-								/>
-							</label>
-						))}
-						<label>
-							Wildcards (comma or newline separated)
-							<textarea
-								value={wildcards}
-								onChange={(e) =>
-									setWildcards(e.target.value)
-								}
-								rows={2}
-								style={{ width: '100%' }}
-								placeholder='Banana, Cactus, Robot, Galaxy'
-							/>
-						</label>
-						<label>
-							Categories (comma separated)
-							<input
-								type='text'
-								value={categories}
-								onChange={(e) =>
-									setCategories(e.target.value)
-								}
-								style={{ width: '100%' }}
-								placeholder='Moody Indie, Cursed 90s Pop Culture'
-							/>
-						</label>
-						<label>
-							Theme
-							<input
-								type='text'
-								value={theme}
-								onChange={(e) => setTheme(e.target.value)}
-								style={{ width: '100%' }}
-								placeholder='moody'
-							/>
-						</label>
-						<button
-							type='submit'
-							className='vibegrid-submit'
-							style={{ marginTop: 8 }}
-						>
-							Generate JSON
-						</button>
-					</form>
-					{jsonResult && (
-						<div style={{ marginTop: 16 }}>
-							<h4>Your Puzzle JSON:</h4>
-							<pre
-								style={{
-									background: '#f1f5f9',
-									color: '#334155',
-									padding: 12,
-									borderRadius: 8,
-									fontSize: 13,
-									overflowX: 'auto',
-								}}
-							>
-								{jsonResult}
-							</pre>
-							<div
-								style={{
-									display: 'flex',
-									gap: 8,
-									marginTop: 8,
-								}}
-							>
-								<button
-									className='vibegrid-submit'
-									onClick={handleSave}
-									type='button'
-								>
-									Save to Database
-								</button>
-								<button
-									className='vibegrid-submit'
-									onClick={handlePlayNow}
-									type='button'
-									style={{
-										background:
-											'linear-gradient(90deg,#22c55e 0%,#38bdf8 100%)',
-									}}
-								>
-									Play Now
-								</button>
-								{shareId && (
-									<button
-										className='vibegrid-submit'
-										onClick={handleCopyLink}
-										type='button'
-										style={{
-											background:
-												'linear-gradient(90deg,#fbbf24 0%,#38bdf8 100%)',
-										}}
-									>
-										Copy Link
-									</button>
-								)}
-							</div>
-							{copyStatus && (
-								<div
-									style={{ color: 'green', marginTop: 4 }}
-								>
-									{copyStatus}
-								</div>
-							)}
-							{saveStatus && (
-								<div
-									style={{
-										marginTop: 8,
-										color: saveStatus.startsWith('Error')
-											? 'red'
-											: 'green',
-									}}
-								>
-									{saveStatus}
-								</div>
-							)}
-						</div>
-					)}
-					<button
-						className='share-modal-close'
-						onClick={onClose}
-						style={{ marginTop: 16 }}
-					>
-						Close
-					</button>
-				</div>
-			</div>
-		);
-	};
 
 	// --- Animation: transition matched group words from grid to solved group ---
 	// Add a class to matched words for animation, and remove them from the grid after animation completes
@@ -890,104 +550,6 @@ function App() {
 		}
 	}, [mode, customPuzzle, customState]);
 
-	// --- Browse Custom Puzzles Screen ---
-	const BrowseCustomPuzzles = ({
-		onBack,
-		puzzles,
-	}: {
-		onBack: () => void;
-		puzzles: any[];
-	}) => {
-		return (
-			<div
-				className='vibegrid-container'
-				style={{ minHeight: '100vh', padding: 24 }}
-			>
-				<h1 className='vibegrid-title'>
-					Browse Custom Puzzles
-				</h1>
-				<button
-					className='vibegrid-submit'
-					onClick={onBack}
-					style={{ marginBottom: 16 }}
-				>
-					Back
-				</button>
-				{puzzles.length === 0 ? (
-					<div style={{ marginTop: 32 }}>
-						No custom puzzles found. Create one in Custom
-						Puzzle Mode!
-					</div>
-				) : (
-					<div
-						style={{
-							display: 'flex',
-							flexDirection: 'column',
-							gap: 16,
-						}}
-					>
-						{puzzles.map((puzzle) => (
-							<div
-								key={puzzle._id}
-								style={{
-									border: '1px solid #e5e7eb',
-									borderRadius: 8,
-									padding: 16,
-									background: darkMode ? '#222' : '#fff',
-									color: darkMode ? '#fff' : '#222',
-								}}
-							>
-								<div
-									style={{ fontWeight: 600, fontSize: 18 }}
-								>
-									{puzzle.title || 'Untitled Puzzle'}
-								</div>
-								<div
-									style={{
-										fontSize: 14,
-										margin: '4px 0 8px 0',
-									}}
-								>
-									{puzzle.theme && (
-										<span>Theme: {puzzle.theme} | </span>
-									)}
-									Words: {puzzle.words?.length || 0}
-								</div>
-								<button
-									className='vibegrid-submit'
-									onClick={() => {
-										setCustomPuzzle(puzzle);
-										setMode('custom');
-										setCustomState(null);
-									}}
-									style={{ marginRight: 8 }}
-								>
-									Play
-								</button>
-								<button
-									className='vibegrid-submit'
-									onClick={() => {
-										const url =
-											window.location.origin +
-											'/#/play/custom/' +
-											puzzle._id;
-										navigator.clipboard.writeText(url);
-									}}
-									style={{
-										background:
-											'linear-gradient(90deg,#fbbf24 0%,#38bdf8 100%)',
-									}}
-								>
-									Copy Link
-								</button>
-							</div>
-						))}
-					</div>
-				)}
-			</div>
-		);
-	};
-
 	// --- Custom puzzle play mode UI ---
 	if (mode === 'custom' && customPuzzle && customState) {
 		const puzzle = customPuzzle;
@@ -1182,28 +744,45 @@ function App() {
 							</div>
 						</div>
 					</div>
-					<button
-						className='rules-btn'
-						onClick={() => setShowRules(true)}
-						aria-label='How to Play'
-						style={{ marginLeft: 'auto' }}
+					<div
+						style={{
+							display: 'flex',
+							alignItems: 'center',
+						}}
 					>
-						<svg
-							className='rules-icon'
-							viewBox='0 0 24 24'
-							width='28'
-							height='28'
-							fill='none'
-							stroke='currentColor'
-							strokeWidth='2'
-							strokeLinecap='round'
-							strokeLinejoin='round'
+						<button
+							className='rules-btn'
+							aria-label='Statistics'
+							onClick={() => setShowStats(true)}
+							style={{ marginRight: 8 }}
 						>
-							<circle cx='12' cy='12' r='10' />
-							<line x1='12' y1='16' x2='12' y2='12' />
-							<line x1='12' y1='8' x2='12' y2='8' />
-						</svg>
-					</button>
+							<FontAwesomeIcon
+								icon={faChartBar}
+								className='rules-icon'
+							/>
+						</button>
+						<button
+							className='rules-btn'
+							onClick={() => setShowRules(true)}
+							aria-label='How to Play'
+						>
+							<svg
+								className='rules-icon'
+								viewBox='0 0 24 24'
+								width='28'
+								height='28'
+								fill='none'
+								stroke='currentColor'
+								strokeWidth='2'
+								strokeLinecap='round'
+								strokeLinejoin='round'
+							>
+								<circle cx='12' cy='12' r='10' />
+								<line x1='12' y1='16' x2='12' y2='12' />
+								<line x1='12' y1='8' x2='12' y2='8' />
+							</svg>
+						</button>
+					</div>
 				</div>
 				{solvedGroups.length > 0 && (
 					<div className='vibegrid-solved-groups'>
@@ -1465,6 +1044,15 @@ function App() {
 							</button>
 						</div>
 					</div>
+				)}
+				{showStats && (
+					<StatisticsModal
+						open={showStats}
+						onClose={() => setShowStats(false)}
+						user={user}
+						setUser={setUser}
+						dailyCompleted={dailyCompleted}
+					/>
 				)}
 				<RulesModal
 					open={showRules}
@@ -1629,10 +1217,7 @@ function App() {
 							fontSize: '1.3rem',
 							padding: '1.2rem 0',
 						}}
-						onClick={() => {
-							setActivePuzzle(dailyPuzzle); // always get the latest daily puzzle
-							setMode('daily');
-						}}
+						onClick={() => setShowSignInModal(true)}
 					>
 						Play Daily Puzzle
 					</button>
@@ -1706,6 +1291,24 @@ function App() {
 				<CustomPuzzleModal
 					open={showCustomModal}
 					onClose={() => setShowCustomModal(false)}
+					setCustomPuzzle={setCustomPuzzle}
+					setMode={setMode}
+				/>
+				<SignInModal
+					open={showSignInModal}
+					onClose={() => {
+						setShowSignInModal(false);
+						setMode('daily');
+					}}
+					onSignIn={() => {
+						// --- Google OAuth wireframe ---
+						setUser({
+							name: 'Jane Doe',
+							email: 'jane@example.com',
+						});
+						setShowSignInModal(false);
+						setMode('daily');
+					}}
 				/>
 			</div>
 		);
@@ -1766,28 +1369,45 @@ function App() {
 							</div>
 						</div>
 					</div>
-					<button
-						className='rules-btn'
-						onClick={() => setShowRules(true)}
-						aria-label='How to Play'
-						style={{ marginLeft: 'auto' }}
+					<div
+						style={{
+							display: 'flex',
+							alignItems: 'center',
+						}}
 					>
-						<svg
-							className='rules-icon'
-							viewBox='0 0 24 24'
-							width='28'
-							height='28'
-							fill='none'
-							stroke='currentColor'
-							strokeWidth='2'
-							strokeLinecap='round'
-							strokeLinejoin='round'
+						<button
+							className='rules-btn'
+							aria-label='Statistics'
+							onClick={() => setShowStats(true)}
+							style={{ marginRight: 8 }}
 						>
-							<circle cx='12' cy='12' r='10' />
-							<line x1='12' y1='16' x2='12' y2='12' />
-							<line x1='12' y1='8' x2='12' y2='8' />
-						</svg>
-					</button>
+							<FontAwesomeIcon
+								icon={faChartBar}
+								className='rules-icon'
+							/>
+						</button>
+						<button
+							className='rules-btn'
+							onClick={() => setShowRules(true)}
+							aria-label='How to Play'
+						>
+							<svg
+								className='rules-icon'
+								viewBox='0 0 24 24'
+								width='28'
+								height='28'
+								fill='none'
+								stroke='currentColor'
+								strokeWidth='2'
+								strokeLinecap='round'
+								strokeLinejoin='round'
+							>
+								<circle cx='12' cy='12' r='10' />
+								<line x1='12' y1='16' x2='12' y2='12' />
+								<line x1='12' y1='8' x2='12' y2='8' />
+							</svg>
+						</button>
+					</div>
 				</div>
 				{solvedGroups.length > 0 && (
 					<div className='vibegrid-solved-groups'>
@@ -2050,6 +1670,15 @@ function App() {
 						</div>
 					</div>
 				)}
+				{showStats && (
+					<StatisticsModal
+						open={showStats}
+						onClose={() => setShowStats(false)}
+						user={user}
+						setUser={setUser}
+						dailyCompleted={dailyCompleted}
+					/>
+				)}
 				<RulesModal
 					open={showRules}
 					onClose={() => setShowRules(false)}
@@ -2064,11 +1693,20 @@ function App() {
 			<BrowseCustomPuzzles
 				onBack={() => setMode('startup')}
 				puzzles={customPuzzleList}
+				setCustomPuzzle={setCustomPuzzle}
+				setMode={setMode}
+				setCustomState={setCustomState}
 			/>
 		);
 	}
 
 	return null;
 }
+
+// --- Sign In Modal Component ---
+// (moved to ./components/SignInModal.tsx)
+
+// --- Statistics Modal Component ---
+// (moved to ./components/StatisticsModal.tsx)
 
 export default App;
