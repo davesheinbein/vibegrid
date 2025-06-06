@@ -17,6 +17,15 @@ import RulesModal from '../components/RulesModal';
 import StatisticsModal from '../components/StatisticsModal';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faChartBar } from '@fortawesome/free-solid-svg-icons';
+import {
+	faXTwitter,
+	faMeta,
+	faReddit,
+	faLinkedin,
+	faTiktok,
+	faInstagram,
+} from '@fortawesome/free-brands-svg-icons';
+import { faShareAlt } from '@fortawesome/free-solid-svg-icons';
 
 const DailyPage: React.FC = () => {
 	// --- State declarations ---
@@ -46,6 +55,7 @@ const DailyPage: React.FC = () => {
 	const [endTime, setEndTime] = useState<number | null>(
 		null
 	);
+	const [showShare, setShowShare] = useState(false);
 
 	// --- Puzzle setup ---
 	const activePuzzle = dailyPuzzle;
@@ -234,6 +244,76 @@ const DailyPage: React.FC = () => {
 		setShuffledWords(shuffle(activePuzzle.words));
 	};
 
+	const handleShare = async () => {
+		const text = getShareText();
+		const url = getShareUrl();
+		const title = getShareTitle();
+		if (navigator.share) {
+			try {
+				await navigator.share({ title, text, url });
+				return;
+			} catch {}
+		}
+		setShowShare(true);
+	};
+	const getShareText = () => {
+		const solved = solvedGroups.length;
+		const attempts = 4 - attemptsLeft;
+		const words = lockedWords.length;
+		const total = gridWordCount;
+		const emoji = words === total ? '🔥' : '✨';
+		return `VibeGrid: ${solved}/${groupCount} groups solved in ${attempts} attempts! ${emoji} Play: https://vibegrid.app`;
+	};
+	const getShareUrl = () => 'https://vibegrid.app';
+	const getShareTitle = () =>
+		"VibeGrid: Can you solve today's grid?";
+	const shareLinks = [
+		{
+			name: 'X',
+			url: `https://twitter.com/intent/tweet?text=${encodeURIComponent(
+				getShareText()
+			)}`,
+			icon: <FontAwesomeIcon icon={faXTwitter} />,
+		},
+		{
+			name: 'Meta',
+			url: `https://www.meta.com/share?u=${encodeURIComponent(
+				getShareUrl()
+			)}&quote=${encodeURIComponent(getShareText())}`,
+			icon: <FontAwesomeIcon icon={faMeta} />,
+		},
+		{
+			name: 'Reddit',
+			url: `https://www.reddit.com/submit?title=${encodeURIComponent(
+				getShareTitle()
+			)}&text=${encodeURIComponent(getShareText())}`,
+			icon: <FontAwesomeIcon icon={faReddit} />,
+		},
+		{
+			name: 'LinkedIn',
+			url: `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(
+				getShareUrl()
+			)}&title=${encodeURIComponent(
+				getShareTitle()
+			)}&summary=${encodeURIComponent(getShareText())}`,
+			icon: <FontAwesomeIcon icon={faLinkedin} />,
+		},
+		{
+			name: 'TikTok',
+			url: `https://www.tiktok.com/share?url=${encodeURIComponent(
+				getShareUrl()
+			)}&text=${encodeURIComponent(getShareText())}`,
+			icon: <FontAwesomeIcon icon={faTiktok} />,
+		},
+		{
+			name: 'Instagram',
+			url: `https://www.instagram.com/?url=${encodeURIComponent(
+				getShareUrl()
+			)}`,
+			icon: <FontAwesomeIcon icon={faInstagram} />,
+		},
+	];
+
 	return (
 		<div className='vibegrid-container'>
 			<div
@@ -248,71 +328,89 @@ const DailyPage: React.FC = () => {
 				}}
 			>
 				<div
-					style={{ display: 'flex', alignItems: 'center' }}
+					style={{
+						display: 'flex',
+						flexDirection: 'column',
+						alignItems: 'center',
+						width: '100%',
+					}}
 				>
-					<button
-						className='back-icon-btn'
-						// TODO: wire up navigation to StartupPage
-						aria-label='Back'
+					<div
+						style={{
+							display: 'flex',
+							alignItems: 'center',
+							width: '100%',
+						}}
 					>
-						<span
-							style={{
-								fontSize: '1.3em',
-								lineHeight: 1,
-								color: '#fff',
-							}}
-							aria-hidden='true'
+						<button
+							className='back-icon-btn'
+							// TODO: wire up navigation to StartupPage
+							aria-label='Back'
 						>
-							&#8592;
-						</span>
-					</button>
-					<div style={{ marginLeft: 52 }}>
-						<h1
-							className='vibegrid-title'
-							style={{ margin: 0 }}
-						>
-							{activePuzzle.title || 'VibeGrid Daily'}
-						</h1>
-						<div className='vibegrid-subtitle'>
-							Daily Puzzle
+							<span
+								style={{
+									fontSize: '1.3em',
+									lineHeight: 1,
+									color: '#fff',
+								}}
+								aria-hidden='true'
+							>
+								&#8592;
+							</span>
+						</button>
+						<div style={{ marginLeft: 52 }}>
+							<h1
+								className='vibegrid-title'
+								style={{ margin: 0 }}
+							>
+								{activePuzzle.title || 'VibeGrid Daily'}
+							</h1>
+							<div className='vibegrid-subtitle'>
+								Daily Puzzle
+							</div>
 						</div>
 					</div>
-				</div>
-				<div
-					style={{ display: 'flex', alignItems: 'center' }}
-				>
-					<button
-						className='rules-btn'
-						aria-label='Statistics'
-						onClick={() => setShowStats(true)}
-						style={{ marginRight: 8 }}
+					<div
+						style={{
+							display: 'flex',
+							alignItems: 'center',
+							justifyContent: 'flex-end',
+							width: '100%',
+						}}
 					>
-						<FontAwesomeIcon
-							icon={faChartBar}
-							className='rules-icon'
-						/>
-					</button>
-					<button
-						className='rules-btn'
-						onClick={() => setShowRules(true)}
-						aria-label='How to Play'
-					>
-						<svg
-							className='rules-icon'
-							viewBox='0 0 24 24'
-							width='28'
-							height='28'
-							fill='none'
-							stroke='currentColor'
-							strokeWidth='2'
-							strokeLinecap='round'
-							strokeLinejoin='round'
+						<button
+							className='rules-btn'
+							aria-label='Statistics'
+							onClick={() => setShowStats(true)}
+							style={{ marginRight: 8 }}
 						>
-							<circle cx='12' cy='12' r='10' />
-							<line x1='12' y1='16' x2='12' y2='12' />
-							<line x1='12' y1='8' x2='12' y2='8' />
-						</svg>
-					</button>
+							<FontAwesomeIcon
+								icon={faChartBar}
+								className='rules-icon'
+							/>
+						</button>
+						<button
+							className='rules-btn'
+							onClick={() => setShowRules(true)}
+							aria-label='How to Play'
+						>
+							<svg
+								className='rules-icon'
+								viewBox='0 0 24 24'
+								width='28'
+								height='28'
+								fill='none'
+								stroke='currentColor'
+								strokeWidth='2'
+								strokeLinecap='round'
+								strokeLinejoin='round'
+							>
+								<circle cx='12' cy='12' r='10' />
+								<line x1='12' y1='16' x2='12' y2='12' />
+								<line x1='12' y1='8' x2='12' y2='8' />
+							</svg>
+						</button>
+					</div>
 				</div>
 			</div>
 			{solvedGroups.length > 0 && (
@@ -397,79 +495,238 @@ const DailyPage: React.FC = () => {
 						/>
 					))}
 			</div>
-			{burnSuspect && (
-				<div className='burn-status-bar'>
-					🔥 Burn active: <b>{burnSuspect}</b>
+			<div className='vibegrid-controls'>
+				{burnSuspect && (
+					<div className='burn-status-bar'>
+						🔥 Burn active: <b>{burnSuspect}</b>
+						<button
+							className='burn-btn'
+							onClick={confirmBurn}
+						>
+							Confirm Burn
+						</button>
+					</div>
+				)}
+				<div
+					style={{
+						display: 'flex',
+						justifyContent: 'center',
+						width: '100%',
+					}}
+				>
 					<button
-						className='burn-btn'
-						onClick={confirmBurn}
+						className='vibegrid-submit'
+						onClick={handleSubmit}
+						disabled={attemptsLeft === 0 || gameOver}
+						style={{ width: '100%', maxWidth: 300 }}
 					>
-						Confirm Burn
+						Submit
 					</button>
 				</div>
-			)}
-			<button
-				className='vibegrid-submit'
-				onClick={handleSubmit}
-				disabled={attemptsLeft === 0 || gameOver}
-			>
-				Submit Group
-			</button>
-			<FeedbackBanner message={feedback} />
-			<div className='vibegrid-attempts-bar'>
-				{[...Array(attemptsLeft > 4 ? 5 : 4)].map(
-					(_, i) => (
-						<span
-							key={i}
-							className={
-								'vibegrid-attempt-dot' +
-								(i >= attemptsLeft ? ' used' : '')
-							}
-						></span>
-					)
-				)}
-			</div>
-			<p className='vibegrid-attempts'>
-				Attempts Left: {attemptsLeft}
-				<button
-					className='randomize-btn'
-					aria-label='Randomize word order'
-					onClick={handleRandomize}
-					style={{
-						marginLeft: 12,
-						verticalAlign: 'middle',
-					}}
-				>
-					<span
-						aria-hidden='true'
+				<FeedbackBanner message={feedback} />
+				<div className='vibegrid-attempts-bar'>
+					{[...Array(attemptsLeft > 4 ? 5 : 4)].map(
+						(_, i) => (
+							<span
+								key={i}
+								className={
+									'vibegrid-attempt-dot' +
+									(i >= attemptsLeft ? ' used' : '')
+								}
+							></span>
+						)
+					)}
+				</div>
+				<p className='vibegrid-attempts'>
+					Attempts Left: {attemptsLeft}
+					<button
+						className='randomize-btn'
+						aria-label='Randomize word order'
+						onClick={handleRandomize}
 						style={{
-							display: 'inline-block',
-							transform: 'rotate(-45deg)',
-							fontSize: '1.2em',
+							marginLeft: 12,
+							verticalAlign: 'middle',
 						}}
 					>
-						&#x267B;
-					</span>
-				</button>
+						<span
+							aria-hidden='true'
+							style={{
+								display: 'inline-block',
+								transform: 'rotate(-45deg)',
+								fontSize: '1.2em',
+							}}
+						>
+							&#x267B;
+						</span>
+					</button>
+					<button
+						className='deselect-btn'
+						aria-label='Deselect all'
+						onClick={() => setSelectedWords([])}
+						style={{
+							marginLeft: 8,
+							verticalAlign: 'middle',
+							padding: '0.3em 0.9em',
+							fontSize: '1em',
+							borderRadius: 6,
+							background: '#e5e7eb',
+							color: '#222',
+							border: 'none',
+							cursor: 'pointer',
+						}}
+					>
+						Deselect All
+					</button>
+				</p>
 				<button
-					className='deselect-btn'
-					aria-label='Deselect all'
-					onClick={() => setSelectedWords([])}
-					style={{
-						marginLeft: 8,
-						verticalAlign: 'middle',
-						padding: '0.3em 0.9em',
-						fontSize: '1em',
-						borderRadius: 6,
-						background: '#e5e7eb',
-						color: '#222',
-						border: 'none',
-						cursor: 'pointer',
-					}}
+					className='share-btn'
+					onClick={handleShare}
+					style={{ marginTop: 16 }}
 				>
-					Deselect All
+					<FontAwesomeIcon
+						icon={faShareAlt}
+						className='share-icon'
+					/>
+					Share
 				</button>
-			</p>
+				{showShare && (
+					<div
+						className='share-modal'
+						onClick={(e) =>
+							e.target === e.currentTarget &&
+							setShowShare(false)
+						}
+					>
+						<div className='share-modal-content'>
+							<h2>Share your VibeGrid result!</h2>
+							<div
+								className='share-links-grid'
+								style={{
+									width: '100%',
+									margin: '0 auto',
+									maxWidth: 420,
+								}}
+							>
+								{(() => {
+									const rows = [];
+									for (
+										let i = 0;
+										i < shareLinks.length;
+										i += 3
+									) {
+										rows.push(
+											<div
+												className='share-links-row'
+												key={i}
+												style={{
+													display: 'flex',
+													gap: 16,
+													marginBottom: 12,
+													justifyContent: 'center',
+												}}
+											>
+												{shareLinks
+													.slice(i, i + 3)
+													.map((link) => {
+														let brandColor = '#64748b';
+														switch (link.name) {
+															case 'X':
+																brandColor = '#222';
+																break;
+															case 'Meta':
+																brandColor = '#1877F3';
+																break;
+															case 'Reddit':
+																brandColor = '#FF4500';
+																break;
+															case 'LinkedIn':
+																brandColor = '#0077B5';
+																break;
+															case 'TikTok':
+																brandColor = '#000';
+																break;
+															case 'Instagram':
+																brandColor = '#E1306C';
+																break;
+															default:
+																break;
+														}
+														return (
+															<a
+																href={link.url}
+																target='_blank'
+																rel='noopener noreferrer'
+																className='share-link'
+																data-platform={link.name}
+																key={link.name}
+																style={{
+																	display: 'flex',
+																	alignItems: 'center',
+																	gap: 8,
+																	fontWeight: 700,
+																	fontSize: 17,
+																	padding: '0.7em 1.3em',
+																	borderRadius: 32,
+																	background: brandColor,
+																	color:
+																		link.name === 'X' ||
+																		link.name === 'TikTok'
+																			? '#fff'
+																			: '#fff',
+																	textDecoration: 'none',
+																	boxShadow:
+																		'0 2px 8px 0 rgba(30,41,59,0.10)',
+																	transition:
+																		'background 0.18s, transform 0.13s',
+																	border: 'none',
+																	outline: 'none',
+																	cursor: 'pointer',
+																}}
+																onMouseOver={(e) =>
+																	(e.currentTarget.style.transform =
+																		'scale(1.06)')
+																}
+																onMouseOut={(e) =>
+																	(e.currentTarget.style.transform =
+																		'scale(1)')
+																}
+															>
+																<span
+																	className='share-link-icon'
+																	style={{
+																		fontSize: 22,
+																		display: 'flex',
+																		alignItems: 'center',
+																	}}
+																>
+																	{link.icon}
+																</span>
+																<span
+																	style={{
+																		fontWeight: 700,
+																	}}
+																>
+																	{link.name}
+																</span>
+															</a>
+														);
+													})}
+											</div>
+										);
+									}
+									return rows;
+								})()}
+							</div>
+							<button
+								className='share-modal-close'
+								onClick={() => setShowShare(false)}
+							>
+								Close
+							</button>
+						</div>
+					</div>
+				)}
+			</div>
 			{gameOver && (
 				<EndGameModal
 					message={
