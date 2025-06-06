@@ -1,6 +1,11 @@
 import CustomPuzzleModal from '../src/components/CustomPuzzleModal';
 import { useRouter } from 'next/router';
 import React from 'react';
+import {
+	getShareUrl,
+	copyToClipboard,
+} from '../src/utils/helpers';
+import { ShareButton } from '../src/components/ui/Buttons';
 
 // Directory for page-level components and layout logic
 // Example stub for StartupPage (to be filled in during refactor)
@@ -128,9 +133,10 @@ const StartupPage: React.FC<StartupPageProps> = ({
 					>
 						Browse Custom Puzzles
 					</button>
-					<button
+					<ShareButton
 						className='vibegrid-submit'
 						onClick={onShare}
+						label='Share VibeGrid'
 						style={{
 							width: '100%',
 							fontSize: 20,
@@ -142,9 +148,7 @@ const StartupPage: React.FC<StartupPageProps> = ({
 							fontWeight: 700,
 							boxShadow: '0 2px 8px 0 rgba(30,41,59,0.10)',
 						}}
-					>
-						Share VibeGrid
-					</button>
+					/>
 					<div
 						style={{
 							width: '100%',
@@ -593,9 +597,9 @@ export default function Home() {
 // CopyLinkButton component for copying the share link
 function CopyLinkButton() {
 	const [copied, setCopied] = React.useState(false);
-	const shareUrl = 'https://vibegrid.app';
+
 	const handleCopy = () => {
-		navigator.clipboard.writeText(shareUrl);
+		copyToClipboard(getShareUrl());
 		setCopied(true);
 		setTimeout(() => setCopied(false), 1500);
 	};

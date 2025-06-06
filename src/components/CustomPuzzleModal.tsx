@@ -1,81 +1,13 @@
 // Modal for creating and sharing custom puzzles (moved from App.tsx)
-import React, { useState, useRef, useEffect } from 'react';
-
-// --- Helper: Parse groups from text ---
-function parseGroupsFromText(
-	text: string,
-	groupSize: number
-): string[][] {
-	return text
-		.split(/\n+/)
-		.map((line) =>
-			line
-				.split(/[,;\-\s]+/)
-				.map((w) => w.trim())
-				.filter(Boolean)
-				.slice(0, groupSize)
-		)
-		.filter((group) => group.length > 0);
-}
-
-// --- Helper: Parse groups from array of group input strings ---
-function parseGroupsFromInputs(
-	inputs: string[],
-	groupSize: number
-): string[][] {
-	return inputs.map((line) =>
-		line
-			.split(/[,;\-\s]+/)
-			.map((w) => w.trim())
-			.filter(Boolean)
-			.slice(0, groupSize)
-	);
-}
-
-// --- Helper: Flatten groups to unique word list ---
-function getUniqueWordsFromGroups(
-	groups: string[][]
-): string[] {
-	return Array.from(
-		new Set(
-			groups
-				.flat()
-				.map((w) => w.trim())
-				.filter(Boolean)
-		)
-	);
-}
-
-// Helper: Get all unique words from groups and wildcards
-function getAllWordsFromGroupsAndWildcards(
-	groups: string[][],
-	wildcards: string[]
-): string[] {
-	const groupWords = groups.flat();
-	const allWords = [...groupWords, ...(wildcards || [])];
-	return Array.from(new Set(allWords));
-}
-
-// --- Helper: Build groups from word list (for sync) ---
-function buildGroupsFromWords(
-	words: string[],
-	groupSize: number
-): string[][] {
-	const groups: string[][] = [];
-	for (let i = 0; i < words.length; i += groupSize) {
-		groups.push(words.slice(i, i + groupSize));
-	}
-	return groups;
-}
-
-// --- Helper: Capitalize first letter of each word ---
-function capitalizeWords(str: string): string {
-	return str.replace(
-		/\b\w+/g,
-		(w) =>
-			w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()
-	);
-}
+import React, { useState } from 'react';
+import {
+	parseGroupsFromInputs,
+	getUniqueWordsFromGroups,
+	buildGroupsFromWords,
+	capitalizeWords,
+	getAllWordsFromGroupsAndWildcards,
+} from '../utils/helpers';
+import WordButton from './WordButton';
 
 // --- Step configuration (streamlined: no separate Words step) ---
 const steps = [
@@ -665,10 +597,30 @@ const CustomPuzzleModal: React.FC<
 					)}
 					{step === steps.length && jsonResult && (
 						<div className='share-modal-preview'>
-							<h4>Generated Puzzle JSON</h4>
-							<pre className='share-modal-json-preview'>
-								{jsonResult}
-							</pre>
+							<h4>Grid Preview</h4>
+							<div
+								className='vibegrid-grid'
+								style={{
+									gridTemplateColumns: `repeat(${numCols}, 1fr)`,
+									gridTemplateRows: `repeat(${numRows}, 1fr)`,
+									margin: '0 auto 1.2rem auto',
+									pointerEvents: 'none',
+									userSelect: 'none',
+									maxWidth: 420,
+								}}
+							>
+								{allWords.map((word, idx) => (
+									<WordButton
+										key={word + idx}
+										word={word}
+										isSelected={false}
+										isLocked={false}
+										onClick={() => {}}
+										tabIndex={-1}
+										aria-disabled={true}
+									/>
+								))}
+							</div>
 							<div className='share-modal-preview-btns'>
 								<button
 									className='vibegrid-submit'

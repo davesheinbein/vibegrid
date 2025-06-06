@@ -1,11 +1,19 @@
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
-import { dailyPuzzle } from '../src/data/dailyPuzzle';
-import { partialMatchFeedback } from '../src/utils/gameLogic';
 import {
+	dailyPuzzle,
 	shuffle,
+	getShareUrl,
+	getShareTitle,
+	getShareText,
+	copyToClipboard,
 	getAllWordsFromGroupsAndWildcards,
 } from '../src/utils/helpers';
+import {
+	checkGroupValidity,
+	partialMatchFeedback,
+	groupsArrayToObject,
+} from '../src/utils/gameLogic';
 import WordButton from '../src/components/WordButton';
 import FeedbackBanner from '../src/components/FeedbackBanner';
 import EndGameModal from '../src/components/EndGameModal';
@@ -471,33 +479,41 @@ export default function Daily(props: DailyPageProps) {
 					</div>
 				)}
 				<div
-					className='vibegrid-grid'
 					style={{
-						gridTemplateColumns: `repeat(${gridCols}, 1fr)`,
-						gridTemplateRows: `repeat(${gridRows}, 1fr)`,
+						display: 'flex',
+						justifyContent: 'center',
+						alignItems: 'center',
 					}}
 				>
-					{gridWords.map((word: string) => (
-						<WordButton
-							key={word}
-							word={word}
-							isSelected={selectedWords.includes(word)}
-							isLocked={lockedWords.includes(word)}
-							onClick={() => handleWordTap(word)}
-							burnSuspect={burnSuspect === word}
-						/>
-					))}
-					{animatingGroup &&
-						animatingGroup.map((word: string) => (
+					<div
+						className='vibegrid-grid'
+						style={{
+							gridTemplateColumns: `repeat(${gridCols}, 1fr)`,
+							gridTemplateRows: `repeat(${gridRows}, 1fr)`,
+						}}
+					>
+						{gridWords.map((word: string) => (
 							<WordButton
-								key={word + '-animating'}
+								key={word}
 								word={word}
-								isSelected={false}
-								isLocked={true}
-								onClick={() => {}}
-								className='word-btn animating-to-solved'
+								isSelected={selectedWords.includes(word)}
+								isLocked={lockedWords.includes(word)}
+								onClick={() => handleWordTap(word)}
+								burnSuspect={burnSuspect === word}
 							/>
 						))}
+						{animatingGroup &&
+							animatingGroup.map((word: string) => (
+								<WordButton
+									key={word + '-animating'}
+									word={word}
+									isSelected={false}
+									isLocked={true}
+									onClick={() => {}}
+									className='word-btn animating-to-solved'
+								/>
+							))}
+					</div>
 				</div>
 				<div className='vibegrid-controls'>
 					{burnSuspect && (
@@ -548,16 +564,7 @@ export default function Daily(props: DailyPageProps) {
 								aria-label='Randomize word order'
 								onClick={handleRandomize}
 							>
-								<span
-									aria-hidden='true'
-									style={{
-										display: 'inline-block',
-										transform: 'rotate(-45deg)',
-										fontSize: '1.2em',
-									}}
-								>
-									&#x267B;
-								</span>
+								Mix It Up!
 							</button>
 							<button
 								className='deselect-btn'

@@ -1,20 +1,35 @@
 import React from 'react';
 import { useRouter } from 'next/router';
 import CustomPuzzleModal from '../src/components/CustomPuzzleModal';
+import {
+	getShareUrl,
+	getShareTitle,
+	getShareText,
+	copyToClipboard,
+} from '../src/utils/helpers';
+import { GoBackButton } from '../src/components/ui/Buttons';
 
 export default function Browse() {
 	const router = useRouter();
-	const [customPuzzle, setCustomPuzzle] = React.useState<any>(null);
-	const [customState, setCustomState] = React.useState<any>(null);
+	const [customPuzzle, setCustomPuzzle] =
+		React.useState<any>(null);
+	const [customState, setCustomState] =
+		React.useState<any>(null);
 	const [user, setUser] = React.useState<{
 		name: string;
 		email: string;
 		photoUrl?: string;
 	} | null>(null);
-	const [mode, setMode] = React.useState<'browse' | 'custom'>('browse');
-	const [tab, setTab] = React.useState<'community' | 'mine'>('community');
+	const [mode, setMode] = React.useState<
+		'browse' | 'custom'
+	>('browse');
+	const [tab, setTab] = React.useState<
+		'community' | 'mine'
+	>('community');
 	const [loading, setLoading] = React.useState(false);
-	const [tabPuzzles, setTabPuzzles] = React.useState<any[]>([]);
+	const [tabPuzzles, setTabPuzzles] = React.useState<any[]>(
+		[]
+	);
 
 	React.useEffect(() => {
 		async function fetchPuzzles() {
@@ -22,12 +37,15 @@ export default function Browse() {
 			try {
 				let url = '';
 				if (tab === 'mine' && user) {
-					url = `/api/custom-puzzles?creatorId=${encodeURIComponent(user.email)}`;
+					url = `/api/custom-puzzles?creatorId=${encodeURIComponent(
+						user.email
+					)}`;
 				} else {
 					url = '/api/custom-puzzles/public';
 				}
 				const res = await fetch(url);
-				if (!res.ok) throw new Error('Failed to fetch puzzles');
+				if (!res.ok)
+					throw new Error('Failed to fetch puzzles');
 				const data = await res.json();
 				setTabPuzzles(data);
 			} catch {
@@ -38,7 +56,9 @@ export default function Browse() {
 		fetchPuzzles();
 	}, [tab, user]);
 
-	const handleSetMode = (newMode: 'browse' | 'custom' | 'startup' | 'daily') => {
+	const handleSetMode = (
+		newMode: 'browse' | 'custom' | 'startup' | 'daily'
+	) => {
 		if (newMode === 'browse' || newMode === 'custom') {
 			setMode(newMode);
 		}
@@ -60,21 +80,21 @@ export default function Browse() {
 	return (
 		<div
 			className='vibegrid-container'
-			style={{ minHeight: '100vh', padding: 24, position: 'relative' }}
+			style={{
+				minHeight: '100vh',
+				padding: 24,
+				position: 'relative',
+			}}
 		>
-			<button
-				className='back-icon-btn'
+			<GoBackButton
 				onClick={() => router.push('/')}
-				aria-label='Back'
 				style={{ marginRight: 16 }}
-			>
-				<span style={{ fontSize: '1.3em', lineHeight: 1, color: '#fff' }} aria-hidden='true'>
-					&#8592;
-				</span>
-			</button>
+			/>
 
 			<div className='browse-puzzles-header'>
-				<h1 className='vibegrid-title'>Browse Custom Puzzles</h1>
+				<h1 className='vibegrid-title'>
+					Browse Custom Puzzles
+				</h1>
 				<div className='browse-puzzles-tabs'>
 					<button
 						onClick={() => setTab('community')}
@@ -117,20 +137,44 @@ export default function Browse() {
 									color: '#222',
 								}}
 							>
-								<div style={{ fontWeight: 600, fontSize: 18 }}>
+								<div
+									style={{ fontWeight: 600, fontSize: 18 }}
+								>
 									{puzzle.title || 'Untitled Puzzle'}
 								</div>
-								<div style={{ fontSize: 14, margin: '4px 0 8px 0' }}>
+								<div
+									style={{
+										fontSize: 14,
+										margin: '4px 0 8px 0',
+									}}
+								>
 									{puzzle.theme && (
 										<span>Theme: {puzzle.theme} | </span>
 									)}
 									Words: {puzzle.words?.length || 0} |
-									Wildcards: {puzzle.wildcardsToggle ? 'On' : 'Off'}
+									Wildcards:{' '}
+									{puzzle.wildcardsToggle ? 'On' : 'Off'}
 								</div>
-								<div style={{ fontSize: 13, color: '#64748b', marginBottom: 6 }}>
-									By: {puzzle.creatorName || puzzle.creatorId || 'Anonymous'} | {puzzle.date || ''}
+								<div
+									style={{
+										fontSize: 13,
+										color: '#64748b',
+										marginBottom: 6,
+									}}
+								>
+									By:{' '}
+									{puzzle.creatorName ||
+										puzzle.creatorId ||
+										'Anonymous'}{' '}
+									| {puzzle.date || ''}
 								</div>
-								<div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+								<div
+									style={{
+										display: 'flex',
+										gap: 8,
+										alignItems: 'center',
+									}}
+								>
 									<button
 										className='vibegrid-submit'
 										onClick={() => {
@@ -145,15 +189,39 @@ export default function Browse() {
 									<button
 										className='vibegrid-submit'
 										onClick={() => {
-											const url = router.basePath + '/play/custom/' + puzzle._id;
+											const url =
+												router.basePath +
+												'/play/custom/' +
+												puzzle._id;
 											navigator.clipboard.writeText(url);
 										}}
-										style={{ background: 'linear-gradient(90deg,#fbbf24 0%,#38bdf8 100%)' }}
+										style={{
+											background:
+												'linear-gradient(90deg,#fbbf24 0%,#38bdf8 100%)',
+										}}
 									>
 										Copy Link
 									</button>
-									<span style={{ marginLeft: 8, color: '#fbbf24', fontSize: 18 }} title='Rating (coming soon)'>★</span>
-									<span style={{ marginLeft: 2, color: '#64748b', fontSize: 16 }} title='Favorite (coming soon)'>♡</span>
+									<span
+										style={{
+											marginLeft: 8,
+											color: '#fbbf24',
+											fontSize: 18,
+										}}
+										title='Rating (coming soon)'
+									>
+										★
+									</span>
+									<span
+										style={{
+											marginLeft: 2,
+											color: '#64748b',
+											fontSize: 16,
+										}}
+										title='Favorite (coming soon)'
+									>
+										♡
+									</span>
 								</div>
 							</div>
 						))}

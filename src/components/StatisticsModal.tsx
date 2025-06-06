@@ -1,5 +1,7 @@
 // Modal for statistics and leaderboard (moved from App.tsx)
 import React from 'react';
+import { Modal } from './ui/Modal';
+import { CloseButton, SubmitButton } from './ui/Buttons';
 
 interface StatisticsModalProps {
 	open: boolean;
@@ -34,27 +36,14 @@ const StatisticsModal: React.FC<StatisticsModalProps> = ({
 				className='xwd__modal--body modal-stats-body animate-opening'
 				tabIndex={0}
 			>
-				<div
-					role='button'
-					aria-label='close'
-					className='xwd__modal--close'
-					tabIndex={0}
+				<CloseButton
 					onClick={onClose}
-					data-testid='modal-close'
 					style={{
 						position: 'absolute',
 						top: 12,
 						right: 12,
-						cursor: 'pointer',
 					}}
-				>
-					<i
-						className='pz-icon pz-icon-close'
-						style={{ fontSize: 22 }}
-					>
-						&times;
-					</i>
-				</div>
+				/>
 				<article
 					className='xwd__modal--content'
 					style={{
@@ -76,43 +65,7 @@ const StatisticsModal: React.FC<StatisticsModalProps> = ({
 						className='Stats-module_regiwall_message__pbJmt'
 						data-testid='regiwall_message'
 						style={{ margin: '1.2rem 0' }}
-					>
-						<h3
-							style={{
-								fontSize: '1.15rem',
-								marginBottom: 8,
-							}}
-						>
-							Track your Connections stats.
-						</h3>
-						<p
-							style={{
-								color: '#64748b',
-								fontSize: 15,
-								marginBottom: 18,
-							}}
-						>
-							Register to follow your streaks, total
-							completed puzzles, win rate and more.
-						</p>
-						<button
-							type='button'
-							className='button-primary conn-anon-login button-dark-mode-support vibegrid-submit'
-							style={{
-								fontSize: 17,
-								padding: '0.7em 2.2em',
-								fontWeight: 600,
-							}}
-							onClick={() =>
-								setUser({
-									name: 'Jane Doe',
-									email: 'jane@example.com',
-								})
-							}
-						>
-							Create a free account
-						</button>
-					</div>
+					></div>
 				</article>
 			</div>
 		);
@@ -124,13 +77,12 @@ const StatisticsModal: React.FC<StatisticsModalProps> = ({
 					You must finish today's daily puzzle to view your
 					statistics and leaderboard placement.
 				</p>
-				<button
-					className='vibegrid-submit'
+				<SubmitButton
 					onClick={onClose}
 					style={{ marginTop: 16 }}
 				>
 					OK
-				</button>
+				</SubmitButton>
 			</div>
 		);
 	} else {
@@ -206,26 +158,18 @@ const StatisticsModal: React.FC<StatisticsModalProps> = ({
 		);
 	}
 	return (
-		<div
-			className='share-modal'
-			onClick={(e) =>
-				e.target === e.currentTarget && onClose()
-			}
-		>
+		<Modal open={open} onClose={onClose}>
 			<div
 				className='share-modal-content'
 				style={{ maxWidth: 420, position: 'relative' }}
 			>
 				{content}
-				<button
-					className='share-modal-close'
+				<CloseButton
 					onClick={onClose}
 					style={{ marginTop: 16 }}
-				>
-					Close
-				</button>
+				/>
 			</div>
-		</div>
+		</Modal>
 	);
 };
 
