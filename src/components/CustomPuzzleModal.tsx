@@ -58,6 +58,15 @@ function buildGroupsFromWords(
 	return groups;
 }
 
+// --- Helper: Capitalize first letter of each word ---
+function capitalizeWords(str: string): string {
+	return str.replace(
+		/\b\w+/g,
+		(w) =>
+			w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()
+	);
+}
+
 // --- Step configuration (streamlined: no separate Words step) ---
 const steps = [
 	{
@@ -120,7 +129,21 @@ const steps = [
 			`Wildcards should be ${numCols} words per group, comma or space separated.`,
 		field: 'wildcardList',
 		placeholder: 'banana, robot, cactus',
-		validate: (_: any) => true,
+		validate: ({
+			wildcardList,
+			wildcardsToggle,
+			numCols,
+		}: any) => {
+			if (!wildcardsToggle) return true;
+			const wildcards = wildcardList
+				.split(/[,;\s]+/)
+				.map((w: string) => w.trim())
+				.filter(Boolean);
+			return (
+				wildcards.length === numCols &&
+				wildcardList.trim().length > 0
+			);
+		},
 	},
 	{
 		title: 'Categories (Optional)',
@@ -371,7 +394,9 @@ const CustomPuzzleModal: React.FC<
 								type='text'
 								value={puzzleTitle}
 								onChange={(e) =>
-									setPuzzleTitle(e.target.value)
+									setPuzzleTitle(
+										capitalizeWords(e.target.value)
+									)
 								}
 								placeholder={
 									typeof steps[0].placeholder === 'function'
@@ -439,7 +464,10 @@ const CustomPuzzleModal: React.FC<
 											type='text'
 											value={groupInputs[i] || ''}
 											onChange={(e) =>
-												handleGroupChange(i, e.target.value)
+												handleGroupChange(
+													i,
+													capitalizeWords(e.target.value)
+												)
 											}
 											placeholder={`Enter ${numCols} words, comma or space separated`}
 											style={{
@@ -496,19 +524,27 @@ const CustomPuzzleModal: React.FC<
 									/>
 								</label>
 							</div>
-							<input
-								type='text'
-								value={wildcardList}
-								onChange={(e) =>
-									setWildcardList(e.target.value)
-								}
-								placeholder={
-									typeof steps[3].placeholder === 'function'
-										? steps[3].placeholder(numCols)
-										: steps[3].placeholder
-								}
-								style={{ width: '100%', marginBottom: 12 }}
-							/>
+							{wildcardsToggle && (
+								<input
+									type='text'
+									value={wildcardList}
+									onChange={(e) =>
+										setWildcardList(
+											capitalizeWords(e.target.value)
+										)
+									}
+									placeholder={
+										typeof steps[3].placeholder ===
+										'function'
+											? steps[3].placeholder(numCols)
+											: steps[3].placeholder
+									}
+									style={{
+										width: '100%',
+										marginBottom: 12,
+									}}
+								/>
+							)}
 						</div>
 					)}
 					{step === 4 && (
@@ -523,7 +559,9 @@ const CustomPuzzleModal: React.FC<
 								type='text'
 								value={categoryList}
 								onChange={(e) =>
-									setCategoryList(e.target.value)
+									setCategoryList(
+										capitalizeWords(e.target.value)
+									)
 								}
 								placeholder={
 									typeof steps[4].placeholder === 'function'
@@ -546,7 +584,9 @@ const CustomPuzzleModal: React.FC<
 								type='text'
 								value={puzzleTheme}
 								onChange={(e) =>
-									setPuzzleTheme(e.target.value)
+									setPuzzleTheme(
+										capitalizeWords(e.target.value)
+									)
 								}
 								placeholder={
 									typeof steps[5].placeholder === 'function'
@@ -655,6 +695,18 @@ const CustomPuzzleModal: React.FC<
 								type='button'
 								className='vibegrid-submit'
 								onClick={handleNext}
+								disabled={
+									!steps[step].validate({
+										puzzleTitle,
+										numRows,
+										numCols,
+										groupInputs,
+										wildcardList,
+										wildcardsToggle,
+										categoryList,
+										puzzleTheme,
+									})
+								}
 							>
 								Next
 							</button>
