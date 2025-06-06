@@ -32,11 +32,6 @@
       "static/chunks/webpack.js",
       "static/chunks/main.js",
       "static/chunks/pages/browse.js"
-    ],
-    "/daily": [
-      "static/chunks/webpack.js",
-      "static/chunks/main.js",
-      "static/chunks/pages/daily.js"
     ]
   },
   "ampFirstPages": []
