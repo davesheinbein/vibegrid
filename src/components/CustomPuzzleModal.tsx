@@ -116,8 +116,8 @@ const steps = [
 	},
 	{
 		title: 'Wildcards (Optional)',
-		description:
-			'Enter any wildcards (comma or newline separated).',
+		description: (numCols: number) =>
+			`Wildcards should be ${numCols} words per group, comma or space separated.`,
 		field: 'wildcardList',
 		placeholder: 'banana, robot, cactus',
 		validate: (_: any) => true,
@@ -174,6 +174,8 @@ const CustomPuzzleModal: React.FC<
 		string | null
 	>(null);
 	const [error, setError] = useState<string | null>(null);
+	const [wildcardsToggle, setWildcardsToggle] =
+		useState(true);
 
 	// --- Live preview ---
 	const groups = parseGroupsFromInputs(
@@ -198,6 +200,7 @@ const CustomPuzzleModal: React.FC<
 			setError('Please complete this step correctly.');
 			return;
 		}
+		// Only advance one step at a time
 		setStep((s) => Math.min(s + 1, steps.length - 1));
 	};
 	const handleBack = () => {
@@ -208,6 +211,8 @@ const CustomPuzzleModal: React.FC<
 	// --- Finalize puzzle ---
 	const handleSubmit = (e: React.FormEvent) => {
 		e.preventDefault();
+		// Only allow submit on the last step
+		if (step !== steps.length - 1) return;
 		const wildcards = wildcardList
 			.split(/[\n,]+/)
 			.map((w) => w.trim())
@@ -225,6 +230,7 @@ const CustomPuzzleModal: React.FC<
 			wildcards,
 			categories,
 			theme: puzzleTheme,
+			wildcardsToggle, // <-- add toggle to output
 		};
 		setJsonResult(JSON.stringify(json, null, 2));
 		setSaveStatus(null);
@@ -466,6 +472,30 @@ const CustomPuzzleModal: React.FC<
 									? steps[3].description(numCols)
 									: steps[3].description}
 							</p>
+							<div
+								style={{
+									display: 'flex',
+									alignItems: 'center',
+									marginBottom: 8,
+								}}
+							>
+								<label
+									style={{
+										fontWeight: 500,
+										marginRight: 10,
+									}}
+								>
+									Enable Wildcards
+									<input
+										type='checkbox'
+										checked={wildcardsToggle}
+										onChange={(e) =>
+											setWildcardsToggle(e.target.checked)
+										}
+										style={{ marginLeft: 6 }}
+									/>
+								</label>
+							</div>
 							<input
 								type='text'
 								value={wildcardList}

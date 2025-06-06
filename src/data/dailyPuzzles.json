@@ -33,7 +33,8 @@
 		],
 		"wildcards": ["Banana", "Cactus", "Robot", "Galaxy"],
 		"categories": ["Moody Indie", "Cursed 90s Pop Culture"],
-		"theme": "moody"
+		"theme": "moody",
+		"wildcardsToggle": true
 	},
 	{
 		"date": "02/06/2025",
@@ -69,7 +70,8 @@
 		],
 		"wildcards": ["Puzzle", "Dice", "Spinner", "Card"],
 		"categories": ["Board Games"],
-		"theme": "nostalgia"
+		"theme": "nostalgia",
+		"wildcardsToggle": true
 	},
 	{
 		"date": "03/06/2025",
@@ -105,7 +107,8 @@
 		],
 		"wildcards": ["Sydney", "Moscow", "Madrid", "Lima"],
 		"categories": ["Geography"],
-		"theme": "mystery"
+		"theme": "mystery",
+		"wildcardsToggle": true
 	},
 	{
 		"date": "04/06/2025",
@@ -152,7 +155,8 @@
 			"Modern Mavericks & Icons",
 			"Avant-Garde Innovators"
 		],
-		"theme": "party"
+		"theme": "party",
+		"wildcardsToggle": true
 	},
 	{
 		"date": "05/06/2025",
@@ -188,7 +192,8 @@
 		],
 		"wildcards": ["Scooby", "Velma", "Fred", "Daphne"],
 		"categories": ["Fiction", "Mystery"],
-		"theme": "mystery"
+		"theme": "mystery",
+		"wildcardsToggle": true
 	},
 	{
 		"date": "default",
@@ -224,6 +229,7 @@
 		],
 		"wildcards": ["Banana", "Cactus", "Robot", "Galaxy"],
 		"categories": ["Default", "General"],
-		"theme": "moody"
+		"theme": "moody",
+		"wildcardsToggle": true
 	}
 ]
