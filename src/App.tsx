@@ -1,7 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { dailyPuzzle } from './data/dailyPuzzle';
 import { partialMatchFeedback } from './utils/gameLogic';
-import { shuffle } from './utils/helpers';
+import {
+	shuffle,
+	getAllWordsFromGroupsAndWildcards,
+} from './utils/helpers';
 import WordButton from './components/WordButton';
 import FeedbackBanner from './components/FeedbackBanner';
 import EndGameModal from './components/EndGameModal';
@@ -111,13 +114,23 @@ function App() {
 	const [shuffledWords, setShuffledWords] = useState<
 		string[]
 	>(() =>
-		shuffle(activePuzzle.words.slice(0, gridWordCount))
+		shuffle(
+			getAllWordsFromGroupsAndWildcards(
+				activePuzzle.groups,
+				activePuzzle.wildcards
+			)
+		)
 	);
 
 	// --- Update shuffledWords and reset state when activePuzzle changes ---
 	useEffect(() => {
 		setShuffledWords(
-			shuffle(activePuzzle.words.slice(0, gridWordCount))
+			shuffle(
+				getAllWordsFromGroupsAndWildcards(
+					activePuzzle.groups,
+					activePuzzle.wildcards
+				)
+			)
 		);
 		setSelectedWords([]);
 		setLockedWords([]);
@@ -733,15 +746,17 @@ function App() {
 									&#8592;
 								</span>
 							</button>
-							<div style={{ marginLeft: 52 }}>
-								<h1
-									className='vibegrid-title'
-									style={{ margin: 0 }}
-								>
-									{activePuzzle.title || 'VibeGrid Daily'}
-								</h1>
-								<div className='vibegrid-subtitle'>
-									Daily Puzzle
+							<div className='vibegrid-title-wrapper'>
+								<div className='vibegrid-title-content'>
+									<h1
+										className='vibegrid-title'
+										style={{ margin: 0 }}
+									>
+										{activePuzzle.title || 'VibeGrid Daily'}
+									</h1>
+									<div className='vibegrid-subtitle'>
+										Daily Puzzle
+									</div>
 								</div>
 							</div>
 						</div>
@@ -1369,7 +1384,9 @@ function App() {
 									&#8592;
 								</span>
 							</button>
-							<div style={{ marginLeft: 52 }}>
+						</div>
+						<div className='vibegrid-title-wrapper'>
+							<div className='vibegrid-title-content'>
 								<h1
 									className='vibegrid-title'
 									style={{ margin: 0 }}

@@ -11,4 +11,14 @@ export function shuffle<T>(array: T[]): T[] {
 	return arr;
 }
 
+// Helper: Get all unique words from groups and wildcards
+export function getAllWordsFromGroupsAndWildcards(
+	groups: string[][],
+	wildcards: string[]
+): string[] {
+	const groupWords = groups.flat();
+	const allWords = [...groupWords, ...(wildcards || [])];
+	return Array.from(new Set(allWords));
+}
+
 // Add more helpers as needed...

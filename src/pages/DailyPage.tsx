@@ -6,7 +6,10 @@
 import React, { useState, useEffect } from 'react';
 import { dailyPuzzle } from '../data/dailyPuzzle';
 import { partialMatchFeedback } from '../utils/gameLogic';
-import { shuffle } from '../utils/helpers';
+import {
+	shuffle,
+	getAllWordsFromGroupsAndWildcards,
+} from '../utils/helpers';
 import WordButton from '../components/WordButton';
 import FeedbackBanner from '../components/FeedbackBanner';
 import EndGameModal from '../components/EndGameModal';
@@ -60,13 +63,23 @@ const DailyPage: React.FC = () => {
 	const [shuffledWords, setShuffledWords] = useState<
 		string[]
 	>(() =>
-		shuffle(activePuzzle.words.slice(0, gridWordCount))
+		shuffle(
+			getAllWordsFromGroupsAndWildcards(
+				activePuzzle.groups,
+				activePuzzle.wildcards
+			)
+		)
 	);
 
 	// --- Update shuffledWords and reset state when activePuzzle changes ---
 	useEffect(() => {
 		setShuffledWords(
-			shuffle(activePuzzle.words.slice(0, gridWordCount))
+			shuffle(
+				getAllWordsFromGroupsAndWildcards(
+					activePuzzle.groups,
+					activePuzzle.wildcards
+				)
+			)
 		);
 		setSelectedWords([]);
 		setLockedWords([]);

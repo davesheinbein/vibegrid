@@ -1,4 +1,14 @@
 // --- Modernized, consistent, and SCSS-friendly styles for VibeGrid ---
+html {
+	font-size: 18px;
+	@media (max-width: 900px) {
+		font-size: 16px;
+	}
+	@media (max-width: 600px) {
+		font-size: 14px;
+	}
+}
+
 .fullscreen-bg {
 	min-height: 100vh;
 	min-width: 100vw;
@@ -8,27 +18,27 @@
 	flex-direction: column;
 	align-items: center;
 	justify-content: center;
-	background: #f1f5f9;
+	background: #273449;
 }
 
 .vibegrid-container {
 	width: 100%;
 	max-width: 600px;
 	margin: 32px auto 0 auto;
-	padding: 32px 32px 40px 32px;
-	background: #fff;
+	background: inherit;
 	border-radius: 18px;
 	box-shadow: 0 2px 16px 0 rgba(30, 41, 59, 0.1);
 	min-height: 70vh;
 	transition: box-shadow 0.2s;
 	display: flex;
+	justify-content: center;
 	flex-direction: column;
 	align-items: stretch;
 	position: relative;
 
 	@media (max-width: 900px) {
 		max-width: 95vw;
-		padding: 24px 16px 32px 16px;
+		// padding: 24px 16px 32px 16px;
 		border-radius: 20px;
 		min-height: 420px;
 	}
@@ -38,7 +48,7 @@
 		margin: 0;
 		border-radius: 0;
 		box-shadow: none;
-		padding: 12px 0 24px 0;
+		// padding: 12px 10px 24px 10px;
 		min-height: 100vh;
 	}
 }
@@ -50,6 +60,25 @@
 	text-align: center;
 	letter-spacing: 0.02em;
 	color: #1e293b;
+	width: 100%;
+	display: flex;
+	justify-content: center;
+	align-items: center;
+
+	@media (max-width: 900px) {
+		font-size: 1.7rem;
+	}
+	@media (max-width: 600px) {
+		font-size: 1.3rem;
+	}
+}
+
+.vibegrid-title-content {
+	display: flex;
+	justify-content: center;
+	align-items: center;
+	flex-direction: column;
+	padding: 20px 0 0;
 }
 
 .vibegrid-subtitle {
@@ -58,8 +87,12 @@
 	text-align: center;
 	color: #64748b;
 	margin-bottom: 1.2rem;
-	@media (max-width: 600px) {
+
+	@media (max-width: 900px) {
 		font-size: 1rem;
+	}
+	@media (max-width: 600px) {
+		font-size: 0.92rem;
 	}
 }
 
@@ -70,17 +103,46 @@
 	margin-bottom: 0.5rem;
 }
 
+.vibegrid-header-row {
+	display: flex;
+	align-items: center;
+	margin-bottom: 24px;
+	position: relative;
+	min-height: 48px;
+
+	@media (max-width: 900px) {
+		padding-left: 10px;
+		padding-right: 10px;
+		font-size: 1rem;
+	}
+	@media (max-width: 600px) {
+		padding-left: 10px;
+		padding-right: 10px;
+		font-size: 0.95rem;
+	}
+}
+
 .vibegrid-grid {
 	display: grid;
 	gap: 0.75rem;
 	margin-bottom: 1.5rem;
+	padding: 10px;
+
 	@media (max-width: 600px) {
 		gap: 0.25rem;
 	}
 }
 
-.vibegrid-submit {
+.vibegrid-submit-wrapper {
+	display: flex;
+	justify-content: center;
+	align-items: center;
+	padding-left: 10px;
+	padding-right: 10px;
 	width: 100%;
+}
+
+.vibegrid-submit {
 	padding: 0.75rem 0;
 	background: linear-gradient(
 		90deg,
@@ -104,6 +166,11 @@
 		font-size: 1rem;
 		padding: 0.6rem 0;
 	}
+
+	@media (max-width: 900px) {
+		margin-left: 10px;
+		margin-right: 10px;
+	}
 }
 
 .vibegrid-attempts {
@@ -111,8 +178,14 @@
 	margin-top: 0.5rem;
 	color: #64748b;
 	font-size: 1rem;
+
+	@media (max-width: 900px) {
+		margin-left: 10px;
+		margin-right: 10px;
+		font-size: 0.98em;
+	}
 	@media (max-width: 600px) {
-		font-size: 0.95rem;
+		font-size: 0.92em;
 	}
 }
 
@@ -230,6 +303,19 @@
 	font-weight: 700;
 	color: #0ea5e9;
 	min-height: 1.5em;
+
+	@media (max-width: 900px) {
+		margin-left: 10px;
+		margin-right: 10px;
+	}
+	@media (max-width: 600px) {
+		margin-left: 10px;
+		margin-right: 10px;
+	}
+}
+
+.feedback-banner--hidden {
+	visibility: hidden;
 }
 
 // --- EndGameModal styles ---
@@ -318,6 +404,13 @@
 	text-align: left;
 	flex-shrink: 0;
 	line-height: 1.2;
+
+	@media (max-width: 900px) {
+		font-size: 1.1rem;
+	}
+	@media (max-width: 600px) {
+		font-size: 0.95rem;
+	}
 }
 .vibegrid-solved-word-list {
 	display: flex;
@@ -396,6 +489,15 @@
 	.share-icon {
 		font-size: 1.5em;
 		margin-right: 0.3em;
+	}
+
+	@media (max-width: 900px) {
+		margin-left: 10px;
+		margin-right: 10px;
+	}
+	@media (max-width: 600px) {
+		margin-left: 10px;
+		margin-right: 10px;
 	}
 }
 
@@ -578,6 +680,14 @@
 	padding: 0.5rem 1.5rem;
 	box-shadow: 0 1px 6px 0 #f43f5e22;
 	font-size: 1.08rem;
+
+	@media (max-width: 900px) {
+		font-size: 0.98em;
+	}
+	@media (max-width: 600px) {
+		font-size: 0.92em;
+	}
+
 	.burn-btn {
 		margin: 0;
 		padding: 0.4rem 1.5rem;
@@ -767,4 +877,17 @@ body.dark-mode,
 		#f8e6ff 0%,
 		#fbe6ff 100%
 	) !important; /* Creamy Blush/Purple */
+}
+
+// --- Browse Puzzles Header ---
+.browse-puzzles-header {
+	position: absolute;
+	top: 20px;
+	left: 0;
+	right: 0;
+	display: flex;
+	justify-content: center;
+	align-items: center;
+	flex-direction: column;
+	z-index: 2;
 }

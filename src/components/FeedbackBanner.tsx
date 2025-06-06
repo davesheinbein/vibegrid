@@ -10,9 +10,10 @@ const FeedbackBanner: React.FC<FeedbackBannerProps> = ({
 	// --- Enhancement: visually hide empty feedback for layout stability ---
 	return (
 		<div
-			className='feedback-banner'
+			className={`feedback-banner${
+				message ? '' : ' feedback-banner--hidden'
+			}`}
 			aria-live='polite'
-			style={{ visibility: message ? 'visible' : 'hidden' }}
 		>
 			{message}
 		</div>

@@ -1,5 +1,6 @@
 // Page for browsing custom puzzles (moved from App.tsx)
 import React from 'react';
+import { getAllWordsFromGroupsAndWildcards } from '../utils/helpers';
 
 interface BrowseCustomPuzzlesProps {
 	onBack: () => void;
@@ -104,163 +105,184 @@ const BrowseCustomPuzzles: React.FC<
 					/>
 				</svg>
 			</button>
-			<h1
-				className='vibegrid-title'
-				style={{
-					textAlign: 'center',
-					marginLeft: 0,
-					marginRight: 0,
-					paddingLeft: 32,
-					paddingRight: 32,
-				}}
-			>
-				Browse Custom Puzzles
-			</h1>
-			<div
-				style={{
-					display: 'flex',
-					gap: 16,
-					marginBottom: 16,
-					justifyContent: 'center',
-					marginTop: 24,
-				}}
-			>
-				<button
-					className={`vibegrid-submit${
-						tab === 'community' ? ' active' : ''
-					}`}
-					onClick={() => setTab('community')}
-				>
-					Community Puzzles
-				</button>
-				<button
-					className={`vibegrid-submit${
-						tab === 'mine' ? ' active' : ''
-					}`}
-					onClick={() => setTab('mine')}
-					disabled={!user}
-				>
-					My Puzzles
-				</button>
+
+			<div className='browse-puzzles-header'>
+				<h1 className='vibegrid-title'>
+					Browse Custom Puzzles
+				</h1>
+				<div className='browse-puzzles-tabs'>
+					<button
+						onClick={() => setTab('community')}
+						className={tab === 'community' ? 'active' : ''}
+					>
+						Community Puzzles
+					</button>
+					<button
+						onClick={() => setTab('mine')}
+						className={tab === 'mine' ? 'active' : ''}
+					>
+						My Puzzles
+					</button>
+				</div>
 			</div>
-			{loading ? (
-				<div>Loading...</div>
-			) : tabPuzzles.length === 0 ? (
-				<div style={{ marginTop: 32 }}>
-					No custom puzzles found.
-				</div>
-			) : (
-				<div
-					style={{
-						display: 'flex',
-						flexDirection: 'column',
-						gap: 16,
-					}}
-				>
-					{tabPuzzles.map((puzzle) => (
-						<div
-							key={puzzle._id}
-							style={{
-								border: '1px solid #e5e7eb',
-								borderRadius: 8,
-								padding: 16,
-								background: '#fff',
-								color: '#222',
-							}}
-						>
+
+			<div className='browse-puzzles-list'>
+				{loading ? (
+					<div>Loading...</div>
+				) : tabPuzzles.length === 0 ? (
+					<div style={{ marginTop: 32 }}>
+						No custom puzzles found.
+					</div>
+				) : (
+					<div
+						style={{
+							display: 'flex',
+							flexDirection: 'column',
+							gap: 16,
+						}}
+					>
+						{tabPuzzles.map((puzzle) => (
 							<div
-								style={{ fontWeight: 600, fontSize: 18 }}
-							>
-								{puzzle.title || 'Untitled Puzzle'}
-							</div>
-							<div
+								key={puzzle._id}
 								style={{
-									fontSize: 14,
-									margin: '4px 0 8px 0',
+									border: '1px solid #e5e7eb',
+									borderRadius: 8,
+									padding: 16,
+									background: '#fff',
+									color: '#222',
 								}}
 							>
-								{puzzle.theme && (
-									<span>Theme: {puzzle.theme} | </span>
-								)}
-								Words: {puzzle.words?.length || 0} |
-								Wildcards:{' '}
-								{puzzle.wildcardsToggle ? 'On' : 'Off'}
-							</div>
-							<div
-								style={{
-									fontSize: 13,
-									color: '#64748b',
-									marginBottom: 6,
-								}}
-							>
-								By:{' '}
-								{puzzle.creatorName ||
-									puzzle.creatorId ||
-									'Anonymous'}{' '}
-								| {puzzle.date || ''}
-							</div>
-							<div
-								style={{
-									display: 'flex',
-									gap: 8,
-									alignItems: 'center',
-								}}
-							>
-								<button
-									className='vibegrid-submit'
-									onClick={() => {
-										setCustomPuzzle(puzzle);
-										setMode('custom');
-										setCustomState(null);
-									}}
-									style={{ marginRight: 8 }}
+								<div
+									style={{ fontWeight: 600, fontSize: 18 }}
 								>
-									Play
-								</button>
-								<button
-									className='vibegrid-submit'
-									onClick={() => {
-										const url =
-											window.location.origin +
-											'/#/play/custom/' +
-											puzzle._id;
-										navigator.clipboard.writeText(url);
-									}}
+									{puzzle.title || 'Untitled Puzzle'}
+								</div>
+								<div
 									style={{
-										background:
-											'linear-gradient(90deg,#fbbf24 0%,#38bdf8 100%)',
+										fontSize: 14,
+										margin: '4px 0 8px 0',
 									}}
 								>
-									Copy Link
-								</button>
-								<span
+									{puzzle.theme && (
+										<span>Theme: {puzzle.theme} | </span>
+									)}
+									Words: {puzzle.words?.length || 0} |
+									Wildcards:{' '}
+									{puzzle.wildcardsToggle ? 'On' : 'Off'}
+								</div>
+								<div
 									style={{
-										marginLeft: 8,
-										color: '#fbbf24',
-										fontSize: 18,
-									}}
-									title='Rating (coming soon)'
-								>
-									★
-								</span>
-								<span
-									style={{
-										marginLeft: 2,
+										fontSize: 13,
 										color: '#64748b',
-										fontSize: 16,
+										marginBottom: 6,
 									}}
-									title='Favorite (coming soon)'
 								>
-									♡
-								</span>
+									By:{' '}
+									{puzzle.creatorName ||
+										puzzle.creatorId ||
+										'Anonymous'}{' '}
+									| {puzzle.date || ''}
+								</div>
+								<div
+									style={{
+										display: 'flex',
+										gap: 8,
+										alignItems: 'center',
+									}}
+								>
+									<button
+										className='vibegrid-submit'
+										onClick={() => {
+											setCustomPuzzle(puzzle);
+											setMode('custom');
+											setCustomState(null);
+										}}
+										style={{ marginRight: 8 }}
+									>
+										Play
+									</button>
+									<button
+										className='vibegrid-submit'
+										onClick={() => {
+											const url =
+												window.location.origin +
+												'/#/play/custom/' +
+												puzzle._id;
+											navigator.clipboard.writeText(url);
+										}}
+										style={{
+											background:
+												'linear-gradient(90deg,#fbbf24 0%,#38bdf8 100%)',
+										}}
+									>
+										Copy Link
+									</button>
+									<span
+										style={{
+											marginLeft: 8,
+											color: '#fbbf24',
+											fontSize: 18,
+										}}
+										title='Rating (coming soon)'
+									>
+										★
+									</span>
+									<span
+										style={{
+											marginLeft: 2,
+											color: '#64748b',
+											fontSize: 16,
+										}}
+										title='Favorite (coming soon)'
+									>
+										♡
+									</span>
+								</div>
 							</div>
-						</div>
-					))}
-				</div>
-			)}
+						))}
+					</div>
+				)}
+			</div>
+
 			<style>{`
 				.vibegrid-back-arrow:hover svg path {
 					stroke: #1e40af;
+				}
+				.browse-puzzles-header {
+					position: absolute;
+					top: 20px;
+					left: 0;
+					right: 0;
+					display: flex;
+					justify-content: center;
+					align-items: center;
+					flex-direction: column;
+					z-index: 2;
+				}
+				.browse-puzzles-tabs {
+					display: flex;
+					gap: 12px;
+					margin-top: 10px;
+				}
+				.browse-puzzles-tabs button {
+					font-weight: 400;
+					background: none;
+					border: none;
+					border-bottom: 2px solid transparent;
+					color: #64748b;
+					font-size: 18px;
+					cursor: pointer;
+					padding: 6px 18px;
+					border-radius: 0;
+					transition: color 0.2s, border-bottom 0.2s;
+				}
+				.browse-puzzles-tabs button.active {
+					font-weight: 700;
+					border-bottom: 2px solid #38bdf8;
+					color: #2563eb;
+				}
+				.browse-puzzles-list {
+					margin-top: 120px;
 				}
 			`}</style>
 		</div>
@@ -268,3 +290,5 @@ const BrowseCustomPuzzles: React.FC<
 };
 
 export default BrowseCustomPuzzles;
+
+// When rendering or using the word list, use getAllWordsFromGroupsAndWildcards(puzzle.groups, puzzle.wildcards)

@@ -46,6 +46,16 @@ function getUniqueWordsFromGroups(
 	);
 }
 
+// Helper: Get all unique words from groups and wildcards
+function getAllWordsFromGroupsAndWildcards(
+	groups: string[][],
+	wildcards: string[]
+): string[] {
+	const groupWords = groups.flat();
+	const allWords = [...groupWords, ...(wildcards || [])];
+	return Array.from(new Set(allWords));
+}
+
 // --- Helper: Build groups from word list (for sync) ---
 function buildGroupsFromWords(
 	words: string[],
@@ -219,7 +229,14 @@ const CustomPuzzleModal: React.FC<
 		groupInputs,
 		numCols
 	);
-	const words = getUniqueWordsFromGroups(groups);
+	const wildcards = wildcardList
+		.split(/[\n,]+/)
+		.map((w) => w.trim())
+		.filter(Boolean);
+	const allWords = getAllWordsFromGroupsAndWildcards(
+		groups,
+		wildcards
+	);
 
 	// --- Step navigation ---
 	const handleNext = () => {
@@ -262,7 +279,7 @@ const CustomPuzzleModal: React.FC<
 			date: new Date().toLocaleDateString('en-GB'),
 			title: puzzleTitle,
 			size: { rows: numRows, cols: numCols },
-			words,
+			words: allWords,
 			groups,
 			wildcards,
 			categories,
