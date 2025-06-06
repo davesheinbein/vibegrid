@@ -1,4 +1,5 @@
 import React from 'react';
+import { useRouter } from 'next/router';
 
 // EndGameModal: Modal shown at the end of a game session.
 // Single responsibility: display end-of-game message and restart action.
@@ -13,6 +14,7 @@ const EndGameModal: React.FC<EndGameModalProps> = ({
 	message,
 	onRestart,
 }) => {
+	const router = useRouter();
 	// Enhancement: allow modal to close on backdrop click for better UX
 	const handleBackdropClick = (
 		e: React.MouseEvent<HTMLDivElement>
@@ -23,15 +25,20 @@ const EndGameModal: React.FC<EndGameModalProps> = ({
 	};
 
 	const [copied, setCopied] = React.useState(false);
-	const shareUrl = window.location.href;
+	const shareUrl =
+		typeof window !== 'undefined'
+			? window.location.href
+			: '';
 	const shareText = encodeURIComponent(
 		'Check out my VibeGrid result!'
 	);
 
 	const handleCopy = () => {
-		navigator.clipboard.writeText(shareUrl);
-		setCopied(true);
-		setTimeout(() => setCopied(false), 1500);
+		if (typeof window !== 'undefined') {
+			navigator.clipboard.writeText(shareUrl);
+			setCopied(true);
+			setTimeout(() => setCopied(false), 1500);
+		}
 	};
 
 	return (
@@ -60,8 +67,7 @@ const EndGameModal: React.FC<EndGameModalProps> = ({
 						}}
 						onClick={(e) => {
 							e.preventDefault();
-							if (window.location.pathname !== '/browse')
-								window.location.assign('/browse');
+							router.push('/browse');
 						}}
 					>
 						{'browse our community made puzzles'}
@@ -357,7 +363,7 @@ const EndGameModal: React.FC<EndGameModalProps> = ({
 				</div>
 				<button
 					onClick={() => {
-						window.location.assign('/');
+						router.push('/');
 					}}
 					autoFocus
 				>

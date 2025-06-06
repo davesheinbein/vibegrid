@@ -389,11 +389,11 @@ const CustomPuzzleModal: React.FC<
 
 	// --- Copy shareable link to clipboard
 	const handleCopyLink = () => {
-		if (!shareId) return;
-		const url = `${window.location.origin}/?puzzle=${shareId}`;
-		navigator.clipboard.writeText(url);
-		setCopyStatus('Link copied!');
-		setTimeout(() => setCopyStatus(null), 2000);
+		if (typeof window !== 'undefined') {
+			navigator.clipboard.writeText(window.location.href);
+			setCopyStatus('Link copied!');
+			setTimeout(() => setCopyStatus(''), 1500);
+		}
 	};
 
 	// --- Handle group change ---
