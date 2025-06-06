@@ -15,7 +15,7 @@ interface BrowseCustomPuzzlesProps {
 		email: string;
 		photoUrl?: string;
 	} | null;
-	mode?: 'browse';
+	mode: 'browse';
 }
 
 const BrowseCustomPuzzles: React.FC<
@@ -27,7 +27,7 @@ const BrowseCustomPuzzles: React.FC<
 	setMode,
 	setCustomState,
 	user,
-	mode = 'browse',
+	mode,
 }) => {
 	const [tab, setTab] = React.useState<
 		'community' | 'mine'

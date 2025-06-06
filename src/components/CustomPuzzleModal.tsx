@@ -177,9 +177,7 @@ interface CustomPuzzleModalProps {
 	open: boolean;
 	onClose: () => void;
 	setCustomPuzzle: (puzzle: any) => void;
-	setMode: (
-		mode: 'startup' | 'daily' | 'custom' | 'browse'
-	) => void;
+	setMode: (mode: 'startup' | 'daily' | 'custom') => void;
 	user?: {
 		name: string;
 		email: string;
@@ -441,46 +439,39 @@ const CustomPuzzleModal: React.FC<
 				e.target === e.currentTarget && onClose()
 			}
 		>
-			<div
-				className='share-modal-content'
-				style={{ maxWidth: 540, minHeight: 480 }}
-			>
-				{/* Blue circle stepper for progress */}
-				<div style={{ marginBottom: 16 }}>
-					<div
-						style={{
-							display: 'flex',
-							alignItems: 'center',
-							gap: 8,
-						}}
+			<div className='share-modal-content'>
+				<button
+					onClick={onClose}
+					className='share-modal-close'
+					aria-label='Close'
+				>
+					<span
+						style={{ lineHeight: 1, pointerEvents: 'none' }}
 					>
+						×
+					</span>
+				</button>
+				{/* Blue circle stepper for progress */}
+				<div className='share-modal-stepper'>
+					<div className='share-modal-stepper-row'>
 						{steps.map((_, i) => (
 							<div
 								key={i}
-								style={{
-									width: 18,
-									height: 18,
-									borderRadius: '50%',
-									background:
-										i === step ? '#38bdf8' : '#e5e7eb',
-									border:
-										i === step
-											? '2px solid #0ea5e9'
-											: '1px solid #cbd5e1',
-									transition: 'background 0.2s',
-								}}
+								className={`share-modal-stepper-dot${
+									i === step ? ' active' : ''
+								}`}
 							></div>
 						))}
 					</div>
 				</div>
 				<form
 					onSubmit={handleSubmit}
-					style={{ transition: 'all 0.3s' }}
+					className='share-modal-form'
 				>
 					{step === 0 && (
 						<div className='step-content fade-in'>
 							<h2>{steps[0].title}</h2>
-							<p>
+							<p className='share-modal-step-desc'>
 								{typeof steps[0].description === 'function'
 									? steps[0].description(numCols)
 									: steps[0].description}
@@ -498,7 +489,7 @@ const CustomPuzzleModal: React.FC<
 										? steps[0].placeholder(numCols)
 										: steps[0].placeholder
 								}
-								style={{ width: '100%', marginBottom: 16 }}
+								className='share-modal-input'
 								autoFocus
 							/>
 						</div>
@@ -506,12 +497,12 @@ const CustomPuzzleModal: React.FC<
 					{step === 1 && (
 						<div className='step-content fade-in'>
 							<h2>{steps[1].title}</h2>
-							<p>
+							<p className='share-modal-step-desc'>
 								{typeof steps[1].description === 'function'
 									? steps[1].description(numCols)
 									: steps[1].description}
 							</p>
-							<div style={{ display: 'flex', gap: 16 }}>
+							<div className='share-modal-row'>
 								<label>
 									Rows:
 									<input
@@ -522,7 +513,7 @@ const CustomPuzzleModal: React.FC<
 										onChange={(e) =>
 											setNumRows(Number(e.target.value))
 										}
-										style={{ width: 60, marginLeft: 6 }}
+										className='share-modal-input share-modal-input-num'
 									/>
 								</label>
 								<label>
@@ -535,7 +526,7 @@ const CustomPuzzleModal: React.FC<
 										onChange={(e) =>
 											setNumCols(Number(e.target.value))
 										}
-										style={{ width: 60, marginLeft: 6 }}
+										className='share-modal-input share-modal-input-num'
 									/>
 								</label>
 							</div>
@@ -544,17 +535,20 @@ const CustomPuzzleModal: React.FC<
 					{step === 2 && (
 						<div className='step-content fade-in'>
 							<h2>{steps[2].title}</h2>
-							<p>
+							<p className='share-modal-step-desc'>
 								{typeof steps[2].description === 'function'
 									? steps[2].description(numCols)
 									: steps[2].description}
 							</p>
 							{Array.from({ length: numRows }).map(
 								(_, i) => (
-									<div key={i} style={{ marginBottom: 10 }}>
-										<label
-											style={{ fontWeight: 600 }}
-										>{`Group ${i + 1}:`}</label>
+									<div
+										key={i}
+										className='share-modal-group-row'
+									>
+										<label className='share-modal-group-label'>{`Group ${
+											i + 1
+										}:`}</label>
 										<input
 											type='text'
 											value={groupInputs[i] || ''}
@@ -565,21 +559,12 @@ const CustomPuzzleModal: React.FC<
 												)
 											}
 											placeholder={`Enter ${numCols} words, comma or space separated`}
-											style={{
-												width: '100%',
-												marginTop: 4,
-											}}
+											className='share-modal-input share-modal-group-input'
 										/>
 									</div>
 								)
 							)}
-							<div
-								style={{
-									fontSize: 13,
-									color: '#64748b',
-									marginTop: 4,
-								}}
-							>
+							<div className='share-modal-group-hint'>
 								Each group must have exactly {numCols} words
 								(comma, space, dash, or semicolon
 								separated). All words must be unique and
@@ -590,24 +575,13 @@ const CustomPuzzleModal: React.FC<
 					{step === 3 && (
 						<div className='step-content fade-in'>
 							<h2>{steps[3].title}</h2>
-							<p>
+							<p className='share-modal-step-desc'>
 								{typeof steps[3].description === 'function'
 									? steps[3].description(numCols)
 									: steps[3].description}
 							</p>
-							<div
-								style={{
-									display: 'flex',
-									alignItems: 'center',
-									marginBottom: 8,
-								}}
-							>
-								<label
-									style={{
-										fontWeight: 500,
-										marginRight: 10,
-									}}
-								>
+							<div className='share-modal-wildcard-row'>
+								<label className='share-modal-wildcard-label'>
 									Enable Wildcards
 									<input
 										type='checkbox'
@@ -615,7 +589,7 @@ const CustomPuzzleModal: React.FC<
 										onChange={(e) =>
 											setWildcardsToggle(e.target.checked)
 										}
-										style={{ marginLeft: 6 }}
+										className='share-modal-wildcard-checkbox'
 									/>
 								</label>
 							</div>
@@ -634,10 +608,7 @@ const CustomPuzzleModal: React.FC<
 											? steps[3].placeholder(numCols)
 											: steps[3].placeholder
 									}
-									style={{
-										width: '100%',
-										marginBottom: 12,
-									}}
+									className='share-modal-input share-modal-wildcard-input'
 								/>
 							)}
 						</div>
@@ -645,7 +616,7 @@ const CustomPuzzleModal: React.FC<
 					{step === 4 && (
 						<div className='step-content fade-in'>
 							<h2>{steps[4].title}</h2>
-							<p>
+							<p className='share-modal-step-desc'>
 								{typeof steps[4].description === 'function'
 									? steps[4].description(numCols)
 									: steps[4].description}
@@ -663,14 +634,14 @@ const CustomPuzzleModal: React.FC<
 										? steps[4].placeholder(numCols)
 										: steps[4].placeholder
 								}
-								style={{ width: '100%', marginBottom: 12 }}
+								className='share-modal-input'
 							/>
 						</div>
 					)}
 					{step === 5 && (
 						<div className='step-content fade-in'>
 							<h2>{steps[5].title}</h2>
-							<p>
+							<p className='share-modal-step-desc'>
 								{typeof steps[5].description === 'function'
 									? steps[5].description(numCols)
 									: steps[5].description}
@@ -688,30 +659,17 @@ const CustomPuzzleModal: React.FC<
 										? steps[5].placeholder(numCols)
 										: steps[5].placeholder
 								}
-								style={{ width: '100%', marginBottom: 12 }}
+								className='share-modal-input'
 							/>
 						</div>
 					)}
 					{step === steps.length && jsonResult && (
-						<div style={{ marginTop: 16 }}>
+						<div className='share-modal-preview'>
 							<h4>Generated Puzzle JSON</h4>
-							<pre
-								style={{
-									background: '#f1f5f9',
-									padding: 12,
-									borderRadius: 6,
-									fontSize: 13,
-								}}
-							>
+							<pre className='share-modal-json-preview'>
 								{jsonResult}
 							</pre>
-							<div
-								style={{
-									display: 'flex',
-									gap: 8,
-									marginTop: 8,
-								}}
-							>
+							<div className='share-modal-preview-btns'>
 								<button
 									className='vibegrid-submit'
 									onClick={handleSave}
@@ -739,21 +697,17 @@ const CustomPuzzleModal: React.FC<
 								)}
 							</div>
 							{copyStatus && (
-								<div
-									style={{ color: 'green', marginTop: 4 }}
-								>
+								<div className='share-modal-copy-status'>
 									{copyStatus}
 								</div>
 							)}
 							{saveStatus && (
 								<div
-									style={{
-										color:
-											saveStatus === 'Saved!'
-												? 'green'
-												: 'red',
-										marginTop: 4,
-									}}
+									className={`share-modal-save-status${
+										saveStatus === 'Saved!'
+											? ' saved'
+											: ' error'
+									}`}
 								>
 									{saveStatus}
 								</div>
@@ -761,17 +715,9 @@ const CustomPuzzleModal: React.FC<
 						</div>
 					)}
 					{error && (
-						<div style={{ color: 'red', marginTop: 8 }}>
-							{error}
-						</div>
+						<div className='share-modal-error'>{error}</div>
 					)}
-					<div
-						style={{
-							display: 'flex',
-							gap: 8,
-							marginTop: 20,
-						}}
-					>
+					<div className='share-modal-nav-btns'>
 						{step > 0 && step < steps.length && (
 							<button
 								type='button'
@@ -805,11 +751,7 @@ const CustomPuzzleModal: React.FC<
 						{step === steps.length - 1 && (
 							<button
 								type='submit'
-								className='vibegrid-submit'
-								style={{
-									background:
-										'linear-gradient(90deg,#22c55e 0%,#38bdf8 100%)',
-								}}
+								className='vibegrid-submit share-modal-finish-btn'
 							>
 								Finish & Preview
 							</button>

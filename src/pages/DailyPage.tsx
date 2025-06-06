@@ -27,7 +27,13 @@ import {
 } from '@fortawesome/free-brands-svg-icons';
 import { faShareAlt } from '@fortawesome/free-solid-svg-icons';
 
-const DailyPage: React.FC = () => {
+interface DailyPageProps {
+	onBack?: () => void;
+}
+
+const DailyPage: React.FC<DailyPageProps> = ({
+	onBack,
+}) => {
 	// --- State declarations ---
 	const [selectedWords, setSelectedWords] = useState<
 		string[]
@@ -344,8 +350,12 @@ const DailyPage: React.FC = () => {
 					>
 						<button
 							className='back-icon-btn'
-							// TODO: wire up navigation to StartupPage
 							aria-label='Back'
+							onClick={
+								onBack
+									? onBack
+									: () => window.location.assign('/')
+							}
 						>
 							<span
 								style={{
@@ -510,6 +520,8 @@ const DailyPage: React.FC = () => {
 				<div
 					style={{
 						display: 'flex',
+						flexDirection: 'column',
+						alignItems: 'center',
 						justifyContent: 'center',
 						width: '100%',
 					}}
@@ -522,62 +534,62 @@ const DailyPage: React.FC = () => {
 					>
 						Submit
 					</button>
-				</div>
-				<FeedbackBanner message={feedback} />
-				<div className='vibegrid-attempts-bar'>
-					{[...Array(attemptsLeft > 4 ? 5 : 4)].map(
-						(_, i) => (
-							<span
-								key={i}
-								className={
-									'vibegrid-attempt-dot' +
-									(i >= attemptsLeft ? ' used' : '')
-								}
-							></span>
-						)
-					)}
-				</div>
-				<p className='vibegrid-attempts'>
-					Attempts Left: {attemptsLeft}
-					<button
-						className='randomize-btn'
-						aria-label='Randomize word order'
-						onClick={handleRandomize}
-						style={{
-							marginLeft: 12,
-							verticalAlign: 'middle',
-						}}
-					>
-						<span
-							aria-hidden='true'
+					<FeedbackBanner message={feedback} />
+					<div className='vibegrid-attempts-bar'>
+						{[...Array(attemptsLeft > 4 ? 5 : 4)].map(
+							(_, i) => (
+								<span
+									key={i}
+									className={
+										'vibegrid-attempt-dot' +
+										(i >= attemptsLeft ? ' used' : '')
+									}
+								></span>
+							)
+						)}
+					</div>
+					<p className='vibegrid-attempts'>
+						Attempts Left: {attemptsLeft}
+						<button
+							className='randomize-btn'
+							aria-label='Randomize word order'
+							onClick={handleRandomize}
 							style={{
-								display: 'inline-block',
-								transform: 'rotate(-45deg)',
-								fontSize: '1.2em',
+								marginLeft: 12,
+								verticalAlign: 'middle',
 							}}
 						>
-							&#x267B;
-						</span>
-					</button>
-					<button
-						className='deselect-btn'
-						aria-label='Deselect all'
-						onClick={() => setSelectedWords([])}
-						style={{
-							marginLeft: 8,
-							verticalAlign: 'middle',
-							padding: '0.3em 0.9em',
-							fontSize: '1em',
-							borderRadius: 6,
-							background: '#e5e7eb',
-							color: '#222',
-							border: 'none',
-							cursor: 'pointer',
-						}}
-					>
-						Deselect All
-					</button>
-				</p>
+							<span
+								aria-hidden='true'
+								style={{
+									display: 'inline-block',
+									transform: 'rotate(-45deg)',
+									fontSize: '1.2em',
+								}}
+							>
+								&#x267B;
+							</span>
+						</button>
+						<button
+							className='deselect-btn'
+							aria-label='Deselect all'
+							onClick={() => setSelectedWords([])}
+							style={{
+								marginLeft: 8,
+								verticalAlign: 'middle',
+								padding: '0.3em 0.9em',
+								fontSize: '1em',
+								borderRadius: 6,
+								background: '#e5e7eb',
+								color: '#222',
+								border: 'none',
+								cursor: 'pointer',
+							}}
+						>
+							Deselect All
+						</button>
+					</p>
+				</div>
 				<button
 					className='share-btn'
 					onClick={handleShare}

@@ -559,28 +559,53 @@ html {
 		#38bdf8 100%
 	);
 }
-@media (max-width: 600px) {
-	.share-modal-content {
-		padding: 1.2rem 0.5rem 1rem 0.5rem;
-		min-width: 0;
-		border-radius: 0.7rem;
-	}
-	.share-modal-content h2 {
-		font-size: 1.1rem;
-	}
-	.share-modal-content button,
-	.share-modal-close {
-		font-size: 1rem;
-		padding: 0.6rem 1.2rem;
-	}
+.share-modal-close {
+	position: absolute;
+	top: 16px;
+	right: 16px;
+	width: 30px;
+	height: 30px;
+	border-radius: 8px;
+	background: #fee2e2;
+	border: none;
+	font-size: 20px;
+	font-weight: 700;
+	color: #b91c1c;
+	cursor: pointer;
+	z-index: 10;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
+	transition: background 0.2s;
+	padding: 0;
 }
-@keyframes fadeIn {
-	from {
-		opacity: 0;
-	}
-	to {
-		opacity: 1;
-	}
+.share-modal-close:hover {
+	background: #fecaca;
+}
+.share-modal-stepper {
+	margin-bottom: 16px;
+}
+.share-modal-stepper-row {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+}
+.share-modal-stepper-dot {
+	width: 18px;
+	height: 18px;
+	border-radius: 50%;
+	background: #e5e7eb;
+	border: 1px solid #cbd5e1;
+	transition: background 0.2s;
+}
+.share-modal-stepper-dot.active {
+	background: #38bdf8;
+	border: 2px solid #0ea5e9;
+}
+.share-modal-form {
+	transition: all 0.3s;
+	width: 100%;
 }
 
 // --- Rules modal ---
@@ -896,4 +921,125 @@ body.dark-mode,
 	border: 1.7px solid #38bdf8;
 	box-shadow: 0 0 0 3px #bae6fd;
 	background: #fff;
+}
+
+.share-modal-input {
+	width: 100%;
+	margin-bottom: 16px;
+	padding: 0.6rem 0.9rem;
+	border-radius: 0.5rem;
+	border: 1.5px solid #cbd5e1;
+	font-size: 1.05rem;
+	transition: border 0.2s;
+	background: #f8fafc;
+	color: #222;
+}
+.share-modal-input:focus {
+	outline: none;
+	border: 1.5px solid #38bdf8;
+	background: #fff;
+}
+.share-modal-input-num {
+	width: 60px;
+	margin-left: 6px;
+	margin-bottom: 0;
+	padding: 0.4rem 0.5rem;
+}
+.share-modal-row {
+	display: flex;
+	gap: 16px;
+}
+.share-modal-step-desc {
+	margin-bottom: 0.5rem;
+	color: #64748b;
+	font-size: 1rem;
+}
+
+.share-modal-group-row {
+	margin-bottom: 10px;
+	display: flex;
+	align-items: center;
+	gap: 8px;
+}
+.share-modal-group-label {
+	font-weight: 600;
+	margin-right: 8px;
+	min-width: 70px;
+}
+.share-modal-group-input {
+	margin-top: 4px;
+}
+.share-modal-group-hint {
+	font-size: 13px;
+	color: #64748b;
+	margin-top: 4px;
+}
+.share-modal-wildcard-row {
+	display: flex;
+	align-items: center;
+	margin-bottom: 8px;
+}
+.share-modal-wildcard-label {
+	font-weight: 500;
+	margin-right: 10px;
+	display: flex;
+	align-items: center;
+}
+.share-modal-wildcard-checkbox {
+	margin-left: 6px;
+}
+.share-modal-wildcard-input {
+	margin-bottom: 12px;
+}
+
+// --- Preview and status messages for share modal ---
+.share-modal-preview {
+	margin-top: 16px;
+	width: 100%;
+}
+.share-modal-json-preview {
+	background: #f1f5f9;
+	padding: 12px;
+	border-radius: 6px;
+	font-size: 13px;
+	text-align: left;
+	white-space: pre-wrap;
+	word-break: break-word;
+	margin-bottom: 8px;
+}
+.share-modal-preview-btns {
+	display: flex;
+	gap: 8px;
+	margin-top: 8px;
+	justify-content: flex-start;
+}
+.share-modal-copy-status {
+	color: green;
+	margin-top: 4px;
+}
+.share-modal-save-status {
+	margin-top: 4px;
+	font-weight: 600;
+}
+.share-modal-save-status.saved {
+	color: green;
+}
+.share-modal-save-status.error {
+	color: red;
+}
+.share-modal-error {
+	color: red;
+	margin-top: 8px;
+}
+.share-modal-nav-btns {
+	display: flex;
+	gap: 8px;
+	margin-top: 20px;
+}
+.share-modal-finish-btn {
+	background: linear-gradient(
+		90deg,
+		#22c55e 0%,
+		#38bdf8 100%
+	);
 }
