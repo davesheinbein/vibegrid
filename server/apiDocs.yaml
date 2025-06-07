@@ -1,0 +1,48 @@
+openapi: 3.0.0
+info:
+  title: VibeGrid API
+  version: 1.0.0
+servers:
+  - url: http://localhost:3000
+paths:
+  /api/user/profile:
+    get:
+      summary: Get user profile
+      responses:
+        '200':
+          description: OK
+    put:
+      summary: Update user profile
+      responses:
+        '200':
+          description: OK
+  /api/friends/request:
+    post:
+      summary: Send a friend request
+      responses:
+        '200':
+          description: OK
+  /api/chat/message:
+    post:
+      summary: Send a chat message
+      responses:
+        '200':
+          description: OK
+  /api/puzzles/daily:
+    get:
+      summary: Get daily puzzle
+      responses:
+        '200':
+          description: OK
+  /api/achievements:
+    get:
+      summary: Get all achievements
+      responses:
+        '200':
+          description: OK
+  /api/leaderboard/global:
+    get:
+      summary: Get global leaderboard
+      responses:
+        '200':
+          description: OK

@@ -79,20 +79,16 @@
 	min-height: 48px;
 	padding: 24px 0 10px;
 	background: none;
-	padding: 10px 0;
+	padding: 10px;
 
 	@media (max-width: 900px) {
-		padding-left: 10px;
-		padding-right: 10px;
 		font-size: 1rem;
-		padding: 10px 20px 0;
 	}
 
 	@media (max-width: 600px) {
-		padding-left: 10px;
-		padding-right: 10px;
+		padding-left: 0px;
+		padding-right: 0px;
 		font-size: 0.95rem;
-		padding: 10px 10px 0;
 	}
 }
 
@@ -101,7 +97,6 @@
 	display: grid;
 	gap: 0.75rem;
 	margin-bottom: 1.5rem;
-	padding: 10px;
 	background: #fafdff;
 	border-radius: 1rem;
 	box-shadow: 0 2px 12px 0 #e3eaff;
@@ -252,6 +247,10 @@
 		box-shadow: 0 0 0 3px #facc15, 0 0 8px 2px #facc15;
 		animation: burn-flicker 0.7s infinite alternate;
 	}
+	@media (max-width: 300px) {
+		padding: 0px;
+		font-size: 12px;
+	}
 }
 
 .vibegrid-container {
@@ -285,7 +284,6 @@
 		border-radius: 0;
 		box-shadow: none;
 		min-height: 100vh;
-		max-width: 100%;
 	}
 }
 
