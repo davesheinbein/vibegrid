@@ -209,7 +209,7 @@ export default function Home() {
 			{showCustomModal && (
 				<CustomPuzzleModal
 					open={showCustomModal}
-					onClose={() => setShowCustomPuzzle(false)}
+					onClose={() => setShowCustomModal(false)}
 					setCustomPuzzle={setCustomPuzzle}
 					setMode={() => {}}
 					user={null}

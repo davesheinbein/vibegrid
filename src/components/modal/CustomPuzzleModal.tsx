@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import {
 	parseGroupsFromInputs,
@@ -9,7 +8,6 @@ import {
 } from '../../utils/helpers';
 import { WordButton } from '../ui/Buttons';
 import { Modal } from '../ui/Modal';
-
 
 const steps = [
 	{
@@ -106,6 +104,20 @@ const steps = [
 	},
 ];
 
+const CATEGORY_OPTIONS = [
+	'Animals',
+	'Movies',
+	'Food',
+	'Nature',
+	'Travel',
+	'Music',
+	'History',
+	'Pop Culture',
+	'Science',
+	'Phrases',
+	'Other',
+];
+
 interface CustomPuzzleModalProps {
 	open: boolean;
 	onClose: () => void;
@@ -118,7 +130,6 @@ interface CustomPuzzleModalProps {
 	} | null;
 	setShowSignInModal?: (open: boolean) => void;
 }
-
 
 const CustomPuzzleModal: React.FC<
 	CustomPuzzleModalProps
@@ -138,7 +149,8 @@ const CustomPuzzleModal: React.FC<
 		() => Array(numRows).fill('')
 	);
 	const [wildcardList, setWildcardList] = useState('');
-	const [categoryList, setCategoryList] = useState('');
+	const [category, setCategory] = useState('');
+	const [customCategory, setCustomCategory] = useState('');
 	const [puzzleTheme, setPuzzleTheme] = useState('');
 	const [jsonResult, setJsonResult] = useState('');
 	const [saveStatus, setSaveStatus] = useState<
@@ -155,7 +167,6 @@ const CustomPuzzleModal: React.FC<
 		useState(true);
 	const [loading, setLoading] = useState(false);
 
-	
 	const groups = parseGroupsFromInputs(
 		groupInputs,
 		numCols
@@ -167,7 +178,6 @@ const CustomPuzzleModal: React.FC<
 	const allWords: string[] =
 		getAllWordsFromGroupsAndWildcards(groups, wildcards);
 
-	
 	const handleNext = () => {
 		setError(null);
 		const state = {
@@ -176,14 +186,15 @@ const CustomPuzzleModal: React.FC<
 			numCols,
 			groupInputs,
 			wildcardList,
-			categoryList,
+			category,
+			customCategory,
 			puzzleTheme,
 		};
 		if (!steps[step].validate(state)) {
 			setError('Please complete this step correctly.');
 			return;
 		}
-		
+
 		setStep((s) => Math.min(s + 1, steps.length - 1));
 	};
 	const handleBack = () => {
@@ -191,19 +202,21 @@ const CustomPuzzleModal: React.FC<
 		setStep((s) => Math.max(s - 1, 0));
 	};
 
-	
 	const handleSubmit = (e: React.FormEvent) => {
 		e.preventDefault();
-		
+
 		if (step !== steps.length - 1) return;
 		const wildcards = wildcardList
 			.split(/[\n,]+/)
 			.map((w) => w.trim())
 			.filter(Boolean);
-		const categories = categoryList
-			.split(',')
-			.map((c) => c.trim())
-			.filter(Boolean);
+		// Compose the category string for storage
+		let finalCategory = category;
+		if (category === 'Other') {
+			finalCategory = customCategory.trim()
+				? `Other - ${customCategory.trim()}`
+				: 'Other';
+		}
 		const json = {
 			date: new Date().toLocaleDateString('en-GB'),
 			title: puzzleTitle,
@@ -211,16 +224,18 @@ const CustomPuzzleModal: React.FC<
 			words: allWords,
 			groups,
 			wildcards,
-			categories,
+			category: finalCategory,
 			theme: puzzleTheme,
-			wildcardsToggle, 
+			wildcardsToggle,
+			// For preview compatibility
+			categoryList: finalCategory,
+			puzzleTheme: puzzleTheme.trim(),
 		};
 		setJsonResult(JSON.stringify(json, null, 2));
 		setSaveStatus(null);
-		setStep(steps.length); 
+		setStep(steps.length);
 	};
 
-	
 	function validatePuzzleJson(json: any) {
 		if (!json) return false;
 		if (!json.title || typeof json.title !== 'string')
@@ -244,7 +259,6 @@ const CustomPuzzleModal: React.FC<
 		return true;
 	}
 
-	
 	async function savePuzzleToBackend(
 		puzzle: any,
 		playAfter = false
@@ -278,7 +292,6 @@ const CustomPuzzleModal: React.FC<
 		}
 	}
 
-	
 	const handlePlayNow = async () => {
 		if (!jsonResult) return;
 		try {
@@ -298,7 +311,6 @@ const CustomPuzzleModal: React.FC<
 		}
 	};
 
-	
 	const handleSave = async () => {
 		if (!jsonResult) return;
 		try {
@@ -318,7 +330,6 @@ const CustomPuzzleModal: React.FC<
 		}
 	};
 
-	
 	const handleCopyLink = () => {
 		if (typeof window !== 'undefined') {
 			navigator.clipboard.writeText(window.location.href);
@@ -327,18 +338,15 @@ const CustomPuzzleModal: React.FC<
 		}
 	};
 
-	
 	const handleGroupChange = (
 		idx: number,
 		value: string
 	) => {
-		
 		const allWords = value
 			.split(/[,;\-\s\n]+/)
 			.map((w) => w.trim())
 			.filter(Boolean);
 
-		
 		if (allWords.length > numCols) {
 			const newInputs = [...groupInputs];
 			let wordIdx = 0;
@@ -442,30 +450,57 @@ const CustomPuzzleModal: React.FC<
 									? steps[2].description(numCols)
 									: steps[2].description}
 							</p>
-							{Array.from({ length: numRows }).map(
-								(_, i) => (
+							{groupInputs.map((input, idx) => {
+								const wordCount = input
+									.split(/[,;\s]+/)
+									.map((w) => w.trim())
+									.filter(Boolean).length;
+								return (
 									<div
-										key={i}
-										className='share-modal-group-row'
+										key={idx}
+										style={{ marginBottom: 10 }}
 									>
-										<label className='share-modal-group-label'>{`Group ${
-											i + 1
-										}:`}</label>
+										<label
+											style={{
+												fontWeight: 500,
+												fontSize: 15,
+												marginBottom: 2,
+												display: 'block',
+											}}
+										>
+											{`Group ${
+												idx + 1
+											}: ${wordCount} / ${numCols}`}
+										</label>
 										<input
 											type='text'
-											value={groupInputs[i] || ''}
-											onChange={(e) =>
-												handleGroupChange(
-													i,
-													capitalizeWords(e.target.value)
-												)
+											value={input}
+											onChange={(e) => {
+												let val = e.target.value;
+												let words = val
+													.split(/[,;\s]+/)
+													.map((w) => w.trim())
+													.filter(Boolean);
+												if (words.length > numCols) {
+													words = words.slice(0, numCols);
+													val = words.join(', ');
+												}
+												const newInputs = [...groupInputs];
+												newInputs[idx] = val;
+												setGroupInputs(newInputs);
+											}}
+											placeholder={
+												typeof steps[2].placeholder ===
+												'function'
+													? steps[2].placeholder(numCols)
+													: steps[2].placeholder
 											}
-											placeholder={`Enter ${numCols} words, comma or space separated`}
-											className='share-modal-input share-modal-group-input'
+											className='share-modal-input'
+											style={{ marginBottom: 2 }}
 										/>
 									</div>
-								)
-							)}
+								);
+							})}
 							<div className='share-modal-group-hint'>
 								Each group must have exactly {numCols} words
 								(comma, space, dash, or semicolon
@@ -499,11 +534,19 @@ const CustomPuzzleModal: React.FC<
 								<input
 									type='text'
 									value={wildcardList}
-									onChange={(e) =>
-										setWildcardList(
-											capitalizeWords(e.target.value)
-										)
-									}
+									onChange={(e) => {
+										// Only allow up to numCols words
+										let val = e.target.value;
+										let words = val
+											.split(/[,;\s]+/)
+											.map((w) => w.trim())
+											.filter(Boolean);
+										if (words.length > numCols) {
+											words = words.slice(0, numCols);
+											val = words.join(', ');
+										}
+										setWildcardList(val);
+									}}
 									placeholder={
 										typeof steps[3].placeholder ===
 										'function'
@@ -511,7 +554,24 @@ const CustomPuzzleModal: React.FC<
 											: steps[3].placeholder
 									}
 									className='share-modal-input share-modal-wildcard-input'
+									maxLength={100}
 								/>
+							)}
+							{wildcardsToggle && (
+								<div
+									style={{
+										fontSize: 13,
+										color: '#64748b',
+										marginTop: 4,
+									}}
+								>
+									{
+										wildcardList
+											.split(/[,;\s]+/)
+											.filter(Boolean).length
+									}{' '}
+									/ {numCols} wildcards
+								</div>
 							)}
 						</div>
 					)}
@@ -523,21 +583,48 @@ const CustomPuzzleModal: React.FC<
 									? steps[4].description(numCols)
 									: steps[4].description}
 							</p>
-							<input
-								type='text'
-								value={categoryList}
-								onChange={(e) =>
-									setCategoryList(
-										capitalizeWords(e.target.value)
-									)
-								}
-								placeholder={
-									typeof steps[4].placeholder === 'function'
-										? steps[4].placeholder(numCols)
-										: steps[4].placeholder
-								}
+							<label
+								htmlFor='category-dropdown'
+								style={{
+									fontWeight: 500,
+									marginBottom: 6,
+									display: 'block',
+								}}
+							>
+								Select a category:
+							</label>
+							<select
+								id='category-dropdown'
 								className='share-modal-input'
-							/>
+								value={category}
+								onChange={(e) => {
+									setCategory(e.target.value);
+									if (e.target.value !== 'Other')
+										setCustomCategory('');
+								}}
+								style={{ marginBottom: 8 }}
+							>
+								<option value='' disabled>
+									Choose a category
+								</option>
+								{CATEGORY_OPTIONS.map((opt) => (
+									<option key={opt} value={opt}>
+										{opt}
+									</option>
+								))}
+							</select>
+							{category === 'Other' && (
+								<input
+									type='text'
+									className='share-modal-input'
+									placeholder='Enter custom category (optional)'
+									value={customCategory}
+									onChange={(e) =>
+										setCustomCategory(e.target.value)
+									}
+									style={{ marginTop: 6 }}
+								/>
+							)}
 						</div>
 					)}
 					{step === 5 && (
@@ -567,71 +654,108 @@ const CustomPuzzleModal: React.FC<
 							/>
 						</div>
 					)}
-					{step === steps.length && jsonResult && (
-						<div className='share-modal-preview'>
-							<h4 className='share-modal-preview-title'>
-								Grid Preview
-							</h4>
-							<div className='vibegrid-grid share-modal-preview-grid'>
-								{allWords.map(
-									(word: string, idx: number) => (
-										<WordButton
-											key={word + idx}
-											word={word}
-											isSelected={false}
-											isLocked={false}
-											onClick={() => {}}
-											tabIndex={-1}
-											aria-disabled={true}
-										/>
-									)
-								)}
-							</div>
-							<div className='share-modal-preview-btns'>
-								<button
-									className='vibegrid-submit'
-									onClick={handleSave}
-									type='button'
-									disabled={loading}
-								>
-									{loading ? 'Saving...' : 'Save'}
-								</button>
-								<button
-									className='vibegrid-submit'
-									onClick={handlePlayNow}
-									type='button'
-									disabled={loading}
-								>
-									{loading ? 'Loading...' : 'Play Now'}
-								</button>
-								{shareId && (
-									<button
-										className='vibegrid-submit'
-										onClick={handleCopyLink}
-										type='button'
-									>
-										Copy Link
-									</button>
-								)}
-							</div>
-							{copyStatus && (
-								<div className='share-modal-copy-status'>
-									{copyStatus}
+					{step === steps.length &&
+						jsonResult &&
+						(() => {
+							let categoryList = '';
+							let puzzleTheme = '';
+							try {
+								const parsed = JSON.parse(jsonResult);
+								categoryList = parsed.categoryList || '';
+								puzzleTheme = parsed.puzzleTheme || '';
+							} catch {}
+							return (
+								<div className='share-modal-preview'>
+									<h4 className='share-modal-preview-title'>
+										Grid Preview
+										{categoryList.trim() && (
+											<span
+												style={{
+													display: 'block',
+													fontWeight: 500,
+													color: '#2563eb',
+													fontSize: '1.08rem',
+													marginTop: 4,
+												}}
+											>
+												Categories: {categoryList}
+											</span>
+										)}
+										{puzzleTheme.trim() && (
+											<span
+												style={{
+													display: 'block',
+													fontWeight: 500,
+													color: '#f59e42',
+													fontSize: '1.08rem',
+													marginTop: 2,
+												}}
+											>
+												Theme: {puzzleTheme}
+											</span>
+										)}
+									</h4>
+									<div className='vibegrid-grid share-modal-preview-grid'>
+										{allWords.map(
+											(word: string, idx: number) => (
+												<WordButton
+													key={word + idx}
+													word={word}
+													isSelected={false}
+													isLocked={false}
+													onClick={() => {}}
+													tabIndex={-1}
+													aria-disabled={true}
+												/>
+											)
+										)}
+									</div>
+									<div className='share-modal-preview-btns'>
+										<button
+											className='vibegrid-submit'
+											onClick={handleSave}
+											type='button'
+											disabled={loading}
+										>
+											{loading ? 'Saving...' : 'Save'}
+										</button>
+										<button
+											className='vibegrid-submit'
+											onClick={handlePlayNow}
+											type='button'
+											disabled={loading}
+										>
+											{loading ? 'Loading...' : 'Play Now'}
+										</button>
+										{shareId && (
+											<button
+												className='vibegrid-submit'
+												onClick={handleCopyLink}
+												type='button'
+											>
+												Copy Link
+											</button>
+										)}
+									</div>
+									{copyStatus && (
+										<div className='share-modal-copy-status'>
+											{copyStatus}
+										</div>
+									)}
+									{saveStatus && (
+										<div
+											className={`share-modal-save-status${
+												saveStatus === 'Saved!'
+													? ' saved'
+													: ' error'
+											}`}
+										>
+											{saveStatus}
+										</div>
+									)}
 								</div>
-							)}
-							{saveStatus && (
-								<div
-									className={`share-modal-save-status${
-										saveStatus === 'Saved!'
-											? ' saved'
-											: ' error'
-									}`}
-								>
-									{saveStatus}
-								</div>
-							)}
-						</div>
-					)}
+							);
+						})()}
 					{error && (
 						<div className='custom-puzzle-error'>
 							{error}
@@ -661,7 +785,8 @@ const CustomPuzzleModal: React.FC<
 										numCols,
 										groupInputs,
 										wildcardList,
-										categoryList,
+										category,
+										customCategory,
 										puzzleTheme,
 										wildcardsToggle,
 									})
