@@ -16,6 +16,7 @@ import {
 import { WordButton } from './Buttons';
 import FeedbackBanner from './FeedbackBanner';
 import { Modal } from './Modal';
+import InMatchChatWindow from './InMatchChatWindow';
 
 // Dummy puzzle for now; replace with actual puzzle from context/server
 const demoPuzzle = {
@@ -62,12 +63,15 @@ const VSMultiplayerGame: React.FC = () => {
 	const [endTime, setEndTime] = useState<number | null>(
 		null
 	);
+	const [showInMatchChat, setShowInMatchChat] =
+		useState(false);
 
 	// TODO: Replace with puzzle from server/context
 	const puzzle = demoPuzzle;
-	const gridCols = puzzle.size?.cols || 4;
-	const groupSize = puzzle.groups?.[0]?.length || 4;
-	const groupCount = puzzle.groups?.length || 4;
+
+	// In-match chat integration
+	const multiplayerOpponentId =
+		multiplayer.opponentUserId || '';
 
 	// Shuffle words on mount
 	useEffect(() => {
@@ -339,6 +343,19 @@ const VSMultiplayerGame: React.FC = () => {
 					</button>
 				</div>
 			</Modal>
+			<button
+				className='inmatch-chat-toggle-btn'
+				onClick={() => setShowInMatchChat((v) => !v)}
+			>
+				💬 Match Chat
+			</button>
+			{showInMatchChat && (
+				<InMatchChatWindow
+					matchId={multiplayer.roomCode || ''}
+					friendId={multiplayerOpponentId}
+					onClose={() => setShowInMatchChat(false)}
+				/>
+			)}
 		</div>
 	);
 };

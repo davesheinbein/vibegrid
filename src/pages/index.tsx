@@ -18,6 +18,7 @@ import {
 	faMeta,
 } from '@fortawesome/free-brands-svg-icons';
 import StartupPage from '@components/ui/StartupPage';
+import FriendsSidebar from '@components/ui/FriendsSidebar';
 
 export default function Home() {
 	const router = useRouter();
@@ -30,6 +31,7 @@ export default function Home() {
 
 	return (
 		<>
+			<FriendsSidebar />
 			<StartupPage
 				onStartDaily={() => router.push('/daily')}
 				onStartCustom={() => setShowCustomModal(true)}

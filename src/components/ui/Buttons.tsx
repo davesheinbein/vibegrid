@@ -229,3 +229,34 @@ export const CopyLinkButton: React.FC = () => {
 		</div>
 	);
 };
+
+export const FriendsToggleButton: React.FC<{
+	active: boolean;
+	onClick: () => void;
+}> = ({ active, onClick }) => (
+	<button
+		onClick={onClick}
+		className={`friends-toggle-btn${
+			active ? ' active' : ''
+		}`}
+		aria-label={
+			active
+				? 'Close friends sidebar'
+				: 'Open friends sidebar'
+		}
+		style={{
+			position: 'absolute',
+			top: 24,
+			right: active ? 320 : 24,
+		}}
+	>
+		<span className='friends-toggle-glow' />
+		<span
+			className='friends-toggle-icon'
+			role='img'
+			aria-label='Friends'
+		>
+			👥
+		</span>
+	</button>
+);
