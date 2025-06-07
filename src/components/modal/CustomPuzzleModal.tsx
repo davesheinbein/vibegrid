@@ -27,7 +27,7 @@ const steps = [
 			numRows > 1 && numCols > 1,
 	},
 	{
-		title: 'Groups & Words',
+		title: 'Groups of Words',
 		description: (numCols: number) =>
 			`Define your groups (one group per line, ${numCols} words per group, comma or space separated). The word list will be inferred automatically.`,
 		field: 'groupInputs',
@@ -477,6 +477,29 @@ const CustomPuzzleModal: React.FC<
 											value={input}
 											onChange={(e) => {
 												let val = e.target.value;
+												// If the input contains newlines, treat as bulk paste for all group fields
+												if (val.includes('\n')) {
+													const lines = val
+														.split(/\r?\n/)
+														.map((l) => l.trim())
+														.filter(Boolean);
+													const newInputs = [
+														...groupInputs,
+													];
+													for (
+														let i = 0;
+														i <
+														Math.min(
+															lines.length,
+															groupInputs.length
+														);
+														i++
+													) {
+														newInputs[i] = lines[i];
+													}
+													setGroupInputs(newInputs);
+													return;
+												}
 												let words = val
 													.split(/[,;\s]+/)
 													.map((w) => w.trim())
@@ -501,12 +524,6 @@ const CustomPuzzleModal: React.FC<
 									</div>
 								);
 							})}
-							<div className='share-modal-group-hint'>
-								Each group must have exactly {numCols} words
-								(comma, space, dash, or semicolon
-								separated). All words must be unique and
-								used exactly once.
-							</div>
 						</div>
 					)}
 					{step === 3 && (
