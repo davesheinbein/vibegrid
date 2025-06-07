@@ -25,11 +25,25 @@ export interface FriendRequest {
 export interface FriendMessage {
 	id: string;
 	senderId: string;
-	receiverId: string;
+	receiverId?: string; // For DMs
+	groupId?: string; // For group messages
 	message: string;
 	sentAt: string;
 	expiresAt: string;
 	system?: boolean;
+}
+export interface Group {
+	id: string;
+	name: string;
+	memberIds: string[];
+	createdAt: string;
+}
+export interface Notification {
+	id: string;
+	type: 'message' | 'friend_request' | 'achievement';
+	content: string;
+	createdAt: string;
+	read?: boolean;
 }
 
 interface FriendsContextType {
@@ -37,20 +51,25 @@ interface FriendsContextType {
 	requests: FriendRequest[];
 	recentMatches: Friend[];
 	onlineFriends: string[];
-	unreadMessages: Record<string, number>;
-	chatHistory: Record<string, FriendMessage[]>;
+	unreadMessages: Record<string, number>; // chatId: count
+	chatHistory: Record<string, FriendMessage[]>; // chatId: messages
+	groups: Group[];
+	notifications: Notification[];
 	sendFriendRequest: (username: string) => void;
 	acceptFriendRequest: (requestId: string) => void;
 	declineFriendRequest: (requestId: string) => void;
 	removeFriend: (friendId: string) => void;
 	sendChallenge: (friendId: string) => void;
 	acceptChallenge: (challengeId: string) => void;
-	sendFriendMessage: (
-		friendId: string,
-		message: string
-	) => void;
-	loadChatHistory: (friendId: string) => void;
-	clearUnread: (friendId: string) => void;
+	sendMessage: (chatId: string, message: string) => void;
+	loadChatHistory: (chatId: string) => void;
+	clearUnread: (chatId: string) => void;
+	createGroup: (
+		name: string,
+		memberIds: string[]
+	) => string;
+	addNotification: (notification: Notification) => void;
+	markNotificationRead: (id: string) => void;
 }
 
 const FriendsContext = createContext<
@@ -85,6 +104,11 @@ export const FriendsProvider: React.FC<{
 	const [chatHistory, setChatHistory] = useState<
 		Record<string, FriendMessage[]>
 	>({});
+	const [groups, setGroups] = useState<Group[]>([]);
+	const [notifications, setNotifications] = useState<
+		Notification[]
+	>([]);
+
 	const socketRef = useRef<Socket | null>(null);
 
 	useEffect(() => {
@@ -161,22 +185,99 @@ export const FriendsProvider: React.FC<{
 			challengeId,
 		});
 	};
-	const sendFriendMessage = (
-		friendId: string,
+	const sendMessage = (chatId: string, message: string) => {
+		// If chatId is a groupId, send to group; if userId, send DM
+		// Implementation depends on backend/socket
+		// Placeholder: just add to chatHistory
+		const isGroup = groups.some((g) => g.id === chatId);
+		const msg: FriendMessage = {
+			id: Math.random().toString(36).slice(2),
+			senderId: 'me', // Replace with actual userId
+			groupId: isGroup ? chatId : undefined,
+			receiverId: isGroup ? undefined : chatId,
+			message,
+			sentAt: new Date().toISOString(),
+			expiresAt: '',
+		};
+		setChatHistory((prev) => ({
+			...prev,
+			[chatId]: [...(prev[chatId] || []), msg],
+		}));
+	};
+	const loadChatHistory = (chatId: string) => {
+		socketRef.current?.emit('loadChatHistory', {
+			chatId,
+		});
+	};
+	const clearUnread = (chatId: string) => {
+		setUnreadMessages((u) => ({ ...u, [chatId]: 0 }));
+	};
+	const createGroup = (
+		name: string,
+		memberIds: string[]
+	) => {
+		const groupId = Math.random().toString(36).slice(2);
+		const group: Group = {
+			id: groupId,
+			name,
+			memberIds,
+			createdAt: new Date().toISOString(),
+		};
+		setGroups((prev) => [...prev, group]);
+		return groupId;
+	};
+
+	const addNotification = (notification: Notification) => {
+		setNotifications((prev) => [notification, ...prev]);
+	};
+
+	const markNotificationRead = (id: string) => {
+		setNotifications((prev) =>
+			prev.map((n) =>
+				n.id === id ? { ...n, read: true } : n
+			)
+		);
+	};
+
+	// --- Notification wrappers ---
+	// Wrap sendFriendRequest to add notification
+	const originalSendFriendRequest = sendFriendRequest;
+	const sendFriendRequestWithNotif = (username: string) => {
+		originalSendFriendRequest(username);
+		addNotification({
+			id: Math.random().toString(36).slice(2),
+			type: 'friend_request',
+			content: `Friend request sent to ${username}`,
+			createdAt: new Date().toISOString(),
+		});
+	};
+
+	// Wrap sendMessage to add notification
+	const originalSendMessage = sendMessage;
+	const sendMessageWithNotif = (
+		chatId: string,
 		message: string
 	) => {
-		socketRef.current?.emit('friendMessage', {
-			friendId,
-			message,
+		originalSendMessage(chatId, message);
+		const isGroup = groups.some((g) => g.id === chatId);
+		addNotification({
+			id: Math.random().toString(36).slice(2),
+			type: 'message',
+			content: `New message sent${
+				isGroup ? ' to group' : ''
+			}`,
+			createdAt: new Date().toISOString(),
 		});
 	};
-	const loadChatHistory = (friendId: string) => {
-		socketRef.current?.emit('loadChatHistory', {
-			friendId,
+
+	// Example: trigger notification on achievement (stub)
+	const unlockAchievement = (title: string) => {
+		addNotification({
+			id: Math.random().toString(36).slice(2),
+			type: 'achievement',
+			content: `Achievement unlocked: ${title}`,
+			createdAt: new Date().toISOString(),
 		});
-	};
-	const clearUnread = (friendId: string) => {
-		setUnreadMessages((u) => ({ ...u, [friendId]: 0 }));
 	};
 
 	return (
@@ -188,15 +289,20 @@ export const FriendsProvider: React.FC<{
 				onlineFriends,
 				unreadMessages,
 				chatHistory,
-				sendFriendRequest,
+				groups,
+				notifications,
+				addNotification,
+				markNotificationRead,
+				sendFriendRequest: sendFriendRequestWithNotif,
 				acceptFriendRequest,
 				declineFriendRequest,
 				removeFriend,
 				sendChallenge,
 				acceptChallenge,
-				sendFriendMessage,
+				sendMessage: sendMessageWithNotif,
 				loadChatHistory,
 				clearUnread,
+				createGroup,
 			}}
 		>
 			{children}

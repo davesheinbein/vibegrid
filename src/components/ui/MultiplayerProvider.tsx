@@ -7,6 +7,14 @@ import React, {
 } from 'react';
 import { io, Socket } from 'socket.io-client';
 
+interface Notification {
+	id: string;
+	type: 'message' | 'friend_request' | 'achievement';
+	content: string;
+	createdAt: string;
+	read?: boolean;
+}
+
 interface MultiplayerContextType {
 	socket: Socket | null;
 	roomCode: string | null;
@@ -14,11 +22,14 @@ interface MultiplayerContextType {
 	isConnected: boolean;
 	matchStarted: boolean;
 	opponentJoined: boolean;
+	notifications: Notification[];
 	setRoomCode: (code: string | null) => void;
 	createRoom: (roomCode: string) => void;
 	joinRoom: (roomCode: string) => void;
 	leaveRoom: () => void;
 	startMatch: () => void;
+	addNotification: (notification: Notification) => void;
+	markNotificationRead: (id: string) => void;
 	// Add more multiplayer state/actions as needed
 }
 
@@ -47,73 +58,142 @@ export const MultiplayerProvider: React.FC<{
 	const [matchStarted, setMatchStarted] = useState(false);
 	const [opponentJoined, setOpponentJoined] =
 		useState(false);
-	const socketRef = useRef<Socket | null>(null);
+	const [notifications, setNotifications] = useState<
+		Notification[]
+	>([]);
+	const notificationIdRef = useRef(0);
 
-	useEffect(() => {
-		const s = io(
-			process.env.NEXT_PUBLIC_SOCKET_URL ||
-				'http://localhost:4000'
+	// --- Notification helpers ---
+	const addNotification = (notification: Notification) => {
+		setNotifications((prev) => [notification, ...prev]);
+		// Push notification (browser)
+		if (
+			window.Notification &&
+			Notification.permission === 'granted'
+		) {
+			new Notification(notification.content, {
+				icon: '/logo.svg',
+				badge: '/logo.svg',
+				body:
+					notification.type === 'achievement'
+						? 'Achievement unlocked!'
+						: undefined,
+			});
+		}
+	};
+
+	const markNotificationRead = (id: string) => {
+		setNotifications((prev) =>
+			prev.map((n) =>
+				n.id === id ? { ...n, read: true } : n
+			)
 		);
-		setSocket(s);
-		socketRef.current = s;
-		s.on('connect', () => setIsConnected(true));
-		s.on('disconnect', () => setIsConnected(false));
-		s.on('roomJoined', ({ roomCode, isHost }) => {
-			setRoomCode(roomCode);
-			setIsHost(isHost);
-		});
-		s.on('opponentJoined', () => setOpponentJoined(true));
-		s.on('startMatch', () => setMatchStarted(true));
-		s.on('leftRoom', () => {
+	};
+
+	// --- Socket setup ---
+	useEffect(() => {
+		if (!socket) {
+			const s = io();
+			setSocket(s);
+			setIsConnected(true);
+			// Listen for multiplayer events
+			s.on('room_joined', () => setOpponentJoined(true));
+			s.on('match_started', () => setMatchStarted(true));
+			// Listen for notifications
+			s.on('new_message', (msg: { content: string }) => {
+				addNotification({
+					id: `notif-${Date.now()}-${notificationIdRef.current++}`,
+					type: 'message',
+					content: msg.content,
+					createdAt: new Date().toISOString(),
+				});
+			});
+			s.on('friend_request', (data: { from: string }) => {
+				addNotification({
+					id: `notif-${Date.now()}-${notificationIdRef.current++}`,
+					type: 'friend_request',
+					content: `Friend request from ${data.from}`,
+					createdAt: new Date().toISOString(),
+				});
+			});
+			s.on(
+				'achievement',
+				(data: { achievement: string }) => {
+					addNotification({
+						id: `notif-${Date.now()}-${notificationIdRef.current++}`,
+						type: 'achievement',
+						content: `Achievement unlocked: ${data.achievement}`,
+						createdAt: new Date().toISOString(),
+					});
+				}
+			);
+			return () => {
+				s.disconnect();
+			};
+		}
+	}, [socket]);
+
+	// Request push notification permission on mount
+	useEffect(() => {
+		if (
+			typeof window !== 'undefined' &&
+			'Notification' in window
+		) {
+			if (Notification.permission === 'default') {
+				Notification.requestPermission();
+			}
+		}
+	}, []);
+
+	// --- Multiplayer actions (stubs, expand as needed) ---
+	const createRoom = (code: string) => {
+		if (socket) {
+			socket.emit('create_room', { code });
+			setRoomCode(code);
+			setIsHost(true);
+		}
+	};
+	const joinRoom = (code: string) => {
+		if (socket) {
+			socket.emit('join_room', { code });
+			setRoomCode(code);
+			setIsHost(false);
+		}
+	};
+	const leaveRoom = () => {
+		if (socket && roomCode) {
+			socket.emit('leave_room', { code: roomCode });
 			setRoomCode(null);
 			setIsHost(false);
 			setOpponentJoined(false);
-			setMatchStarted(false);
-		});
-		return () => {
-			s.disconnect();
-		};
-	}, []);
-
-	const createRoom = (code: string) => {
-		socketRef.current?.emit('createRoom', {
-			roomCode: code,
-		});
-		setIsHost(true);
-		setRoomCode(code);
-	};
-	const joinRoom = (code: string) => {
-		socketRef.current?.emit('joinRoom', { roomCode: code });
-		setIsHost(false);
-		setRoomCode(code);
-	};
-	const leaveRoom = () => {
-		socketRef.current?.emit('leaveRoom');
-		setRoomCode(null);
-		setIsHost(false);
-		setOpponentJoined(false);
-		setMatchStarted(false);
+		}
 	};
 	const startMatch = () => {
-		socketRef.current?.emit('startMatch', { roomCode });
+		if (socket && roomCode) {
+			socket.emit('start_match', { code: roomCode });
+			setMatchStarted(true);
+		}
+	};
+
+	const value: MultiplayerContextType = {
+		socket,
+		roomCode,
+		isHost,
+		isConnected,
+		matchStarted,
+		opponentJoined,
+		notifications,
+		setRoomCode,
+		createRoom,
+		joinRoom,
+		leaveRoom,
+		startMatch,
+		addNotification,
+		markNotificationRead,
 	};
 
 	return (
-		<MultiplayerContext.Provider
-			value={{
-				socket,
-				roomCode,
-				isHost,
-				isConnected,
-				matchStarted,
-				opponentJoined,
-				setRoomCode,
-				createRoom,
-				joinRoom,
-				leaveRoom,
-				startMatch,
-			}}
-		>
+		<MultiplayerContext.Provider value={value}>
 			{children}
 		</MultiplayerContext.Provider>
 	);

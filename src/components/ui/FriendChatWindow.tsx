@@ -2,84 +2,99 @@ import React, { useEffect, useRef, useState } from 'react';
 import { useFriends } from './FriendsProvider';
 
 interface FriendChatWindowProps {
-	friendId: string;
+	chatId: string; // can be userId (DM) or groupId (group chat)
 	onClose: () => void;
 }
 
 const FriendChatWindow: React.FC<FriendChatWindowProps> = ({
-	friendId,
+	chatId,
 	onClose,
 }) => {
 	const {
 		chatHistory,
-		sendFriendMessage,
+		sendMessage,
 		loadChatHistory,
 		clearUnread,
 		friends,
+		groups,
 	} = useFriends();
 	const [message, setMessage] = useState('');
 	const messagesEndRef = useRef<HTMLDivElement>(null);
-	const friend = friends.find((f) => f.id === friendId);
+
+	const group = groups.find((g) => g.id === chatId);
+	const isGroup = !!group;
+	const friend = !isGroup
+		? friends.find((f) => f.id === chatId)
+		: undefined;
 
 	useEffect(() => {
-		loadChatHistory(friendId);
-		clearUnread(friendId);
-	}, [friendId]);
+		loadChatHistory(chatId);
+		clearUnread(chatId);
+	}, [chatId]);
 
 	useEffect(() => {
 		messagesEndRef.current?.scrollIntoView({
 			behavior: 'smooth',
 		});
-	}, [chatHistory[friendId]]);
+	}, [chatHistory[chatId]]);
 
 	const handleSend = (e: React.FormEvent) => {
 		e.preventDefault();
 		if (message.trim()) {
-			sendFriendMessage(friendId, message);
+			sendMessage(chatId, message);
 			setMessage('');
 		}
 	};
 
-	const messages = chatHistory[friendId] || [];
+	const messages = chatHistory[chatId] || [];
 
 	return (
 		<div className='friend-chat-window floating-chat-dock'>
 			<div className='friend-chat-header'>
-				<div className='friend-chat-avatar'>
-					<span className='avatar-circle'>
-						{friend?.username[0]?.toUpperCase() || '?'}
-					</span>
-					<span
-						className={`status-dot ${
-							friend?.online ? 'online' : 'offline'
-						}`}
-					></span>
-				</div>
-				<div className='friend-chat-title'>
-					{friend?.username}
-				</div>
+				{isGroup ? (
+					<div className='friend-chat-group-header'>
+						<span className='friend-chat-group-name'>
+							{group?.name}
+						</span>
+						<span className='friend-chat-group-members'>
+							{group?.memberIds
+								.map(
+									(id) =>
+										friends.find((f) => f.id === id)
+											?.username || id
+								)
+								.join(', ')}
+						</span>
+					</div>
+				) : (
+					<div className='friend-chat-avatar'>
+						{friend?.username}
+					</div>
+				)}
 				<button
 					className='friend-chat-close-btn'
 					onClick={onClose}
-					title='Close chat'
 				>
-					✖
+					×
 				</button>
 			</div>
 			<div className='friend-chat-messages'>
-				{messages.map((msg, i) => (
+				{messages.map((msg) => (
 					<div
-						key={msg.id || i}
+						key={msg.id}
 						className={`friend-chat-message${
-							msg.senderId === friendId
-								? ' inbound'
-								: ' outbound'
-						}${msg.system ? ' system' : ''}`}
+							msg.senderId === 'me' ? ' self' : ''
+						}`}
 					>
+						<span className='friend-chat-message-sender'>
+							{msg.senderId === 'me'
+								? 'You'
+								: friends.find((f) => f.id === msg.senderId)
+										?.username || msg.senderId}
+						</span>
 						<span className='friend-chat-message-text'>
 							{msg.message}
 						</span>
-						{/* TODO: Add emoji reactions, expiry badge, fade-out, etc. */}
 					</div>
 				))}
 				<div ref={messagesEndRef} />
@@ -88,28 +103,24 @@ const FriendChatWindow: React.FC<FriendChatWindowProps> = ({
 				className='friend-chat-input-row'
 				onSubmit={handleSend}
 			>
-				{/* Emoji picker placeholder */}
-				{/* <button type="button" className="friend-chat-emoji-btn">😊</button> */}
 				<input
 					type='text'
 					value={message}
 					onChange={(e) => setMessage(e.target.value)}
-					placeholder='Type a message...'
+					placeholder={
+						isGroup
+							? 'Message group...'
+							: `Message ${friend?.username || ''}...`
+					}
 					className='friend-chat-input'
-					autoComplete='off'
 				/>
 				<button
 					type='submit'
 					className='friend-chat-send-btn'
-					disabled={!message.trim()}
 				>
 					Send
 				</button>
 			</form>
-			<div className='friend-chat-expiry-note'>
-				Messages expire after 24 hours. Expired chats show a
-				system message.
-			</div>
 		</div>
 	);
 };
