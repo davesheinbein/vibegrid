@@ -658,7 +658,6 @@ body {
 .share-modal,
 .modal-stats-modal {
 	background: rgba(255, 255, 255, 0.18);
-	box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.18);
 	backdrop-filter: blur(16px) saturate(180%);
 	-webkit-backdrop-filter: blur(16px) saturate(180%);
 	border-radius: 18px;
@@ -674,7 +673,7 @@ button,
 	border-radius: 12px;
 	font-size: 1rem;
 	font-weight: 600;
-	padding: 0.6em 1.4em;
+	padding: 10px;
 	background: linear-gradient(
 		90deg,
 		#fbbf24 0%,
@@ -762,7 +761,6 @@ button:active,
 .endgame-modal .modal-content {
 	border-radius: 18px;
 	background: rgba(255, 255, 255, 0.92);
-	box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.18);
 }
 
 // --- Font and Color Consistency ---
