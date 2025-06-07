@@ -403,41 +403,42 @@
 					border-color: #fff2;
 				}
 			}
-
-			.share-link-text {
-				display: inline-block;
-				font-weight: 800;
-				font-size: 1rem;
-				padding: 0.2em 1.1em;
-				border-radius: 999px;
-				background: #fff1;
-				color: #fff;
-				text-shadow: 0 2px 8px #0002;
-
-				&.share-link--x {
-					font-family: 'Arial Black', Arial, sans-serif;
-				}
-				&.share-link--meta {
-					font-family: 'Segoe UI', Arial, sans-serif;
-				}
-				&.share-link--reddit {
-					font-family: 'Verdana', Arial, sans-serif;
-				}
-				&.share-link--linkedin {
-					font-family: 'Segoe UI', Arial, sans-serif;
-				}
-				&.share-link--tiktok {
-					font-family: 'Montserrat', Arial, sans-serif;
-				}
-				&.share-link--instagram {
-					font-family: 'Comic Sans MS', 'Comic Sans',
-						cursive, Arial, sans-serif;
-				}
-				&.share-link--copy {
-					font-family: 'Arial Black', Arial, sans-serif;
-				}
-			}
 		}
+	}
+}
+
+.share-link-text {
+	display: inline-block;
+	font-weight: 800;
+	font-size: 1rem;
+	padding: 0.2em 1.1em;
+	border-radius: 999px;
+	background: #fff1;
+	color: #fff;
+	text-shadow: 0 2px 8px #0002;
+	font-family: 'Arial Black, Arial, sans-serif';
+
+	&.share-link--x {
+		font-family: 'Arial Black', Arial, sans-serif;
+	}
+	&.share-link--meta {
+		font-family: 'Segoe UI', Arial, sans-serif;
+	}
+	&.share-link--reddit {
+		font-family: 'Verdana', Arial, sans-serif;
+	}
+	&.share-link--linkedin {
+		font-family: 'Segoe UI', Arial, sans-serif;
+	}
+	&.share-link--tiktok {
+		font-family: 'Montserrat', Arial, sans-serif;
+	}
+	&.share-link--instagram {
+		font-family: 'Comic Sans MS', 'Comic Sans', cursive,
+			Arial, sans-serif;
+	}
+	&.share-link--copy {
+		font-family: 'Arial Black', Arial, sans-serif;
 	}
 }
 .share-link--copy {
@@ -490,4 +491,52 @@
 			border-color: #fff2;
 		}
 	}
+}
+
+.stats-modal-signin-body {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	min-height: 340px;
+	background: none;
+}
+
+.stats-modal-signin-content {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	width: 100%;
+	background: none;
+}
+
+.stats-modal-lottie-container {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	width: 100%;
+}
+
+.stats-modal-signin-title {
+	font-size: 1.5rem;
+	font-weight: 700;
+	margin: 0.5rem 0 0.2rem 0;
+	text-align: center;
+	color: #2563eb;
+}
+
+.stats-modal-signin-message {
+	font-size: 1.08rem;
+	color: #64748b;
+	text-align: center;
+	margin: 0.2rem 0 0 0;
+}
+
+.stats-modal-signin-icon {
+	width: 300;
+	height: 300;
+	display: flex;
+	justify-content: center;
+	align-items: center;
+	margin: 0 auto;
 }

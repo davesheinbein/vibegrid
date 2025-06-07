@@ -212,14 +212,7 @@ export const CopyLinkButton: React.FC = () => {
 						</g>
 					</svg>
 				</span>
-				<span
-					className='share-link-text'
-					style={{
-						fontFamily: 'Arial Black, Arial, sans-serif',
-					}}
-				>
-					Copy URL
-				</span>
+				<span className='share-link-text'>Copy URL</span>
 			</a>
 			{copied && (
 				<span

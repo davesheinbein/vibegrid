@@ -1,6 +1,7 @@
 import React from 'react';
+import { SubmitButton } from '../ui/Buttons';
 import { Modal } from '../ui/Modal';
-import { CloseButton, SubmitButton } from '../ui/Buttons';
+import { DotLottieReact } from '@lottiefiles/dotlottie-react';
 
 interface StatisticsModalProps {
 	open: boolean;
@@ -32,18 +33,25 @@ const StatisticsModal: React.FC<StatisticsModalProps> = ({
 	if (!user) {
 		content = (
 			<div
-				className='xwd__modal--body modal-stats-body animate-opening'
+				className='xwd__modal--body modal-stats-body animate-opening stats-modal-signin-body'
 				tabIndex={0}
 			>
-				<article className='xwd__modal--content modal-stats-content'>
-					<h2 className='modal-system-header modal-stats-title'>
-						Statistics
+				<article className='xwd__modal--content modal-stats-content stats-modal-signin-content'>
+					<div className='stats-modal-lottie-container'>
+						<DotLottieReact
+							src='https://lottie.host/8594b998-44b5-4401-bf10-cba5b54c9716/KUen1nqUtU.lottie'
+							loop
+							autoplay
+							className='stats-modal-signin-icon'
+						/>
+					</div>
+					<h2 className='stats-modal-signin-title'>
+						Sign in to view your stats
 					</h2>
-					<div className='Stats-module_regiwall_abstract_stats__BkBe5 dark_regiwall_abstract_stats modal-stats-abstract'></div>
-					<div
-						className='Stats-module_regiwall_message__pbJmt modal-stats-message'
-						data-testid='regiwall_message'
-					></div>
+					<p className='modal-stats-message stats-modal-signin-message'>
+						Sign in to see your statistics and leaderboard
+						placement.
+					</p>
 				</article>
 			</div>
 		);
@@ -86,7 +94,7 @@ const StatisticsModal: React.FC<StatisticsModalProps> = ({
 								Rank
 							</th>
 							<th className='modal-stats-leaderboard-th'>
-								User
+								Name
 							</th>
 							<th className='modal-stats-leaderboard-th'>
 								Score
@@ -94,27 +102,23 @@ const StatisticsModal: React.FC<StatisticsModalProps> = ({
 						</tr>
 					</thead>
 					<tbody>
-						<tr className='modal-stats-leaderboard-row modal-stats-leaderboard-row--you'>
+						<tr className='modal-stats-leaderboard-row'>
 							<td>1</td>
-							<td>Jane Doe (You)</td>
-							<td>82</td>
+							<td>Alice</td>
+							<td>98</td>
 						</tr>
 						<tr className='modal-stats-leaderboard-row'>
 							<td>2</td>
-							<td>PlayerX</td>
-							<td>80</td>
+							<td>Bob</td>
+							<td>91</td>
 						</tr>
-						<tr className='modal-stats-leaderboard-row'>
+						<tr className='modal-stats-leaderboard-row modal-stats-leaderboard-row--you'>
 							<td>3</td>
-							<td>PlayerY</td>
-							<td>78</td>
+							<td>{user.name || 'You'}</td>
+							<td>82</td>
 						</tr>
 					</tbody>
 				</table>
-				<p className='modal-stats-note'>
-					(Leaderboard and stats are simulated. Backend
-					integration coming soon.)
-				</p>
 			</div>
 		);
 	}

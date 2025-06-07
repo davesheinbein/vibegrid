@@ -490,7 +490,7 @@ export default function Daily(props: DailyPageProps) {
 					</div>
 					{burnSuspect && (
 						<div className='burn-status-bar'>
-							🔥 Burn active: <b>{burnSuspect}</b>
+							🔥 Burn active 🔥 <b>{burnSuspect}</b>
 							<button
 								className='burn-btn'
 								onClick={confirmBurn}
