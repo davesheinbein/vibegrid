@@ -199,6 +199,12 @@ export default function Daily(props: DailyPageProps) {
 		}
 	};
 
+	const handleWordRightClick = (word: string, e: React.MouseEvent) => {
+		e.preventDefault();
+		if (lockedWords.includes(word) || gameOver) return;
+		setBurnSuspect((prev) => (prev === word ? null : word));
+	};
+
 	const handleSubmit = () => {
 		if (gameOver) return;
 		if (selectedWords.length !== groupSize) {
@@ -458,6 +464,7 @@ export default function Daily(props: DailyPageProps) {
 								isSelected={selectedWords.includes(word)}
 								isLocked={lockedWords.includes(word)}
 								onClick={() => handleWordTap(word)}
+								onContextMenu={(e: React.MouseEvent) => handleWordRightClick(word, e)}
 								burnSuspect={burnSuspect === word}
 							/>
 						))}

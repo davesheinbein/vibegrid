@@ -219,7 +219,7 @@ router.get('/:id/comments', async (req, res) => {
 	}
 });
 
-// GET /api/puzzles/top - Get top-rated puzzles (community)
+// GET /api/puzzles/top - Get top-rated community puzzles
 router.get('/top', async (req, res) => {
 	try {
 		const puzzles = await prisma.puzzle.findMany({
@@ -251,6 +251,40 @@ router.get('/featured', async (req, res) => {
 		res
 			.status(500)
 			.json({ error: 'Failed to fetch featured puzzles' });
+	}
+});
+
+// POST /api/puzzles - Create a new puzzle (community submission)
+router.post('/', async (req, res, next) => {
+	try {
+		const {
+			title,
+			authorId,
+			groups,
+			wildcards,
+			isDaily,
+			date,
+		} = req.body;
+		const puzzle = await prisma.puzzle.create({
+			data: {
+				title,
+				authorId,
+				groups,
+				wildcards,
+				isDaily,
+				date,
+			},
+		});
+		if (req.body.userId) {
+			await checkAchievements({
+				userId: req.body.userId,
+				event: 'puzzle_created',
+				eventData: { puzzleId: puzzle.id },
+			});
+		}
+		res.json(puzzle);
+	} catch (err) {
+		next(err);
 	}
 });
 

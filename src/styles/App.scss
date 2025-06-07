@@ -859,23 +859,6 @@ body.dark-mode,
 	}
 }
 
-@keyframes vibegrid-word-fly-to-solved {
-	0% {
-		opacity: 1;
-		transform: scale(1) translateY(0);
-	}
-
-	60% {
-		opacity: 1;
-		transform: scale(1.15) translateY(-18px);
-	}
-
-	100% {
-		opacity: 0;
-		transform: scale(0.7) translateY(-60px);
-	}
-}
-
 .vibegrid-solved-category {
 	font-size: 1.35rem;
 	font-weight: 800;
@@ -1485,6 +1468,26 @@ body.dark-mode,
 	pointer-events: none;
 	z-index: 1000;
 
+	.word-btn.selected {
+		background: linear-gradient(
+			90deg,
+			#fbbf24 0%,
+			#38bdf8 100%
+		);
+		color: #1e293b;
+		border-color: #fde047;
+		box-shadow: 0 0 0 3px #fde04755;
+		transform: scale(1.04);
+		z-index: 2;
+	}
+
+	body.dark-mode .word-btn.selected {
+		background: #fbbf24;
+		color: #1e293b;
+		border-color: #fde047;
+		box-shadow: 0 0 0 3px #fde04755;
+	}
+
 	&.open {
 		transform: translateX(0);
 		pointer-events: auto;
@@ -1493,7 +1496,6 @@ body.dark-mode,
 
 .friends-toggle-btn {
 	position: absolute;
-	// left: -54px;
 	right: 0;
 	top: 32px;
 	width: 48px;
@@ -1509,6 +1511,7 @@ body.dark-mode,
 	outline: none;
 	z-index: 2;
 	transition: box-shadow 0.18s, transform 0.13s;
+
 	.friends-toggle-glow {
 		position: absolute;
 		width: 60px;

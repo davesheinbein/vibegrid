@@ -28,7 +28,7 @@ router.get('/:userId', async (req, res) => {
 
 // POST /api/progression/:userId/xp - Award XP to user (and handle level up)
 router.post('/:userId/xp', async (req, res) => {
-	const { amount } = req.body;
+	const { amount, event } = req.body;
 	if (typeof amount !== 'number' || amount <= 0)
 		return res
 			.status(400)
@@ -38,20 +38,28 @@ router.post('/:userId/xp', async (req, res) => {
 			where: { id: req.params.userId },
 			data: { xp: { increment: amount } },
 		});
-		// Level up logic (example: every 1000 XP = 1 level)
 		const newLevel = Math.floor(user.xp / 1000) + 1;
+		let leveledUp = false;
 		if (newLevel > user.level) {
 			await prisma.user.update({
 				where: { id: user.id },
 				data: { level: newLevel },
 			});
+			leveledUp = true;
 			await checkAchievements({
 				userId: user.id,
 				event: 'level_up',
 				eventData: { level: newLevel },
 			});
 		}
-		res.json({ xp: user.xp, level: newLevel });
+		if (event) {
+			await checkAchievements({
+				userId: user.id,
+				event,
+				eventData: { amount },
+			});
+		}
+		res.json({ xp: user.xp, level: newLevel, leveledUp });
 	} catch (err) {
 		res.status(500).json({ error: 'Failed to award XP' });
 	}
@@ -65,6 +73,11 @@ router.post('/:userId/unlock-theme', async (req, res) => {
 	try {
 		const unlocked = await prisma.userProfileTheme.create({
 			data: { userId: req.params.userId, theme },
+		});
+		await checkAchievements({
+			userId: req.params.userId,
+			event: 'theme_unlocked',
+			eventData: { theme },
 		});
 		res.json(unlocked);
 	} catch (err) {
@@ -82,6 +95,11 @@ router.post('/:userId/unlock-badge', async (req, res) => {
 	try {
 		const unlocked = await prisma.userProfileBadge.create({
 			data: { userId: req.params.userId, badge },
+		});
+		await checkAchievements({
+			userId: req.params.userId,
+			event: 'badge_unlocked',
+			eventData: { badge },
 		});
 		res.json(unlocked);
 	} catch (err) {

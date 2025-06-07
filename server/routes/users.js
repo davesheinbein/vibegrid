@@ -101,11 +101,11 @@ router.get('/:id/tutorial', async (req, res) => {
 // POST /api/users/:id/tutorial - Mark tutorial as completed
 router.post('/:id/tutorial', async (req, res) => {
 	try {
-		const user = await prisma.user.update({
+		await prisma.user.update({
 			where: { id: req.params.id },
 			data: { tutorialCompleted: true },
 		});
-		res.json({ tutorialCompleted: user.tutorialCompleted });
+		res.json({ ok: true });
 	} catch (err) {
 		res
 			.status(500)
