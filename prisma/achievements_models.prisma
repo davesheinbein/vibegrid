@@ -1,0 +1,30 @@
+// Added Achievement, UserAchievement, and AchievementReward models for the Achievements system
+model Achievement {
+  id          String   @id @default(uuid())
+  label       String   @unique
+  description String
+  icon        String?
+  criteria    Json
+  createdAt   DateTime @default(now())
+  userAchievements UserAchievement[]
+  rewards     AchievementReward[]
+}
+
+model UserAchievement {
+  id            String   @id @default(uuid())
+  userId        String
+  achievementId String
+  unlockedAt    DateTime @default(now())
+  user          User     @relation(fields: [userId], references: [id])
+  achievement   Achievement @relation(fields: [achievementId], references: [id])
+
+  @@unique([userId, achievementId])
+}
+
+model AchievementReward {
+  id            String   @id @default(uuid())
+  achievementId String
+  rewardType    String
+  rewardValue   String
+  achievement   Achievement @relation(fields: [achievementId], references: [id])
+}

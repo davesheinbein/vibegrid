@@ -1,6 +1,17 @@
 const express = require('express');
 const router = express.Router();
 const prisma = require('../prismaClient');
+const axios = require('axios');
+const API_URL = process.env.API_URL || 'http://localhost:3000/api/achievements/check';
+
+// Achievement check function
+async function checkAchievements({ userId, event, stats = null, eventData = null }) {
+	try {
+		await axios.post(API_URL, { userId, event, stats, eventData });
+	} catch (e) {
+		console.error('Achievement check failed:', e.message);
+	}
+}
 
 // GET /api/chat/dm/:userId/:otherUserId - Get DM history
 router.get('/dm/:userId/:otherUserId', async (req, res) => {
@@ -55,6 +66,10 @@ router.post('/group', async (req, res) => {
 			},
 			include: { members: true },
 		});
+		// Achievement: group chat created
+		if (createdById) {
+			await checkAchievements({ userId: createdById, event: 'group_chat_created' });
+		}
 		res.json(group);
 	} catch (err) {
 		res

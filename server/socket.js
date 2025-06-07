@@ -9,6 +9,13 @@ function createSocketServer(httpServer) {
 		cors: { origin: '*' },
 	});
 
+	// Make io available to Express routes for emitting events
+	const express = require('express');
+	const app = httpServer.listeners('request')[0];
+	if (app && app instanceof express) {
+		app.set('io', io);
+	}
+
 	// --- Friends Namespace ---
 	io.of('/friends').on('connection', (socket) => {
 		const user = getSessionUser(socket);
@@ -121,19 +128,15 @@ function createSocketServer(httpServer) {
 			where: { id: user.id },
 			data: { lastActive: new Date() },
 		});
-		io.of('/friends')
-			.to(user.id)
-			.emit('friend:status', {
-				userId: user.id,
-				online: true,
-			});
+		io.of('/friends').to(user.id).emit('friend:status', {
+			userId: user.id,
+			online: true,
+		});
 		socket.on('disconnect', () => {
-			io.of('/friends')
-				.to(user.id)
-				.emit('friend:status', {
-					userId: user.id,
-					online: false,
-				});
+			io.of('/friends').to(user.id).emit('friend:status', {
+				userId: user.id,
+				online: false,
+			});
 		});
 	});
 
@@ -283,12 +286,10 @@ function createSocketServer(httpServer) {
 				.emit('game:state', { userId: user.id, state });
 		});
 		socket.on('game:progress', ({ roomCode, progress }) => {
-			socket
-				.to(roomCode)
-				.emit('game:progress', {
-					userId: user.id,
-					progress,
-				});
+			socket.to(roomCode).emit('game:progress', {
+				userId: user.id,
+				progress,
+			});
 		});
 		socket.on('game:end', async ({ roomCode, result }) => {
 			// Save match result to DB, notify users
@@ -320,6 +321,33 @@ function createSocketServer(httpServer) {
 				});
 			}
 		);
+	});
+
+	// --- Achievements Namespace ---
+	io.of('/achievements').on('connection', (socket) => {
+		const user = getSessionUser(socket);
+		if (!user) return socket.disconnect();
+
+		// Client requests all unlocked achievements
+		socket.on('achievement:list', async (_, cb) => {
+			try {
+				const unlocked =
+					await prisma.userAchievement.findMany({
+						where: { userId: user.id },
+						include: { achievement: true },
+					});
+				cb && cb(unlocked);
+			} catch (err) {
+				cb && cb([]);
+			}
+		});
+
+		// Server emits when an achievement is unlocked
+		// socket.emit('achievement:unlocked', { achievement });
+		// Server emits for real-time toast/modal
+		// socket.emit('achievement:notify', { achievement });
+		// Server emits to sync new achievement states
+		// socket.emit('achievement:sync', { achievements });
 	});
 
 	return io;

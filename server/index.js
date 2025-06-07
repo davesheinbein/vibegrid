@@ -10,16 +10,22 @@ const chatRouter = require('./routes/chat');
 const puzzlesRouter = require('./routes/puzzles');
 const matchesRouter = require('./routes/matches');
 const achievementsRouter = require('./routes/achievements');
+const {
+	syncAchievementsToDB,
+} = require('./routes/achievements');
 const leaderboardsRouter = require('./routes/leaderboards');
 const notificationsRouter = require('./routes/notifications');
 const adminRouter = require('./routes/admin');
+const healthRouter = require('./routes/health');
 require('dotenv').config();
 
 const dev = process.env.NODE_ENV !== 'production';
 const app = next({ dev });
 const handle = app.getRequestHandler();
 
-app.prepare().then(() => {
+app.prepare().then(async () => {
+	await syncAchievementsToDB(); // Ensure achievements are seeded
+
 	const server = express();
 	const httpServer = http.createServer(server);
 	createSocketServer(httpServer);
@@ -47,6 +53,8 @@ app.prepare().then(() => {
 	server.use('/api/notifications', notificationsRouter);
 	// Admin API routes
 	server.use('/api/admin', adminRouter);
+	// Health API routes
+	server.use('/api/health', healthRouter);
 
 	// Next.js page handling
 	server.all('*', (req, res) => handle(req, res));

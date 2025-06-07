@@ -1,6 +1,18 @@
 const express = require('express');
 const router = express.Router();
 const prisma = require('../prismaClient');
+const axios = require('axios');
+const API_URL = process.env.API_URL || 'http://localhost:3000/api/achievements/check';
+
+// Helper to trigger achievement check
+async function checkAchievements({ userId, event, stats = null, eventData = null }) {
+	try {
+		await axios.post(API_URL, { userId, event, stats, eventData });
+	} catch (e) {
+		// Log but don't block user flow
+		console.error('Achievement check failed:', e.message);
+	}
+}
 
 // GET /api/puzzles - List all puzzles (optionally filter by author, isDaily, etc)
 router.get('/', async (req, res) => {
@@ -61,6 +73,10 @@ router.post('/', async (req, res) => {
 				date,
 			},
 		});
+		// Achievement: custom puzzle created
+		if (!isDaily && authorId) {
+			await checkAchievements({ userId: authorId, event: 'custom_puzzle_created' });
+		}
 		res.json(puzzle);
 	} catch (err) {
 		res

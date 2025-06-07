@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
 import { SubmitButton } from '../components/ui/Buttons';
 import {
@@ -66,7 +66,7 @@ const initialUserAchievements: Record<string, boolean> = {
 
 const AchievementsPage: React.FC = () => {
 	const router = useRouter();
-	const { addNotification } = useMultiplayer();
+	const { addNotification, socket } = useMultiplayer();
 	// TODO: Replace with real user achievements from context/provider or backend
 	// Example: const userAchievements = useUser()?.achievements || initialUserAchievements;
 	const [userAchievements, setUserAchievements] = useState<
@@ -75,6 +75,21 @@ const AchievementsPage: React.FC = () => {
 	const [justUnlocked, setJustUnlocked] = useState<
 		string | null
 	>(null);
+
+	// Listen for real-time achievement unlocks
+	useEffect(() => {
+		if (!socket) return;
+		const handler = (data: { achievement: { label: string; id: string } }) => {
+			setUserAchievements((prev) => ({ ...prev, [data.achievement.id]: true }));
+			setJustUnlocked(data.achievement.label);
+			notifyAchievement(data.achievement.label, addNotification);
+			setTimeout(() => setJustUnlocked(null), 3200);
+		};
+		socket.on('achievement:unlocked', handler);
+		return () => {
+			socket.off('achievement:unlocked', handler);
+		};
+	}, [socket, addNotification]);
 
 	// Simulate earning an achievement (for demo/testing)
 	const handleEarn = (id: string, label: string) => {
