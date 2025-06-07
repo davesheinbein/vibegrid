@@ -2,7 +2,7 @@
   "/_app": "pages/_app.js",
   "/_error": "pages/_error.js",
   "/_document": "pages/_document.js",
-  "/daily": "pages/daily.js",
   "/": "pages/index.js",
-  "/browse": "pages/browse.js"
+  "/browse": "pages/browse.js",
+  "/daily": "pages/daily.js"
 }

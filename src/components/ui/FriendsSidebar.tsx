@@ -265,6 +265,46 @@ const FriendsSidebar: React.FC = () => {
 								onClose={() => setOpenChatFriendId(null)}
 							/>
 						)}
+						{/* Achievements navigation button */}
+						<div
+							style={{
+								marginTop: 'auto',
+								paddingTop: 18,
+								display: 'flex',
+								justifyContent: 'center',
+							}}
+						>
+							<button
+								className='achievements-nav-btn pill-glow-btn'
+								style={{
+									borderRadius: 16,
+									padding: '10px 28px',
+									fontWeight: 600,
+									fontSize: 16,
+									background: 'rgba(255,255,255,0.22)',
+									boxShadow: '0 1px 8px 0 #e3eaff33',
+									color: '#334155',
+									letterSpacing: 0.2,
+									border: 'none',
+									cursor: 'pointer',
+									transition:
+										'background 0.18s, transform 0.13s',
+								}}
+								onClick={() => {
+									setShow(false);
+									router.push('/achievements');
+								}}
+							>
+								<span
+									role='img'
+									aria-label='Achievements'
+									style={{ marginRight: 8 }}
+								>
+									🏆
+								</span>
+								Achievements
+							</button>
+						</div>
 					</div>
 				)}
 			</aside>

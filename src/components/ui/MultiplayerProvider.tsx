@@ -198,3 +198,30 @@ export const MultiplayerProvider: React.FC<{
 		</MultiplayerContext.Provider>
 	);
 };
+
+// Add this function to trigger an achievement notification
+export function notifyAchievement(
+	achievementLabel: string,
+	addNotification: (n: Notification) => void
+) {
+	const notification: Notification = {
+		id: `achievement-${Date.now()}`,
+		type: 'achievement',
+		content: `Achievement unlocked: ${achievementLabel}`,
+		createdAt: new Date().toISOString(),
+		read: false,
+	};
+	addNotification(notification);
+	// Browser push notification
+	if (
+		typeof window !== 'undefined' &&
+		window.Notification &&
+		Notification.permission === 'granted'
+	) {
+		new Notification(notification.content, {
+			icon: '/logo.svg',
+			badge: '/logo.svg',
+			body: 'You just earned a new achievement!',
+		});
+	}
+}
