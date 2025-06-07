@@ -56,6 +56,18 @@ const FriendsSidebar: React.FC = () => {
 				active={show}
 				onClick={() => setShow(!show)}
 			/>
+			{show && (
+				<div
+					className='friends-sidebar-overlay'
+					style={{
+						position: 'fixed',
+						inset: 0,
+						zIndex: 199,
+						background: 'transparent',
+					}}
+					onClick={() => setShow(false)}
+				/>
+			)}
 			<aside
 				className={`friends-sidebar glassy-sidebar${
 					show ? ' open' : ''
@@ -81,6 +93,35 @@ const FriendsSidebar: React.FC = () => {
 					padding: '1.5rem 0.5rem 1.5rem 1.5rem',
 				}}
 			>
+				{show && (
+					<button
+						className='friends-sidebar-close-btn'
+						onClick={() => setShow(false)}
+						style={{
+							position: 'absolute',
+							left: '-48px',
+							top: 24,
+							zIndex: 201,
+							width: 36,
+							height: 36,
+							borderRadius: '50%',
+							background: 'rgba(255,255,255,0.7)',
+							boxShadow: '0 2px 8px 0 #e3eaff33',
+							border: 'none',
+							cursor: 'pointer',
+							display: 'flex',
+							alignItems: 'center',
+							justifyContent: 'center',
+						}}
+						aria-label='Close friends sidebar'
+					>
+						<span
+							style={{ fontSize: 22, color: '#64748b' }}
+						>
+							&#10005;
+						</span>
+					</button>
+				)}
 				{show && (
 					<div className='friends-sidebar-content'>
 						<div className='friends-sidebar-header'>
