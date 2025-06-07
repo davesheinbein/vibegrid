@@ -50,11 +50,92 @@ router.get('/friends/:userId', async (req, res) => {
 		});
 		res.json(top);
 	} catch (err) {
+		res.status(500).json({
+			error: 'Failed to fetch friends leaderboard',
+		});
+	}
+});
+
+// GET /api/leaderboards/season/:seasonId - Get leaderboard for a specific season
+router.get('/season/:seasonId', async (req, res) => {
+	try {
+		const season =
+			await prisma.leaderboardSeason.findUnique({
+				where: { id: req.params.seasonId },
+			});
+		if (!season)
+			return res
+				.status(404)
+				.json({ error: 'Season not found' });
+		// Example: top users by XP or wins in this season
+		const top = await prisma.user.findMany({
+			where: { lastSeasonId: req.params.seasonId },
+			orderBy: [{ xp: 'desc' }],
+			select: {
+				id: true,
+				username: true,
+				photoUrl: true,
+				xp: true,
+				level: true,
+			},
+			take: 50,
+		});
+		res.json({ season, top });
+	} catch (err) {
 		res
 			.status(500)
 			.json({
-				error: 'Failed to fetch friends leaderboard',
+				error: 'Failed to fetch season leaderboard',
 			});
+	}
+});
+
+// POST /api/leaderboards/season/reset - Reset leaderboard for new season (admin only)
+router.post('/season/reset', async (req, res) => {
+	// TODO: Add admin authentication/authorization
+	const { label, startDate, endDate } = req.body;
+	if (!label || !startDate || !endDate)
+		return res
+			.status(400)
+			.json({ error: 'Missing season data' });
+	try {
+		// End current season
+		await prisma.leaderboardSeason.updateMany({
+			where: { endDate: { gte: new Date() } },
+			data: { endDate: new Date() },
+		});
+		// Create new season
+		const season = await prisma.leaderboardSeason.create({
+			data: {
+				label,
+				startDate: new Date(startDate),
+				endDate: new Date(endDate),
+			},
+		});
+		// Optionally, snapshot top users for Hall of Fame
+		// ...
+		res.json(season);
+	} catch (err) {
+		res
+			.status(500)
+			.json({ error: 'Failed to reset season' });
+	}
+});
+
+// GET /api/leaderboards/hall-of-fame - Get Hall of Fame (past season winners)
+router.get('/hall-of-fame', async (req, res) => {
+	try {
+		const seasons = await prisma.leaderboardSeason.findMany(
+			{
+				orderBy: { startDate: 'desc' },
+				take: 10,
+			}
+		);
+		res.json(seasons);
+	} catch (err) {
+		res
+			.status(500)
+			.json({ error: 'Failed to fetch Hall of Fame' });
 	}
 });
 

@@ -67,19 +67,25 @@ router.post('/unlock', async (req, res) => {
 			}
 		);
 		if (already)
-			return res
-				.status(200)
-				.json({
-					unlocked: false,
-					message: 'Already unlocked',
-				});
+			return res.status(200).json({
+				unlocked: false,
+				message: 'Already unlocked',
+			});
 		const unlocked = await prisma.userAchievement.create({
 			data: { userId, achievementId },
 			include: { achievement: true },
 		});
 		const io = req.app.get('io');
-		if (io) io.of('/achievements').to(userId).emit('achievement:unlocked', { achievement: unlocked.achievement });
-		const user = await prisma.user.findUnique({ where: { id: userId }, select: { pushSubscription: true } });
+		if (io)
+			io.of('/achievements')
+				.to(userId)
+				.emit('achievement:unlocked', {
+					achievement: unlocked.achievement,
+				});
+		const user = await prisma.user.findUnique({
+			where: { id: userId },
+			select: { pushSubscription: true },
+		});
 		if (user && user.pushSubscription) {
 			sendPushNotification(user.pushSubscription, {
 				title: 'Achievement Unlocked!',
@@ -102,51 +108,118 @@ router.post('/sync', async (req, res) => {
 		await syncAchievementsToDB();
 		res.json({ success: true });
 	} catch (err) {
-		res.status(500).json({ error: 'Failed to sync achievements' });
+		res
+			.status(500)
+			.json({ error: 'Failed to sync achievements' });
 	}
 });
 
 // Enhanced criteria check for all achievement types (event, progress, streak, meta, secret)
-function meetsCriteria(criteria, event, stats, eventData, unlockedCount, totalAchievements) {
+function meetsCriteria(
+	criteria,
+	event,
+	stats,
+	eventData,
+	unlockedCount,
+	totalAchievements
+) {
 	if (criteria.type === 'event') {
 		if (criteria.event !== event) return false;
-		if (criteria.seconds && eventData && eventData.seconds) {
+		if (
+			criteria.seconds &&
+			eventData &&
+			eventData.seconds
+		) {
 			return eventData.seconds <= criteria.seconds;
 		}
-		if (criteria.rating && eventData && eventData.rating && criteria.raters && eventData.raters) {
-			return eventData.rating >= criteria.rating && eventData.raters >= criteria.raters;
+		if (
+			criteria.rating &&
+			eventData &&
+			eventData.rating &&
+			criteria.raters &&
+			eventData.raters
+		) {
+			return (
+				eventData.rating >= criteria.rating &&
+				eventData.raters >= criteria.raters
+			);
 		}
-		if (criteria.groupsBehind && eventData && eventData.groupsBehind) {
-			return eventData.groupsBehind >= criteria.groupsBehind;
+		if (
+			criteria.groupsBehind &&
+			eventData &&
+			eventData.groupsBehind
+		) {
+			return (
+				eventData.groupsBehind >= criteria.groupsBehind
+			);
 		}
-		if (criteria.percent && eventData && eventData.percent) {
+		if (
+			criteria.percent &&
+			eventData &&
+			eventData.percent
+		) {
 			return eventData.percent >= criteria.percent;
 		}
-		if (criteria.withinMinutes && eventData && eventData.minutesSinceRelease !== undefined) {
-			return eventData.minutesSinceRelease <= criteria.withinMinutes;
+		if (
+			criteria.withinMinutes &&
+			eventData &&
+			eventData.minutesSinceRelease !== undefined
+		) {
+			return (
+				eventData.minutesSinceRelease <=
+				criteria.withinMinutes
+			);
 		}
-		if (criteria.betweenHours && eventData && eventData.hour !== undefined) {
+		if (
+			criteria.betweenHours &&
+			eventData &&
+			eventData.hour !== undefined
+		) {
 			const [start, end] = criteria.betweenHours;
-			return eventData.hour >= start && eventData.hour < end;
+			return (
+				eventData.hour >= start && eventData.hour < end
+			);
 		}
-		if (criteria.verified && eventData && eventData.verified !== undefined) {
+		if (
+			criteria.verified &&
+			eventData &&
+			eventData.verified !== undefined
+		) {
 			return eventData.verified === criteria.verified;
 		}
-		if (criteria.withinHours && eventData && eventData.withinHours !== undefined) {
+		if (
+			criteria.withinHours &&
+			eventData &&
+			eventData.withinHours !== undefined
+		) {
 			return eventData.withinHours <= criteria.withinHours;
 		}
 		if (criteria.all && eventData && eventData.allFound) {
 			return eventData.allFound === true;
 		}
-		if (criteria.attempts && eventData && eventData.attempts !== undefined) {
+		if (
+			criteria.attempts &&
+			eventData &&
+			eventData.attempts !== undefined
+		) {
 			return eventData.attempts <= criteria.attempts;
 		}
 		return true;
 	}
-	if (criteria.type === 'progress' && stats && criteria.key && criteria.target) {
+	if (
+		criteria.type === 'progress' &&
+		stats &&
+		criteria.key &&
+		criteria.target
+	) {
 		return stats[criteria.key] >= criteria.target;
 	}
-	if (criteria.type === 'streak' && stats && criteria.key && criteria.target) {
+	if (
+		criteria.type === 'streak' &&
+		stats &&
+		criteria.key &&
+		criteria.target
+	) {
 		return stats[criteria.key] >= criteria.target;
 	}
 	if (criteria.type === 'meta') {
@@ -162,10 +235,12 @@ function meetsCriteria(criteria, event, stats, eventData, unlockedCount, totalAc
 router.post('/check', async (req, res) => {
 	try {
 		const { userId, event, stats, eventData } = req.body;
-		const achievements = await prisma.achievement.findMany();
-		const userAchievements = await prisma.userAchievement.findMany({
-			where: { userId },
-		});
+		const achievements =
+			await prisma.achievement.findMany();
+		const userAchievements =
+			await prisma.userAchievement.findMany({
+				where: { userId },
+			});
 		const unlocked = [];
 		const unlockedCount = userAchievements.length;
 		const totalAchievements = achievements.length;
@@ -175,16 +250,35 @@ router.post('/check', async (req, res) => {
 				(ua) => ua.achievementId === ach.id
 			);
 			if (already) continue;
-			if (meetsCriteria(ach.criteria, event, stats, eventData, unlockedCount, totalAchievements)) {
-				const created = await prisma.userAchievement.create({
-					data: { userId, achievementId: ach.id },
-					include: { achievement: true },
-				});
+			if (
+				meetsCriteria(
+					ach.criteria,
+					event,
+					stats,
+					eventData,
+					unlockedCount,
+					totalAchievements
+				)
+			) {
+				const created = await prisma.userAchievement.create(
+					{
+						data: { userId, achievementId: ach.id },
+						include: { achievement: true },
+					}
+				);
 				unlocked.push(created);
 				// Emit real-time socket event
-				if (io) io.of('/achievements').to(userId).emit('achievement:unlocked', { achievement: created.achievement });
+				if (io)
+					io.of('/achievements')
+						.to(userId)
+						.emit('achievement:unlocked', {
+							achievement: created.achievement,
+						});
 				// Send push notification if user has a subscription
-				const user = await prisma.user.findUnique({ where: { id: userId }, select: { pushSubscription: true } });
+				const user = await prisma.user.findUnique({
+					where: { id: userId },
+					select: { pushSubscription: true },
+				});
 				if (user && user.pushSubscription) {
 					sendPushNotification(user.pushSubscription, {
 						title: 'Achievement Unlocked!',
@@ -201,14 +295,32 @@ router.post('/check', async (req, res) => {
 					(ua) => ua.achievementId === ach.id
 				);
 				if (already) continue;
-				if (meetsCriteria(ach.criteria, event, stats, eventData, unlockedCount + unlocked.length, totalAchievements)) {
-					const created = await prisma.userAchievement.create({
-						data: { userId, achievementId: ach.id },
-						include: { achievement: true },
-					});
+				if (
+					meetsCriteria(
+						ach.criteria,
+						event,
+						stats,
+						eventData,
+						unlockedCount + unlocked.length,
+						totalAchievements
+					)
+				) {
+					const created =
+						await prisma.userAchievement.create({
+							data: { userId, achievementId: ach.id },
+							include: { achievement: true },
+						});
 					unlocked.push(created);
-					if (io) io.of('/achievements').to(userId).emit('achievement:unlocked', { achievement: created.achievement });
-					const user = await prisma.user.findUnique({ where: { id: userId }, select: { pushSubscription: true } });
+					if (io)
+						io.of('/achievements')
+							.to(userId)
+							.emit('achievement:unlocked', {
+								achievement: created.achievement,
+							});
+					const user = await prisma.user.findUnique({
+						where: { id: userId },
+						select: { pushSubscription: true },
+					});
 					if (user && user.pushSubscription) {
 						sendPushNotification(user.pushSubscription, {
 							title: 'Achievement Unlocked!',
@@ -221,7 +333,34 @@ router.post('/check', async (req, res) => {
 		}
 		res.json({ unlocked });
 	} catch (err) {
-		res.status(500).json({ error: 'Failed to check achievements' });
+		res
+			.status(500)
+			.json({ error: 'Failed to check achievements' });
+	}
+});
+
+// POST /api/achievements/check - Check and award achievements for a user event
+router.post('/check', async (req, res) => {
+	const { userId, event, stats, eventData } = req.body;
+	if (!userId || !event)
+		return res
+			.status(400)
+			.json({ error: 'Missing userId or event' });
+	try {
+		const {
+			checkAchievements,
+		} = require('../utils/achievements');
+		await checkAchievements({
+			userId,
+			event,
+			stats,
+			eventData,
+		});
+		res.json({ ok: true });
+	} catch (err) {
+		res
+			.status(500)
+			.json({ error: 'Failed to check achievements' });
 	}
 });
 

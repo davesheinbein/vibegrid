@@ -344,8 +344,11 @@ body.dark-mode .modal-close-absolute:hover,
 			border-radius: 999px;
 			padding: 0px;
 			margin: 12px 0;
-			box-shadow: 0 4px 24px 0 #e3eaff66, 0 1.5px 8px 0 #0001;
-			transition: background 0.18s, box-shadow 0.18s, color 0.18s, transform 0.13s cubic-bezier(0.4, 0.2, 0.2, 1);
+			box-shadow: 0 4px 24px 0 #e3eaff66,
+				0 1.5px 8px 0 #0001;
+			transition: background 0.18s, box-shadow 0.18s,
+				color 0.18s,
+				transform 0.13s cubic-bezier(0.4, 0.2, 0.2, 1);
 			color: #fff;
 			border: 3px solid #fff;
 			outline: none;
@@ -376,14 +379,19 @@ body.dark-mode .modal-close-absolute:hover,
 				border-color: #000 !important;
 			}
 			&--instagram {
-				background: linear-gradient(90deg, #e1306c 60%, #fdc468 100%) !important;
+				background: linear-gradient(
+					90deg,
+					#e1306c 60%,
+					#fdc468 100%
+				) !important;
 				border-color: #e1306c !important;
 			}
 
 			&:hover,
 			&:focus {
 				transform: translateY(-3px) scale(1.07);
-				box-shadow: 0 8px 32px 0 #e3eaffcc, 0 2px 12px 0 #0002;
+				box-shadow: 0 8px 32px 0 #e3eaffcc,
+					0 2px 12px 0 #0002;
 				filter: brightness(1.12);
 				text-decoration: none;
 				border-width: 3.5px;
@@ -431,7 +439,11 @@ body.dark-mode .modal-close-absolute:hover,
 					border-color: #fff2;
 				}
 				&.share-link--instagram {
-					background: linear-gradient(135deg, #e1306c 60%, #fdc468 100%);
+					background: linear-gradient(
+						135deg,
+						#e1306c 60%,
+						#fdc468 100%
+					);
 					color: #fff;
 					border-color: #fff2;
 				}
@@ -467,7 +479,8 @@ body.dark-mode .modal-close-absolute:hover,
 		font-family: 'Montserrat', Arial, sans-serif;
 	}
 	&.share-link--instagram {
-		font-family: 'Comic Sans MS', 'Comic Sans', cursive, Arial, sans-serif;
+		font-family: 'Comic Sans MS', 'Comic Sans', cursive,
+			Arial, sans-serif;
 	}
 	&.share-link--copy {
 		font-family: 'Arial Black', Arial, sans-serif;
@@ -484,7 +497,9 @@ body.dark-mode .modal-close-absolute:hover,
 	padding: 0px;
 	margin: 12px 0;
 	box-shadow: 0 4px 24px 0 #e3eaff66, 0 1.5px 8px 0 #0001;
-	transition: background 0.18s, box-shadow 0.18s, color 0.18s, transform 0.13s cubic-bezier(0.4, 0.2, 0.2, 1);
+	transition: background 0.18s, box-shadow 0.18s,
+		color 0.18s,
+		transform 0.13s cubic-bezier(0.4, 0.2, 0.2, 1);
 	color: #fff;
 	border: 3px solid #fff;
 	outline: none;

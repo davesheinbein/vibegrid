@@ -3,6 +3,6 @@
   "/_error": "pages/_error.js",
   "/_document": "pages/_document.js",
   "/achievements": "pages/achievements.js",
-  "/": "pages/index.js",
-  "/daily": "pages/daily.js"
+  "/daily": "pages/daily.js",
+  "/": "pages/index.js"
 }

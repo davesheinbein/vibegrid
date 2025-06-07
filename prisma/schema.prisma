@@ -8,19 +8,25 @@ datasource db {
 }
 
 model User {
-  id           String   @id @default(uuid())
-  username     String   @unique
-  email        String   @unique
-  photoUrl     String?
-  createdAt    DateTime @default(now())
-  lastActive   DateTime @updatedAt
-  isAdmin      Boolean  @default(false)
-  stats        Json?
-  friends      Friend[] @relation("UserFriends")
-  messages     Message[]
-  notifications Notification[]
-  achievements UserAchievement[]
-  puzzles      Puzzle[] @relation("PuzzleAuthor")
+  id                String   @id @default(uuid())
+  username          String   @unique
+  email             String   @unique
+  photoUrl          String?
+  createdAt         DateTime @default(now())
+  lastActive        DateTime @updatedAt
+  isAdmin           Boolean  @default(false)
+  stats             Json?
+  friends           Friend[] @relation("UserFriends")
+  messages          Message[]
+  notifications      Notification[]
+  achievements      UserAchievement[]
+  puzzles           Puzzle[] @relation("PuzzleAuthor")
+  xp                Int      @default(0)
+  level             Int      @default(1)
+  tutorialCompleted Boolean  @default(false)
+  notificationPrefs Json?
+  profileThemes     UserProfileTheme[]
+  profileBadges     UserProfileBadge[]
 }
 
 model Friend {
@@ -88,6 +94,9 @@ model Puzzle {
   favorites Int      @default(0)
   createdAt DateTime @default(now())
   matches   Match[]
+  type      String   @default("standard") // e.g. standard, timed, endless, coop
+  ratings   PuzzleRating[]
+  comments  PuzzleComment[]
 }
 
 model Match {
@@ -103,6 +112,7 @@ model Match {
   winnerId  String?
   startedAt DateTime @default(now())
   endedAt   DateTime?
+  type      String   @default("standard") // e.g. standard, timed, endless, coop
 }
 
 model Achievement {
@@ -143,4 +153,72 @@ model Notification {
   content   String
   createdAt DateTime @default(now())
   read      Boolean  @default(false)
+}
+
+model PuzzleRating {
+  id        String   @id @default(uuid())
+  puzzleId  String
+  userId    String
+  rating    Int
+  createdAt DateTime @default(now())
+  puzzle    Puzzle   @relation(fields: [puzzleId], references: [id])
+  user      User     @relation(fields: [userId], references: [id])
+  @@unique([puzzleId, userId])
+}
+
+model PuzzleComment {
+  id        String   @id @default(uuid())
+  puzzleId  String
+  userId    String
+  comment   String
+  createdAt DateTime @default(now())
+  puzzle    Puzzle   @relation(fields: [puzzleId], references: [id])
+  user      User     @relation(fields: [userId], references: [id])
+}
+
+model Challenge {
+  id          String   @id @default(uuid())
+  label       String   @unique
+  description String
+  type        String   // daily, weekly, etc.
+  criteria    Json
+  startDate   DateTime
+  endDate     DateTime
+  rewards     Json?
+  userChallenges UserChallenge[]
+}
+
+model UserChallenge {
+  id          String   @id @default(uuid())
+  userId      String
+  challengeId String
+  completed   Boolean  @default(false)
+  completedAt DateTime?
+  user        User     @relation(fields: [userId], references: [id])
+  challenge   Challenge @relation(fields: [challengeId], references: [id])
+  @@unique([userId, challengeId])
+}
+
+model LeaderboardSeason {
+  id        String   @id @default(uuid())
+  label     String   @unique
+  startDate DateTime
+  endDate   DateTime
+  winners   Json?
+}
+
+model UserProfileTheme {
+  id      String   @id @default(uuid())
+  userId  String
+  theme   String
+  unlockedAt DateTime @default(now())
+  user    User     @relation(fields: [userId], references: [id])
+}
+
+model UserProfileBadge {
+  id      String   @id @default(uuid())
+  userId  String
+  badge   String
+  unlockedAt DateTime @default(now())
+  user    User     @relation(fields: [userId], references: [id])
 }

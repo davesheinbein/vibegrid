@@ -81,4 +81,36 @@ router.get('/:id/stats', async (req, res) => {
 	}
 });
 
+// GET /api/users/:id/tutorial - Get tutorial completion state
+router.get('/:id/tutorial', async (req, res) => {
+	try {
+		const user = await prisma.user.findUnique({
+			where: { id: req.params.id },
+			select: { tutorialCompleted: true },
+		});
+		res.json({
+			tutorialCompleted: user?.tutorialCompleted || false,
+		});
+	} catch (err) {
+		res
+			.status(500)
+			.json({ error: 'Failed to fetch tutorial state' });
+	}
+});
+
+// POST /api/users/:id/tutorial - Mark tutorial as completed
+router.post('/:id/tutorial', async (req, res) => {
+	try {
+		const user = await prisma.user.update({
+			where: { id: req.params.id },
+			data: { tutorialCompleted: true },
+		});
+		res.json({ tutorialCompleted: user.tutorialCompleted });
+	} catch (err) {
+		res
+			.status(500)
+			.json({ error: 'Failed to update tutorial state' });
+	}
+});
+
 module.exports = router;

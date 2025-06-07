@@ -62,20 +62,35 @@ router.post('/test-achievement', async (req, res) => {
 	// TODO: Add admin auth check
 	try {
 		const { userId, achievementId } = req.body;
-		const already = await prisma.userAchievement.findUnique({
-			where: { userId_achievementId: { userId, achievementId } },
-		});
-		if (already) return res.json({ unlocked: false, message: 'Already unlocked' });
+		const already = await prisma.userAchievement.findUnique(
+			{
+				where: {
+					userId_achievementId: { userId, achievementId },
+				},
+			}
+		);
+		if (already)
+			return res.json({
+				unlocked: false,
+				message: 'Already unlocked',
+			});
 		const unlocked = await prisma.userAchievement.create({
 			data: { userId, achievementId },
 			include: { achievement: true },
 		});
 		// Emit socket event if possible
 		const io = req.app.get('io');
-		if (io) io.of('/achievements').to(userId).emit('achievement:unlocked', { achievement: unlocked.achievement });
+		if (io)
+			io.of('/achievements')
+				.to(userId)
+				.emit('achievement:unlocked', {
+					achievement: unlocked.achievement,
+				});
 		res.json({ unlocked: true, unlocked });
 	} catch (err) {
-		res.status(500).json({ error: 'Failed to test achievement' });
+		res
+			.status(500)
+			.json({ error: 'Failed to test achievement' });
 	}
 });
 

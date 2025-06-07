@@ -79,10 +79,18 @@ const AchievementsPage: React.FC = () => {
 	// Listen for real-time achievement unlocks
 	useEffect(() => {
 		if (!socket) return;
-		const handler = (data: { achievement: { label: string; id: string } }) => {
-			setUserAchievements((prev) => ({ ...prev, [data.achievement.id]: true }));
+		const handler = (data: {
+			achievement: { label: string; id: string };
+		}) => {
+			setUserAchievements((prev) => ({
+				...prev,
+				[data.achievement.id]: true,
+			}));
 			setJustUnlocked(data.achievement.label);
-			notifyAchievement(data.achievement.label, addNotification);
+			notifyAchievement(
+				data.achievement.label,
+				addNotification
+			);
 			setTimeout(() => setJustUnlocked(null), 3200);
 		};
 		socket.on('achievement:unlocked', handler);
