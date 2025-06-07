@@ -39,7 +39,9 @@
 	&-nav-btns {
 		display: flex;
 		margin-top: 20px;
+
 		.vibegrid-submit {
+			max-width: fit-content;
 			margin: 0 auto;
 			padding: 0.7rem 1.5rem;
 			background: linear-gradient(

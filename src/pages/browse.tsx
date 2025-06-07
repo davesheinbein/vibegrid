@@ -88,7 +88,7 @@ export default function Browse() {
 			<div className='browse-puzzles-header'>
 				<GoBackButton
 					onClick={() => router.push('/')}
-					style={{ marginRight: 16 }}
+					className='browse-back-btn'
 				/>
 
 				<div className='browse-puzzles-header-title'>

@@ -1,3 +1,10 @@
+.vibegrid-icons {
+	display: flex;
+	justify-content: center;
+	align-items: flex-end;
+	padding-right: 40px;
+}
+
 .vibegrid-title {
 	font-size: 2.2rem;
 	font-weight: 700;
@@ -11,9 +18,11 @@
 	align-items: center;
 	text-shadow: 0 2px 8px #e3eaff;
 	margin: 0;
+
 	@media (max-width: 900px) {
 		font-size: 1.7rem;
 	}
+
 	@media (max-width: 600px) {
 		font-size: 1.3rem;
 	}
@@ -29,6 +38,7 @@
 		@media (max-width: 900px) {
 			padding: 16px 0 0;
 		}
+
 		@media (max-width: 600px) {
 			padding: 12px 0 0;
 		}
@@ -42,9 +52,11 @@
 	color: #2563eb;
 	margin-bottom: 1.2rem;
 	text-shadow: 0 1px 4px #e3eaff;
+
 	@media (max-width: 900px) {
 		font-size: 1rem;
 	}
+
 	@media (max-width: 600px) {
 		font-size: 0.92rem;
 	}
@@ -62,11 +74,10 @@
 	flex-direction: column;
 	justify-content: center;
 	width: 100%;
-	align-items: center;
 	margin-bottom: 24px;
 	position: relative;
 	min-height: 48px;
-	padding: 0 10px;
+	padding: 24px 0 10px;
 	background: none;
 	padding: 10px 0;
 
@@ -76,6 +87,7 @@
 		font-size: 1rem;
 		padding: 10px 20px 0;
 	}
+
 	@media (max-width: 600px) {
 		padding-left: 10px;
 		padding-right: 10px;
@@ -95,6 +107,7 @@
 	box-shadow: 0 2px 12px 0 #e3eaff;
 	margin-left: auto;
 	margin-right: auto;
+
 	@media (max-width: 600px) {
 		gap: 0.25rem;
 	}
@@ -104,8 +117,6 @@
 	display: flex;
 	justify-content: center;
 	align-items: center;
-	padding-left: 10px;
-	padding-right: 10px;
 	width: 100%;
 	margin-left: auto;
 	margin-right: auto;
@@ -135,6 +146,7 @@
 			#2563eb 100%
 		);
 	}
+
 	&:disabled {
 		opacity: 0.5;
 		cursor: not-allowed;
@@ -161,6 +173,7 @@
 	gap: 0.3rem;
 	margin: 0.7rem 0 0.5rem 0;
 }
+
 .vibegrid-attempt-dot {
 	width: 1.1em;
 	height: 1.1em;
@@ -200,12 +213,14 @@
 	align-items: stretch;
 	position: relative;
 	border: 1.5px solid #e0e7ef;
+
 	@media (max-width: 900px) {
 		max-width: 95vw;
 		border-radius: 20px;
 		min-height: 420px;
 		max-width: 600px;
 	}
+
 	@media (max-width: 600px) {
 		max-width: 100vw;
 		margin: 0;
@@ -216,37 +231,11 @@
 	}
 }
 
-.vibegrid-header-row {
-	display: flex;
-	flex-direction: column;
-	justify-content: center;
-	width: 100%;
-	align-items: center;
-	margin-bottom: 24px;
-	position: relative;
-	min-height: 48px;
-	padding: 0 10px;
-	background: none;
-	padding: 10px 0;
-	@media (max-width: 900px) {
-		padding-left: 10px;
-		padding-right: 10px;
-		font-size: 1rem;
-		padding: 10px 20px 0;
-	}
-	@media (max-width: 600px) {
-		padding-left: 10px;
-		padding-right: 10px;
-		font-size: 0.95rem;
-		padding: 10px 10px 0;
-	}
-}
-
 .vibegrid-header-heading {
 	display: flex;
 	flex-direction: column;
-	align-items: center;
 	justify-content: center;
+	align-items: center;
 	flex: 1;
 }
 
@@ -264,48 +253,6 @@
 .vibegrid-controls {
 	width: 100%;
 	margin: 0 auto;
-	padding: 0 10px;
-}
-
-.vibegrid-submit-wrapper {
-	display: flex;
-	justify-content: center;
-	align-items: center;
-	padding-left: 10px;
-	padding-right: 10px;
-	width: 100%;
-	margin-left: auto;
-	margin-right: auto;
-}
-
-.vibegrid-submit {
-	padding: 0.75rem 2.2rem;
-	background: linear-gradient(
-		90deg,
-		#2563eb 0%,
-		#38bdf8 100%
-	);
-	color: #fff;
-	font-size: 1.1rem;
-	font-weight: 600;
-	border: none;
-	border-radius: 0.7rem;
-	box-shadow: 0 2px 8px 0 #e3eaff;
-	margin: 0.7rem auto 0.5rem auto;
-	transition: background 0.2s, box-shadow 0.18s;
-	cursor: pointer;
-	text-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
-	&:hover {
-		background: linear-gradient(
-			90deg,
-			#38bdf8 0%,
-			#2563eb 100%
-		);
-	}
-	&:disabled {
-		opacity: 0.5;
-		cursor: not-allowed;
-	}
 }
 
 .share-btn {
@@ -352,16 +299,31 @@
 .randomize-btn,
 .deselect-btn {
 	margin-left: 8px;
-	padding: 0.4rem 1.1rem;
+	padding: 0.3rem 0.9rem;
 	border-radius: 0.7rem;
 	border: none;
-	background: #e0e7ef;
-	color: #2563eb;
+	background: linear-gradient(
+		90deg,
+		#ff8800 0%,
+		#ffb347 100%
+	);
+	color: #fff;
 	font-weight: 600;
-	font-size: 0.98rem;
+	font-size: 0.92rem;
 	cursor: pointer;
-	transition: background 0.18s;
+	transition: background 0.18s, box-shadow 0.18s,
+		transform 0.13s cubic-bezier(0.4, 0.2, 0.2, 1);
+	box-shadow: 0 1px 4px 0 #ffb34744;
 	&:hover {
-		background: #c7d2fe;
+		background: linear-gradient(
+			90deg,
+			#ffb347 0%,
+			#ff8800 100%
+		);
+		box-shadow: 0 2px 8px 0 #ffb34766;
+		transform: scale(1.06);
+	}
+	&:active {
+		transform: scale(0.97);
 	}
 }

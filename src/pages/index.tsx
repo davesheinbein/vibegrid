@@ -20,6 +20,7 @@ import {
 	faInstagram,
 	faMeta,
 } from '@fortawesome/free-brands-svg-icons';
+import Footer from '@components/ui/Footer';
 
 interface StartupPageProps {
 	onStartDaily: () => void;
@@ -34,13 +35,6 @@ const StartupPage: React.FC<StartupPageProps> = ({
 	onBrowseCustom,
 	onShare,
 }) => {
-	const [darkMode, setDarkMode] = React.useState(false);
-	React.useEffect(() => {
-		document.body.classList.toggle('dark-mode', darkMode);
-
-		document.body.style.transition =
-			'background 0.25s ease-in-out, color 0.25s';
-	}, [darkMode]);
 
 	return (
 		<div className='fullscreen-bg'>
@@ -149,41 +143,8 @@ const StartupPage: React.FC<StartupPageProps> = ({
 						onClick={onShare}
 						label='Share VibeGrid'
 					/>
-					<div
-						style={{
-							width: '100%',
-							display: 'flex',
-							justifyContent: 'center',
-							margin: '8px 0',
-						}}
-					>
-						<label className='container'>
-							<input
-								type='checkbox'
-								checked={!darkMode}
-								onChange={() => setDarkMode((d) => !d)}
-								aria-checked={!darkMode}
-								aria-label='Toggle dark mode'
-							/>
-							<div className='checkbox-wrapper'>
-								<div className='checkmark'></div>
-								<div className='nebula-glow'></div>
-								<div className='sparkle-container'></div>
-							</div>
-						</label>
-					</div>
 				</div>
-				<p
-					style={{
-						color: '#94a3b8',
-						fontSize: 15,
-						marginTop: 40,
-					}}
-				>
-					&copy; {new Date().getFullYear()} VibeGrid &mdash;
-					Made with{' '}
-					<span style={{ color: '#f87171' }}>♥</span>
-				</p>
+				<Footer />
 			</div>
 		</div>
 	);

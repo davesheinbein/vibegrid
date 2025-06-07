@@ -345,6 +345,7 @@ export default function Daily(props: DailyPageProps) {
 						</div>
 					</div>
 					<div
+						className='vibegrid-icons'
 						style={{
 							display: 'flex',
 							gap: 8,
@@ -513,8 +514,10 @@ export default function Daily(props: DailyPageProps) {
 								)
 							)}
 						</div>
-						<p className='vibegrid-attempts'>
+						<div className='vibegrid-attempts'>
 							Attempts Left: {attemptsLeft}
+						</div>
+						<div className='vibegrid-attempts'>
 							<button
 								className='randomize-btn'
 								aria-label='Randomize word order'
@@ -529,7 +532,7 @@ export default function Daily(props: DailyPageProps) {
 							>
 								Deselect All
 							</button>
-						</p>
+						</div>
 					</div>
 					<button
 						className='share-btn'

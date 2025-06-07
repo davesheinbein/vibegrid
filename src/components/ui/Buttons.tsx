@@ -113,21 +113,46 @@ export const ShareButton: React.FC<{
 	</button>
 );
 
+// A reusable dark mode toggle with effect and nebula/checkbox UI
 export const DarkModeToggle: React.FC<{
-	checked: boolean;
-	onChange: (checked: boolean) => void;
 	className?: string;
-}> = ({ checked, onChange, className = '' }) => (
-	<label className={`darkmode-toggle ${className}`.trim()}>
-		<input
-			type='checkbox'
-			checked={checked}
-			onChange={(e) => onChange(e.target.checked)}
-			className='checkbox-margin-right'
-		/>
-		<span>Dark Mode</span>
-	</label>
-);
+	style?: React.CSSProperties;
+}> = ({ className = '', style }) => {
+	const [darkMode, setDarkMode] = React.useState(false);
+
+	React.useEffect(() => {
+		document.body.classList.toggle('dark-mode', darkMode);
+		document.body.style.transition =
+			'background 0.25s ease-in-out, color 0.25s';
+	}, [darkMode]);
+
+	return (
+		<li
+			style={{
+				width: '100%',
+				display: 'flex',
+				justifyContent: 'center',
+				margin: '8px 0',
+				...style,
+			}}
+		>
+			<label className={`container ${className}`.trim()}>
+				<input
+					type='checkbox'
+					checked={!darkMode}
+					onChange={() => setDarkMode((d) => !d)}
+					aria-checked={!darkMode}
+					aria-label='Toggle dark mode'
+				/>
+				<div className='checkbox-wrapper'>
+					<div className='checkmark'></div>
+					<div className='nebula-glow'></div>
+					<div className='sparkle-container'></div>
+				</div>
+			</label>
+		</li>
+	);
+};
 
 export const CopyLinkButton: React.FC = () => {
 	const [copied, setCopied] = React.useState(false);
