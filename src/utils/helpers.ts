@@ -1,4 +1,3 @@
-// Load daily puzzles from JSON
 import dailyPuzzlesJson from '../data/dailyPuzzles.json';
 
 const dailyPuzzles: any[] = dailyPuzzlesJson as any[];
@@ -29,7 +28,6 @@ export function shuffle<T>(array: T[]): T[] {
 	return arr;
 }
 
-// Helper: Get all unique words from groups and wildcards
 export function getAllWordsFromGroupsAndWildcards(
 	groups: string[][],
 	wildcards: string[]
@@ -39,7 +37,6 @@ export function getAllWordsFromGroupsAndWildcards(
 	return Array.from(new Set(allWords));
 }
 
-// --- Helper: Parse groups from text ---
 export function parseGroupsFromText(
 	text: string,
 	groupSize: number
@@ -56,7 +53,6 @@ export function parseGroupsFromText(
 		.filter((group) => group.length > 0);
 }
 
-// --- Helper: Parse groups from array of group input strings ---
 export function parseGroupsFromInputs(
 	inputs: string[],
 	groupSize: number
@@ -70,7 +66,6 @@ export function parseGroupsFromInputs(
 	);
 }
 
-// --- Helper: Flatten groups to unique word list ---
 export function getUniqueWordsFromGroups(
 	groups: string[][]
 ): string[] {
@@ -84,7 +79,6 @@ export function getUniqueWordsFromGroups(
 	);
 }
 
-// --- Helper: Build groups from word list (for sync) ---
 export function buildGroupsFromWords(
 	words: string[],
 	groupSize: number
@@ -96,7 +90,6 @@ export function buildGroupsFromWords(
 	return groups;
 }
 
-// --- Helper: Capitalize first letter of each word ---
 export function capitalizeWords(str: string): string {
 	return str.replace(
 		/\b\w+/g,
@@ -105,7 +98,6 @@ export function capitalizeWords(str: string): string {
 	);
 }
 
-// --- Share helpers ---
 export function getShareUrl(): string {
 	return 'https://vibegrid.app';
 }
@@ -118,7 +110,6 @@ export function getShareText(): string {
 	return 'Check out my VibeGrid result!';
 }
 
-// --- Clipboard helper ---
 export function copyToClipboard(
 	text: string,
 	setCopied?: (v: boolean) => void
@@ -134,3 +125,42 @@ export function copyToClipboard(
 		}
 	}
 }
+
+export const shareLinks = [
+	{
+		name: 'X',
+		url: `https://twitter.com/intent/tweet?text=${encodeURIComponent(
+			'Checkout VibeGrid https://vibegrid.app'
+		)}`,
+	},
+	{
+		name: 'Meta',
+		url: `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(
+			'https://vibegrid.app'
+		)}`,
+	},
+	{
+		name: 'Reddit',
+		url: `https://www.reddit.com/submit?url=${encodeURIComponent(
+			'https://vibegrid.app'
+		)}&title=${encodeURIComponent('Checkout VibeGrid!')}`,
+	},
+	{
+		name: 'LinkedIn',
+		url: `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(
+			'https://vibegrid.app'
+		)}`,
+	},
+	{
+		name: 'TikTok',
+		url: `https://www.tiktok.com/share?url=${encodeURIComponent(
+			'https://vibegrid.app'
+		)}`,
+	},
+	{
+		name: 'Instagram',
+		url: `https://www.instagram.com/?url=${encodeURIComponent(
+			'https://vibegrid.app'
+		)}`,
+	},
+];

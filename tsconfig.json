@@ -22,7 +22,12 @@
 			"@utils/*": ["src/utils/*"],
 			"@data/*": ["src/data/*"]
 		},
-		"types": ["next", "next/types/global"],
+		"types": [
+			"next",
+			"@types/node",
+			"@types/react",
+			"@types/react-dom"
+		],
 		"incremental": true
 	},
 	"include": ["src"],

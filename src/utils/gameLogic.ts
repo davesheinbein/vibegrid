@@ -1,4 +1,3 @@
-// --- Group validity and feedback helpers ---
 export function checkGroupValidity(
 	selectedWords: string[],
 	groups: Record<string, string[]>
@@ -23,7 +22,6 @@ export function partialMatchFeedback(
 	return `${highestMatch} of these fit together.`;
 }
 
-// --- Utility: Convert groups array to object for fast lookup ---
 export function groupsArrayToObject(
 	groups: string[][]
 ): Record<string, string[]> {
