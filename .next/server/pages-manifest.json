@@ -2,10 +2,9 @@
   "/_app": "pages/_app.js",
   "/_error": "pages/_error.js",
   "/_document": "pages/_document.js",
-  "/browse": "pages/browse.js",
-  "/system-status": "pages/system-status.js",
-  "/achievements": "pages/achievements.js",
-  "/api/auth/[...nextauth]": "pages/api/auth/[...nextauth].js",
+  "/daily": "pages/daily.js",
   "/": "pages/index.js",
-  "/daily": "pages/daily.js"
+  "/achievements": "pages/achievements.js",
+  "/browse": "pages/browse.js",
+  "/system-status": "pages/system-status.js"
 }

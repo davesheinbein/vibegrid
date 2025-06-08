@@ -91,7 +91,7 @@ export const SubmitButton: React.FC<{
 	disabled?: boolean;
 }> = ({ children, onClick, className = '', disabled }) => (
 	<button
-		className={`vibegrid-submit ${className}`.trim()}
+		className={`gridRoyale-submit ${className}`.trim()}
 		onClick={onClick}
 		disabled={disabled}
 	>
@@ -103,11 +103,7 @@ export const ShareButton: React.FC<{
 	onClick: () => void;
 	className?: string;
 	label?: string;
-}> = ({
-	onClick,
-	className = '',
-	label = 'Share VibeGrid',
-}) => (
+}> = ({ onClick, className = '', label = 'Share' }) => (
 	<button
 		className={`share-btn ${className}`.trim()}
 		onClick={onClick}

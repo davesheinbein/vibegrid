@@ -1,4 +1,4 @@
-// VibeGrid Socket.io Server (core structure)
+// Grid Royale Socket.io Server (core structure)
 const { Server } = require('socket.io');
 const { getSessionUser } = require('./utils/auth');
 const prisma = require('./prismaClient');
@@ -306,48 +306,104 @@ function createSocketServer(httpServer) {
 		});
 	});
 
-	// --- Notifications Namespace ---
-	io.of('/notifications').on('connection', (socket) => {
+	// --- Grid Royale Match Chat & Notification Banner Logic ---
+
+	// Helper: profanity filter stub
+	function filterProfanity(message) {
+		// TODO: Replace with real filter or use a library
+		return message.replace(/(badword)/gi, '****');
+	}
+
+	// Helper: user chat settings stub
+	async function isChatDisabled(userId) {
+		// TODO: Check user settings in DB
+		return false;
+	}
+
+	// --- Game Namespace (Match Chat, Room Join/Leave) ---
+	io.of('/game').on('connection', (socket) => {
 		const user = getSessionUser(socket);
 		if (!user) return socket.disconnect();
-		socket.join(user.id);
-		// Real-time push for notifications
+
+		// Join match/game room (for all modes)
+		socket.on('match:join', ({ matchId, mode }, cb) => {
+			socket.join(matchId);
+			cb?.({ success: true });
+		});
+
+		// Leave match/game room
+		socket.on('match:leave', ({ matchId }, cb) => {
+			socket.leave(matchId);
+			cb?.({ success: true });
+		});
+
+		// Ephemeral Match Chat (per-match room)
 		socket.on(
-			'notification:read',
-			async ({ notificationId }) => {
-				await prisma.notification.update({
-					where: { id: notificationId },
-					data: { read: true },
-				});
+			'match:chat',
+			async ({ matchId, message, type }, cb) => {
+				if (await isChatDisabled(user.id))
+					return cb?.({ error: 'Chat disabled' });
+				if (!rateLimit(user.id + ':matchchat', 30, 60000))
+					return cb?.({ error: 'Rate limit' });
+				const cleanMsg = filterProfanity(message);
+				const chatMsg = {
+					userId: user.id,
+					matchId,
+					message: cleanMsg,
+					type: type || 'text', // 'text', 'emoji', 'taunt', etc.
+					timestamp: Date.now(),
+				};
+				io.of('/game')
+					.to(matchId)
+					.emit('match:chat', chatMsg);
+				cb?.({ success: true });
 			}
 		);
 	});
 
-	// --- Achievements Namespace ---
-	io.of('/achievements').on('connection', (socket) => {
+	// --- Notifications Namespace (Banner Events) ---
+	io.of('/notifications').on('connection', (socket) => {
 		const user = getSessionUser(socket);
 		if (!user) return socket.disconnect();
+		socket.join(user.id);
 
-		// Client requests all unlocked achievements
-		socket.on('achievement:list', async (_, cb) => {
-			try {
-				const unlocked =
-					await prisma.userAchievement.findMany({
-						where: { userId: user.id },
-						include: { achievement: true },
-					});
-				cb && cb(unlocked);
-			} catch (err) {
-				cb && cb([]);
+		// Trigger notification banner (per-player, per-room, or global)
+		socket.on(
+			'banner:notify',
+			({
+				type,
+				message,
+				color,
+				matchId,
+				targetUserId,
+				data,
+			}) => {
+				const banner = {
+					type, // e.g. 'burn', 'solve', 'milestone', 'victory', etc.
+					message,
+					color,
+					data: data || {},
+					timestamp: Date.now(),
+				};
+				if (targetUserId) {
+					// Send to specific user
+					io.of('/notifications')
+						.to(targetUserId)
+						.emit('banner:notify', banner);
+				} else if (matchId) {
+					// Send to all in match room
+					io.of('/notifications')
+						.to(matchId)
+						.emit('banner:notify', banner);
+				} else {
+					// Global (all connected)
+					io.of('/notifications').emit(
+						'banner:notify',
+						banner
+					);
+				}
 			}
-		});
-
-		// Server emits when an achievement is unlocked
-		// socket.emit('achievement:unlocked', { achievement });
-		// Server emits for real-time toast/modal
-		// socket.emit('achievement:notify', { achievement });
-		// Server emits to sync new achievement states
-		// socket.emit('achievement:sync', { achievements });
+		);
 	});
 
 	return io;

@@ -90,7 +90,7 @@ const EndGameModal: React.FC<EndGameModalProps> = ({
 					<div className='endgame-modal-share-btns'>
 						<ShareButton
 							onClick={onShare}
-							label={'Share VibeGrid'}
+							label={'Share'}
 						/>
 					</div>
 				</div>

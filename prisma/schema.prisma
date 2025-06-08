@@ -39,6 +39,17 @@ model User {
   puzzleRatings     PuzzleRating[]
   puzzleComments    PuzzleComment[]
   userChallenges    UserChallenge[]
+  equippedThemeId    String?
+  equippedFontId     String?
+  equippedEmojiPackId String?
+  equippedSoundPackId String?
+  equippedTitleId    String?
+  equippedFrameId    String?
+  equippedBurnTrailId String?
+  coins              Int      @default(0)
+  premiumCurrency    Int      @default(0)
+  userCustomizations UserCustomization[]
+  userLoadouts       UserLoadout[]
 }
 
 model Friend {
@@ -237,4 +248,47 @@ model UserProfileBadge {
   badge   String
   unlockedAt DateTime @default(now())
   user    User     @relation(fields: [userId], references: [id])
+}
+
+model CustomizationItem {
+  id           String   @id @default(uuid())
+  type         String   // e.g. 'theme', 'font', 'emoji', 'sound', 'title', 'frame', 'burnTrail'
+  name         String
+  description  String?
+  rarity       String?  // e.g. 'common', 'rare', 'epic', 'legendary', 'event'
+  price        Int?     // in-game currency
+  premiumPrice Int?     // premium currency (optional)
+  previewUrl   String?  // image, animation, or sound preview
+  isSeasonal   Boolean  @default(false)
+  isExclusive  Boolean  @default(false)
+  availableAt  DateTime?
+  expiresAt    DateTime?
+  createdAt    DateTime @default(now())
+  userCustomizations UserCustomization[]
+}
+
+model UserCustomization {
+  id         String   @id @default(uuid())
+  userId     String
+  itemId     String
+  acquiredAt DateTime @default(now())
+  via        String?  // 'achievement', 'purchase', 'event', etc.
+  user       User     @relation(fields: [userId], references: [id])
+  item       CustomizationItem @relation(fields: [itemId], references: [id])
+}
+
+model UserLoadout {
+  id         String   @id @default(uuid())
+  userId     String
+  name       String
+  themeId    String?
+  fontId     String?
+  emojiPackId String?
+  soundPackId String?
+  titleId    String?
+  frameId    String?
+  burnTrailId String?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  user       User     @relation(fields: [userId], references: [id])
 }

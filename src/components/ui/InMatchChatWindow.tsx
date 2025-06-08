@@ -1,5 +1,14 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, {
+	useContext,
+	useEffect,
+	useRef,
+	useState,
+} from 'react';
 import { useFriends } from './FriendsProvider';
+import {
+	UserSettingsContext,
+	filterProfanity,
+} from './UserSettingsProvider';
 
 interface InMatchChatWindowProps {
 	matchId: string;
@@ -16,6 +25,7 @@ const InMatchChatWindow: React.FC<
 		loadChatHistory,
 		clearUnread,
 	} = useFriends();
+	const { settings } = useContext(UserSettingsContext);
 	const [message, setMessage] = useState('');
 	const messagesEndRef = useRef<HTMLDivElement>(null);
 
@@ -34,12 +44,29 @@ const InMatchChatWindow: React.FC<
 	const handleSend = (e: React.FormEvent) => {
 		e.preventDefault();
 		if (message.trim()) {
-			// Use a dedicated inMatchMessage event for match chat
-			// This is a placeholder, actual implementation may differ
-			sendFriendMessage(`${matchId}:${friendId}`, message);
+			// When sending a message, filter if enabled
+			const filteredContent =
+				settings.profanityFilter &&
+				filterProfanity(message.trim());
+			sendFriendMessage(
+				`${matchId}:${friendId}`,
+				filteredContent
+			);
 			setMessage('');
 		}
 	};
+
+	// Filter incoming messages if profanityFilter is enabled
+	const filteredMessages = settings.profanityFilter
+		? (chatHistory[`${matchId}:${friendId}`] || []).map(
+				(msg) => ({
+					...msg,
+					message: filterProfanity(msg.message),
+				})
+		  )
+		: chatHistory[`${matchId}:${friendId}`] || [];
+
+	if (!settings.chatEnabled) return null;
 
 	return (
 		<div className='inmatch-chat-window'>
@@ -48,27 +75,25 @@ const InMatchChatWindow: React.FC<
 				<button onClick={onClose}>×</button>
 			</div>
 			<div className='inmatch-chat-messages'>
-				{(chatHistory[`${matchId}:${friendId}`] || []).map(
-					(msg) => (
-						<div
-							key={msg.id}
-							className={`chat-message${
-								msg.system
-									? ' system'
-									: msg.senderId === friendId
-									? ' friend'
-									: ' self'
-							}`}
-						>
-							<span className='chat-message-text'>
-								{msg.message}
-							</span>
-							<span className='chat-message-time'>
-								{new Date(msg.sentAt).toLocaleTimeString()}
-							</span>
-						</div>
-					)
-				)}
+				{filteredMessages.map((msg) => (
+					<div
+						key={msg.id}
+						className={`chat-message${
+							msg.system
+								? ' system'
+								: msg.senderId === friendId
+								? ' friend'
+								: ' self'
+						}`}
+					>
+						<span className='chat-message-text'>
+							{msg.message}
+						</span>
+						<span className='chat-message-time'>
+							{new Date(msg.sentAt).toLocaleTimeString()}
+						</span>
+					</div>
+				))}
 				<div ref={messagesEndRef} />
 			</div>
 			<form

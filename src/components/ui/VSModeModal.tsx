@@ -1,6 +1,7 @@
-import React from 'react';
+import React, { useContext } from 'react';
 import { Modal } from './Modal';
 import { SubmitButton } from './Buttons';
+import { UserSettingsContext } from './UserSettingsProvider';
 
 interface VSModeModalProps {
 	open: boolean;
@@ -39,6 +40,7 @@ const VSModeModal: React.FC<VSModeModalProps> = ({
 	onClose,
 	onSelect,
 }) => {
+	const { settings } = useContext(UserSettingsContext);
 	const [showBot, setShowBot] = React.useState(false);
 	return (
 		<Modal open={open} onClose={onClose}>

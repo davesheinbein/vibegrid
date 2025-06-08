@@ -100,7 +100,7 @@ const AchievementsPage: React.FC = () => {
 
 	return (
 		<div
-			className='vibegrid-container'
+			className='gridRoyale-container'
 			style={{
 				minHeight: '100vh',
 				padding: 24,
@@ -127,7 +127,7 @@ const AchievementsPage: React.FC = () => {
 				}}
 			>
 				Unlock milestones as you play, solve, and connect
-				with the VibeGrid community!
+				with the Grid Royale community!
 			</p>
 			<button
 				onClick={handleReset}

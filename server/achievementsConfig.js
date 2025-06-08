@@ -1,4 +1,4 @@
-// --- VibeGrid Achievements Config ---
+// --- Grid Royale Achievements Config ---
 // This file defines all achievements, their criteria, and metadata for the game.
 // Each achievement should have: label, description, icon, criteria (event/progress/streak/meta), and optional secret flag.
 

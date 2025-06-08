@@ -1,4 +1,4 @@
-// Auth utilities for VibeGrid backend
+// Auth utilities for Grid Royale backend
 const jwt = require('jsonwebtoken');
 
 function getSessionUser(reqOrSocket) {

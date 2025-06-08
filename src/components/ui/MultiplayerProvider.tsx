@@ -1,11 +1,15 @@
 import React, {
 	createContext,
+	useCallback,
 	useContext,
 	useEffect,
 	useRef,
 	useState,
 } from 'react';
 import { io, Socket } from 'socket.io-client';
+import NotificationBanner, {
+	NotificationType,
+} from './NotificationBanner';
 
 interface Notification {
 	id: string;
@@ -30,6 +34,9 @@ interface MultiplayerContextType {
 	startMatch: () => void;
 	addNotification: (notification: Notification) => void;
 	markNotificationRead: (id: string) => void;
+	userId: string;
+	matchId: string;
+	opponentUserId?: string;
 	// Add more multiplayer state/actions as needed
 }
 
@@ -62,6 +69,32 @@ export const MultiplayerProvider: React.FC<{
 		Notification[]
 	>([]);
 	const notificationIdRef = useRef(0);
+
+	// --- User/Match IDs ---
+	const [userId, setUserId] = useState('');
+	const [matchId, setMatchId] = useState('');
+	const [opponentUserId, setOpponentUserId] = useState<
+		string | undefined
+	>(undefined);
+
+	// On mount, set userId from session/localStorage (or generate guest)
+	useEffect(() => {
+		let uid = '';
+		if (typeof window !== 'undefined') {
+			uid = localStorage.getItem('userId') || '';
+			if (!uid) {
+				uid =
+					'guest-' + Math.random().toString(36).slice(2);
+				localStorage.setItem('userId', uid);
+			}
+		}
+		setUserId(uid);
+	}, []);
+
+	// Set matchId when joining/creating a room (stub: use roomCode for now)
+	useEffect(() => {
+		if (roomCode) setMatchId(roomCode);
+	}, [roomCode]);
 
 	// --- Notification helpers ---
 	const addNotification = (notification: Notification) => {
@@ -190,6 +223,9 @@ export const MultiplayerProvider: React.FC<{
 		startMatch,
 		addNotification,
 		markNotificationRead,
+		userId,
+		matchId,
+		opponentUserId,
 	};
 
 	return (
@@ -224,4 +260,69 @@ export function notifyAchievement(
 			body: 'You just earned a new achievement!',
 		});
 	}
+}
+
+// Notification Banner Context
+interface Banner {
+	id: string;
+	type: NotificationType;
+	message: string;
+}
+
+interface NotificationBannerContextType {
+	notify: (type: NotificationType, message: string) => void;
+}
+
+const NotificationBannerContext = createContext<
+	NotificationBannerContextType | undefined
+>(undefined);
+
+export const useNotificationBanner = () =>
+	useContext(NotificationBannerContext)!;
+
+export const NotificationBannerProvider: React.FC<{
+	children: React.ReactNode;
+}> = ({ children }) => {
+	const [banners, setBanners] = useState<Banner[]>([]);
+	const queueRef = useRef<Banner[]>([]);
+
+	const notify = useCallback(
+		(type: NotificationType, message: string) => {
+			const id = Math.random().toString(36).slice(2);
+			queueRef.current.push({ id, type, message });
+			setBanners((prev) => {
+				const next = [...prev, { id, type, message }];
+				return next.slice(-3); // max 3 visible
+			});
+		},
+		[]
+	);
+
+	const handleClose = (id: string) => {
+		setBanners((prev) => prev.filter((b) => b.id !== id));
+	};
+
+	return (
+		<NotificationBannerContext.Provider value={{ notify }}>
+			{children}
+			{banners.map((banner, i) => (
+				<NotificationBanner
+					key={banner.id}
+					type={banner.type}
+					message={banner.message}
+					onClose={() => handleClose(banner.id)}
+					index={i}
+				/>
+			))}
+		</NotificationBannerContext.Provider>
+	);
+};
+
+// Add this function to trigger a notification banner from anywhere
+export function triggerNotificationBanner(
+	type: NotificationType,
+	message: string
+) {
+	const { notify } = useNotificationBanner();
+	notify(type, message);
 }

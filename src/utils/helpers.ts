@@ -99,15 +99,15 @@ export function capitalizeWords(str: string): string {
 }
 
 export function getShareUrl(): string {
-	return 'https://vibegrid.app';
+	return 'https://gridRoyale.app';
 }
 
 export function getShareTitle(): string {
-	return "VibeGrid: Can you solve today's grid?";
+	return "Grid Royale: Can you solve today's grid?";
 }
 
 export function getShareText(): string {
-	return 'Check out my VibeGrid result!';
+	return 'Check out my Grid Royale result!';
 }
 
 export function copyToClipboard(
@@ -130,37 +130,37 @@ export const shareLinks = [
 	{
 		name: 'X',
 		url: `https://twitter.com/intent/tweet?text=${encodeURIComponent(
-			'Checkout VibeGrid https://vibegrid.app'
+			'Checkout Grid Royale https://gridRoyale.app'
 		)}`,
 	},
 	{
 		name: 'Meta',
 		url: `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(
-			'https://vibegrid.app'
+			'https://gridRoyale.app'
 		)}`,
 	},
 	{
 		name: 'Reddit',
 		url: `https://www.reddit.com/submit?url=${encodeURIComponent(
-			'https://vibegrid.app'
-		)}&title=${encodeURIComponent('Checkout VibeGrid!')}`,
+			'https://gridRoyale.app'
+		)}&title=${encodeURIComponent('Checkout Grid Royale!')}`,
 	},
 	{
 		name: 'LinkedIn',
 		url: `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(
-			'https://vibegrid.app'
+			'https://gridRoyale.app'
 		)}`,
 	},
 	{
 		name: 'TikTok',
 		url: `https://www.tiktok.com/share?url=${encodeURIComponent(
-			'https://vibegrid.app'
+			'https://gridRoyale.app'
 		)}`,
 	},
 	{
 		name: 'Instagram',
 		url: `https://www.instagram.com/?url=${encodeURIComponent(
-			'https://vibegrid.app'
+			'https://gridRoyale.app'
 		)}`,
 	},
 ];

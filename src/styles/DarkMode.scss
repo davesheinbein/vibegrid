@@ -1,18 +1,18 @@
 .dark-mode {
-	.vibegrid-container {
+	.gridRoyale-container {
 		background: #1e293b;
 		box-shadow: 0 4px 24px 0 rgba(0, 0, 0, 0.25);
 	}
 
-	.vibegrid-title {
+	.gridRoyale-title {
 		color: #fbbf24;
 	}
 
-	.vibegrid-subtitle {
+	.gridRoyale-subtitle {
 		color: #cbd5e1;
 	}
 
-	.vibegrid-submit {
+	.gridRoyale-submit {
 		background: linear-gradient(
 			90deg,
 			#0ea5e9 0%,
@@ -21,15 +21,15 @@
 		color: #1e293b;
 	}
 
-	.vibegrid-attempts {
+	.gridRoyale-attempts {
 		color: #cbd5e1;
 	}
 
-	.vibegrid-attempt-dot {
+	.gridRoyale-attempt-dot {
 		background: #fbbf24;
 	}
 
-	.vibegrid-attempt-dot.used {
+	.gridRoyale-attempt-dot.used {
 		background: #334155;
 	}
 
@@ -72,11 +72,11 @@
 		color: #f1f5f9;
 	}
 
-	.vibegrid-solved-group {
+	.gridRoyale-solved-group {
 		background: #334155;
 	}
 
-	.vibegrid-solved-word {
+	.gridRoyale-solved-word {
 		color: #fbbf24;
 		background: #0ea5e9;
 	}

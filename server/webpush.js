@@ -1,4 +1,4 @@
-// Web Push Notification Setup for VibeGrid
+// Web Push Notification Setup for Grid Royale
 const webpush = require('web-push');
 
 webpush.setVapidDetails(

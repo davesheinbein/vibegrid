@@ -1,4 +1,4 @@
-// VibeGrid Backend Entry Point
+// Grid Royale Backend Entry Point
 const express = require('express');
 const http = require('http');
 const { createSocketServer } = require('./socket');
@@ -17,6 +17,7 @@ const leaderboardsRouter = require('./routes/leaderboards');
 const notificationsRouter = require('./routes/notifications');
 const adminRouter = require('./routes/admin');
 const healthRouter = require('./routes/health');
+const customizationRouter = require('./routes/customization');
 require('dotenv').config();
 
 const dev = process.env.NODE_ENV !== 'production';
@@ -55,6 +56,8 @@ app.prepare().then(async () => {
 	server.use('/api/admin', adminRouter);
 	// Health API routes
 	server.use('/api/health', healthRouter);
+	// Customization API routes
+	server.use('/api/customization', customizationRouter);
 
 	// Next.js page handling
 	server.all('*', (req, res) => handle(req, res));

@@ -1,3 +1,4 @@
+@use './Variables.scss' as *;
 @use './Browse.scss';
 @use './Daily.scss';
 @use './Footer.scss';
@@ -145,14 +146,14 @@ body {
 	}
 }
 
-.vibegrid-header {
+.gridRoyale-header {
 	display: flex;
 	align-items: center;
 	justify-content: space-between;
 	margin-bottom: 0.5rem;
 }
 
-.vibegrid-attempt-dot {
+.gridRoyale-attempt-dot {
 	width: 14px;
 	height: 14px;
 	border-radius: 50%;
@@ -162,7 +163,7 @@ body {
 	transition: background 0.2s, border 0.2s;
 }
 
-.vibegrid-attempt-dot {
+.gridRoyale-attempt-dot {
 	width: 1.1em;
 	height: 1.1em;
 	border-radius: 50%;
@@ -178,7 +179,7 @@ body {
 }
 
 @media (max-width: 600px) {
-	.vibegrid-attempt-dot {
+	.gridRoyale-attempt-dot {
 		width: 0.9em;
 		height: 0.9em;
 	}
@@ -210,14 +211,14 @@ body {
 	color: #0a174e;
 }
 
-.vibegrid-solved-groups {
+.gridRoyale-solved-groups {
 	display: flex;
 	flex-direction: column;
 	gap: 1.1rem;
 	margin-bottom: 1.5rem;
 }
 
-.vibegrid-solved-group {
+.gridRoyale-solved-group {
 	background: linear-gradient(
 		90deg,
 		#f0f9ff 0%,
@@ -238,11 +239,11 @@ body {
 	box-shadow: 0 2px 8px 0 rgba(14, 165, 233, 0.1);
 	border: 1.5px solid #bae6fd;
 	min-width: 220px;
-	.vibegrid-solved-category {
+	.gridRoyale-solved-category {
 		color: #2563eb;
 	}
 
-	.vibegrid-solved-word {
+	.gridRoyale-solved-word {
 		color: #0a174e;
 		background: #e0f2fe;
 		box-shadow: none !important;
@@ -292,7 +293,17 @@ body {
 	margin-left: 0.5rem;
 	cursor: pointer;
 	transition: transform 0.15s;
+
 	&:hover {
+		padding: 5px;
+		border-radius: 9999px;
+		color: #ffffff;
+		fill: #ffffff;
+		background: linear-gradient(
+			90deg,
+			#2563eb 0%,
+			#38bdf8 100%
+		);
 		transform: scale(1.15);
 	}
 }
@@ -301,6 +312,7 @@ body {
 	width: 25px;
 	height: 25px;
 	fill: #2563eb;
+
 	@media (max-width: 600px) {
 		width: 1.5rem;
 		height: 1.5rem;
@@ -547,28 +559,28 @@ body {
 	justify-content: center;
 	background: rgba(30, 41, 59, 0.55);
 	z-index: 70;
-}
 
-.rules-modal-content {
-	background: #fff;
-	color: #334155;
-	padding: 2rem 1.5rem 1.5rem 1.5rem;
-	border-radius: 1rem;
-	text-align: left;
-	min-width: 260px;
-	max-width: 90vw;
-	h2 {
-		font-size: 1.25rem;
-		margin-bottom: 1rem;
-		color: #2563eb;
-	}
+	&-content {
+		background: #fff;
+		color: #334155;
+		padding: 2rem 1.5rem 1.5rem 1.5rem;
+		border-radius: 1rem;
+		text-align: left;
+		min-width: 260px;
+		max-width: 90vw;
+		h2 {
+			font-size: 1.25rem;
+			margin-bottom: 1rem;
+			color: #2563eb;
+		}
 
-	ul {
-		margin: 0 0 1.2rem 1.2rem;
-		padding: 0;
-		font-size: 1.05rem;
-		li {
-			margin-bottom: 0.5em;
+		ul {
+			margin: 0 0 1.2rem 1.2rem;
+			padding: 0;
+			font-size: 1.05rem;
+			li {
+				margin-bottom: 0.5em;
+			}
 		}
 	}
 }
@@ -685,6 +697,7 @@ button,
 		transform 0.12s;
 	cursor: pointer;
 }
+
 button:hover,
 .submit-btn:hover,
 .vs-mode-btn:hover,
@@ -764,7 +777,7 @@ button:active,
 
 // --- Font and Color Consistency ---
 body,
-.vibegrid-container,
+.gridRoyale-container,
 .modal-content,
 .share-modal-content {
 	font-family: 'Inter', 'Segoe UI', Arial, sans-serif;
@@ -858,7 +871,7 @@ body.dark-mode,
 	}
 }
 
-.vibegrid-solved-category {
+.gridRoyale-solved-category {
 	font-size: 1.35rem;
 	font-weight: 800;
 	color: #0ea5e9;
@@ -876,7 +889,7 @@ body.dark-mode,
 	}
 }
 
-.vibegrid-solved-word-list {
+.gridRoyale-solved-word-list {
 	display: flex;
 	gap: 0.7rem;
 	margin: 0;
@@ -884,7 +897,7 @@ body.dark-mode,
 	list-style: none;
 }
 
-.vibegrid-solved-word {
+.gridRoyale-solved-word {
 	font-weight: 600;
 	color: #0284c7;
 	background: #e0f2fe;
@@ -896,8 +909,8 @@ body.dark-mode,
 	transition: background 0.18s, color 0.18s;
 }
 
-.vibegrid-solved-word-list
-	.vibegrid-solved-word:not(:last-child) {
+.gridRoyale-solved-word-list
+	.gridRoyale-solved-word:not(:last-child) {
 	margin-right: 0.1rem;
 }
 
@@ -1367,30 +1380,18 @@ body.dark-mode,
 }
 
 .home-btn-daily {
-	background: linear-gradient(
-		90deg,
-		#38bdf8 0%,
-		#fbbf24 100%
-	);
-	color: #fff;
+	background: $primary-blue;
+	color: $primary-white;
 }
 
 .home-btn-custom {
-	background: linear-gradient(
-		90deg,
-		#a7f3d0 0%,
-		#38bdf8 100%
-	);
-	color: #2563eb;
+	background: $primary-yellow;
+	color: $primary-black;
 }
 
 .home-btn-browse {
-	background: linear-gradient(
-		90deg,
-		#fbbf24 0%,
-		#38bdf8 100%
-	);
-	color: #fff;
+	background: $primary-cyan-light;
+	color: $primary-blue;
 }
 
 .home-share-btn {
@@ -2087,21 +2088,168 @@ body.dark-mode .friend-chat-send-btn {
 	);
 	color: #1e293b;
 }
-.friends-sidebar,
-.friends-sidebar-overlay {
-	padding: 18px 14px 18px 14px;
-	min-width: 260px;
-	box-sizing: border-box;
+
+/* --- Pregame Modal for Daily Puzzle --- */
+.pregame-modal-overlay {
+	position: fixed;
+	z-index: 2000;
+	inset: 0;
+	background: rgba(30, 41, 59, 0.38);
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	pointer-events: all;
+	animation: fadeIn 0.22s;
+}
+.pregame-modal {
+	background: #fff;
+	border-radius: 18px;
+	box-shadow: 0 4px 32px 0 #00308733, 0 2px 8px 0 #e3eaff33;
+	padding: 2.2em 2.5em 2em 2.5em;
+	min-width: 320px;
+	max-width: 95vw;
+	width: 90vw;
+	max-width: 420px;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	text-align: center;
+	position: relative;
+	animation: fadeInUp 0.32s
+		cubic-bezier(0.23, 1.01, 0.32, 1);
+}
+.pregame-modal-title {
+	font-size: 2.1rem;
+	font-weight: 800;
+	color: #2563eb;
+	margin-bottom: 0.7em;
+	text-align: center;
+}
+.pregame-modal-subtext {
+	font-size: 1.15rem;
+	color: #64748b;
+	font-weight: 500;
+	margin-bottom: 2.2em;
+	text-align: center;
+}
+.pregame-modal-ready-btn {
+	width: 65%;
+	min-width: 160px;
+	max-width: 320px;
+	padding: 1.1em 0;
+	font-size: 1.25rem;
+	font-weight: 700;
+	border-radius: 12px;
+	background: $primary-blue;
+	color: $primary-white;
+	border: none;
+	box-shadow: 0 2px 8px 0 $primary-shadow;
+	margin: 0 auto;
+	display: block;
+	cursor: pointer;
+	transition: background 0.13s, box-shadow 0.08s,
+		transform 0.13s;
+	outline: none;
+	position: relative;
+	&.pulse {
+		animation: pulseBtn 1.2s infinite
+			cubic-bezier(0.4, 0.2, 0.2, 1);
+	}
+	&:hover,
+	&:focus {
+		background: lighten($primary-blue, 12%);
+		transform: scale(1.04);
+	}
 }
 
-.friend-card,
-.glassy-friend-card {
-	padding: 12px 14px;
-	margin-bottom: 10px;
-	box-sizing: border-box;
+.pregame-modal-go-home-btn {
+	width: 65%;
+	min-width: 160px;
+	max-width: 320px;
+	padding: 1.1em 0;
+	font-size: 1.25rem;
+	font-weight: 700;
+	border-radius: 12px;
+	background: $primary-red;
+	color: $primary-white;
+	border: none;
+	box-shadow: 0 2px 8px 0 $primary-shadow;
+	margin: 20px auto 0;
+	display: block;
+	cursor: pointer;
+	transition: background 0.13s, box-shadow 0.08s,
+		transform 0.13s;
+	outline: none;
+	position: relative;
+	&:hover,
+	&:focus {
+		background: lighten($primary-red, 12%);
+		transform: scale(1.04);
+	}
+}
+@keyframes pulseBtn {
+	0% {
+		box-shadow: 0 0 0 0 #2563eb44;
+	}
+	70% {
+		box-shadow: 0 0 0 12px #2563eb11;
+	}
+	100% {
+		box-shadow: 0 0 0 0 #2563eb00;
+	}
 }
 
-.friends-sidebar-section {
-	margin-bottom: 18px;
-	padding-bottom: 10px;
+/* --- Countdown Animation --- */
+.pregame-countdown-overlay {
+	position: fixed;
+	z-index: 2100;
+	inset: 0;
+	background: rgba(30, 41, 59, 0.38);
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	pointer-events: all;
+	animation: fadeIn 0.18s;
+}
+.pregame-countdown-text {
+	font-size: 3.2rem;
+	font-weight: 900;
+	color: #2563eb;
+	background: #fff;
+	border-radius: 18px;
+	padding: 1.2em 2.2em;
+	box-shadow: 0 4px 32px 0 #00308733, 0 2px 8px 0 #e3eaff33;
+	text-align: center;
+	animation: fadeInScale 0.32s
+		cubic-bezier(0.23, 1.01, 0.32, 1);
+}
+@keyframes fadeInScale {
+	0% {
+		opacity: 0;
+		transform: scale(0.7);
+	}
+	100% {
+		opacity: 1;
+		transform: scale(1);
+	}
+}
+
+/* --- Dimmed grid when modal/countdown active --- */
+.dimmed-grid {
+	pointer-events: none !important;
+	opacity: 0.4;
+	filter: blur(1.5px) grayscale(0.1);
+	transition: opacity 0.18s, filter 0.18s;
+}
+
+/* --- Timer under heading --- */
+.daily-timer {
+	margin-top: 0.2em;
+	margin-bottom: 0.5em;
+	font-size: 1.25rem;
+	font-weight: 700;
+	color: #2563eb;
+	letter-spacing: 0.01em;
+	text-align: left;
+	animation: fadeIn 0.22s;
 }

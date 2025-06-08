@@ -1,4 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import React, {
+	useState,
+	useEffect,
+	useContext,
+} from 'react';
 import { useRouter } from 'next/router';
 import {
 	dailyPuzzle,
@@ -34,6 +38,8 @@ import {
 } from '@fortawesome/free-brands-svg-icons';
 import { faShareAlt } from '@fortawesome/free-solid-svg-icons';
 import { Modal } from '../components/ui/Modal';
+import { useNotificationBanner } from '../components/ui/MultiplayerProvider';
+import { UserSettingsContext } from '../components/ui/UserSettingsProvider';
 
 interface DailyPageProps {
 	onBack?: () => void;
@@ -74,6 +80,10 @@ export default function Daily(props: DailyPageProps) {
 	} | null>(null);
 	const [showGameOverBanner, setShowGameOverBanner] =
 		useState(false);
+
+	const { notify } = useNotificationBanner();
+	const { settings } = useContext(UserSettingsContext);
+	const router = useRouter();
 
 	const activePuzzle = dailyPuzzle;
 	const gridCols = activePuzzle.size?.cols || 4;
@@ -167,6 +177,14 @@ export default function Daily(props: DailyPageProps) {
 			);
 			setAttemptsLeft((prev) => prev + 1); // Always increment by 1 for each wildcard burn
 			setFeedback('🔥 Correct burn! Bonus awarded!');
+			notify(
+				'burn',
+				`🔥 Burned wildcard: ${burnSuspect} (+${
+					attemptsLeft >= 2 ? 10 : 5
+				} Bonus, +1 Attempt)`
+			);
+			// Optionally: emit chat/taunt here
+			// socket.emit('match:chat', { matchId, message: '🔥 Burned a wildcard!', type: 'emoji' });
 			if (
 				activePuzzle.wildcards &&
 				activePuzzle.wildcards.length > 0 &&
@@ -177,11 +195,19 @@ export default function Daily(props: DailyPageProps) {
 				setFeedback(
 					'🔥 All wildcards burned! Extra attempt awarded!'
 				);
+				notify(
+					'burn',
+					'🔥 All wildcards burned! Extra attempt awarded!'
+				);
 			}
 		} else {
 			setAttemptsLeft((prev) => prev - 1);
 			setFeedback(
 				'❌ That word belongs to a group! Penalty.'
+			);
+			notify(
+				'burn',
+				`💀 Incorrect burn: ${burnSuspect} (-1 Attempt)`
 			);
 		}
 		setBurnSuspect(null);
@@ -234,6 +260,10 @@ export default function Daily(props: DailyPageProps) {
 			setLockedWords((prev) => [...prev, ...selectedWords]);
 			setSolvedGroups((prev) => [...prev, groupMatch]);
 			setFeedback('Group locked in!');
+			notify(
+				'system',
+				`🎉 Solved the '${groupMatch}' group!`
+			);
 			setSelectedWords([]);
 		} else if (groupMatch) {
 			setFeedback('This group is already solved.');
@@ -311,11 +341,11 @@ export default function Daily(props: DailyPageProps) {
 		const total = gridWordCount;
 		const score = getFinalScore();
 		const url = getShareUrl();
-		return `I scored ${score} in ${solved}/${groupCount} groups solved in ${attempts} attempts! on VibeGrid!\nCan you beat my score? Try the daily puzzle:\n${url}`;
+		return `I scored ${score} in ${solved}/${groupCount} groups solved in ${attempts} attempts! on Grid Royale!\nCan you beat my score? Try the daily puzzle:\n${url}`;
 	};
-	const getShareUrl = () => 'https://vibegrid.app';
+	const getShareUrl = () => 'https://gridRoyale.app';
 	const getShareTitle = () =>
-		"VibeGrid: Can you solve today's grid?";
+		"Grid Royale: Can you solve today's grid?";
 	const shareLinks = [
 		{
 			name: 'X',
@@ -388,13 +418,109 @@ export default function Daily(props: DailyPageProps) {
 		}
 	}, [attemptsLeft, gameOver, user]);
 
+	// Pre-game modal and timer state
+	const [showPreGameModal, setShowPreGameModal] =
+		useState(true);
+	const [showCountdown, setShowCountdown] = useState(false);
+	const [countdownValue, setCountdownValue] = useState(3);
+	const [timerActive, setTimerActive] = useState(false);
+	const [timer, setTimer] = useState(0); // seconds
+	const [timerInterval, setTimerInterval] =
+		useState<NodeJS.Timeout | null>(null);
+
+	// Start timer when timerActive becomes true
+	useEffect(() => {
+		if (timerActive) {
+			const interval = setInterval(() => {
+				setTimer((t) => t + 1);
+			}, 1000);
+			setTimerInterval(interval);
+			return () => clearInterval(interval);
+		} else if (timerInterval) {
+			clearInterval(timerInterval);
+		}
+	}, [timerActive]);
+
+	// Clean up timer on unmount
+	useEffect(() => {
+		return () => {
+			if (timerInterval) clearInterval(timerInterval);
+		};
+	}, [timerInterval]);
+
+	// Countdown animation logic
+	useEffect(() => {
+		if (showCountdown) {
+			if (countdownValue > 0) {
+				const timeout = setTimeout(() => {
+					setCountdownValue((v) => v - 1);
+				}, 500);
+				return () => clearTimeout(timeout);
+			} else {
+				// Show 'Go!' for 1s, then enable grid and timer
+				const timeout = setTimeout(() => {
+					setShowCountdown(false);
+					setTimerActive(true);
+				}, 1000);
+				return () => clearTimeout(timeout);
+			}
+		}
+	}, [showCountdown, countdownValue]);
+
+	// Format timer MM:SS
+	const formatTimer = (t: number) => {
+		const mm = String(Math.floor(t / 60)).padStart(2, '0');
+		const ss = String(t % 60).padStart(2, '0');
+		return `${mm}:${ss}`;
+	};
+
 	return (
 		<div className='fullscreen-bg'>
-			<div className='vibegrid-container'>
+			<div className='gridRoyale-container'>
+				{/* Pre-game Modal Overlay */}
+				{showPreGameModal && (
+					<div className='pregame-modal-overlay'>
+						<div className='pregame-modal'>
+							<h2 className='pregame-modal-title'>
+								Ready to Begin?
+							</h2>
+							<p className='pregame-modal-subtext'>
+								Your time will start as soon as you click
+								'Ready'. Focus up — this one counts.
+							</p>
+							<button
+								className='pregame-modal-ready-btn pulse'
+								onClick={() => {
+									setShowPreGameModal(false);
+									setShowCountdown(true);
+									setCountdownValue(3);
+								}}
+							>
+								Ready
+							</button>
+							<button
+								className='pregame-modal-go-home-btn'
+								onClick={() => router.push('/')}
+								type='button'
+							>
+								Go Home
+							</button>
+						</div>
+					</div>
+				)}
+				{/* Countdown Animation */}
+				{showCountdown && (
+					<div className='pregame-countdown-overlay'>
+						<div className='pregame-countdown-text'>
+							{countdownValue > 0 ? countdownValue : 'Go!'}
+						</div>
+					</div>
+				)}
+				{/* Game Over Banner */}
 				{showGameOverBanner && (
 					<FeedbackBanner message='Game Over! You are out of attempts.' />
 				)}
-				<div className='vibegrid-header-row'>
+				<div className='gridRoyale-header-row'>
 					<GoBackButton
 						onClick={
 							props.onBack
@@ -404,16 +530,24 @@ export default function Daily(props: DailyPageProps) {
 						className='back-icon-btn'
 						label='Back'
 					/>
-					<div className='vibegrid-header-heading'>
-						<h1 className='vibegrid-title'>
-							{activePuzzle.title || 'VibeGrid Daily'}
+					<div className='gridRoyale-header-heading'>
+						<h1 className='gridRoyale-title'>
+							{activePuzzle.title || 'gridRoyale Daily'}
 						</h1>
-						<div className='vibegrid-subtitle'>
+						<div className='gridRoyale-subtitle'>
 							Daily Puzzle
 						</div>
+						{/* Timer under heading */}
+						{timerActive &&
+							!showPreGameModal &&
+							!showCountdown && (
+								<div className='daily-timer'>
+									{formatTimer(timer)}
+								</div>
+							)}
 					</div>
 					<div
-						className='vibegrid-icons'
+						className='gridRoyale-icons'
 						style={{
 							display: 'flex',
 							gap: 8,
@@ -455,188 +589,128 @@ export default function Daily(props: DailyPageProps) {
 						</button>
 					</div>
 				</div>
-
-				{/* Hide grid, submit, and controls if game over */}
-				{!gameOver && (
-					<>
-						{solvedGroups.length > 0 && (
-							<div className='vibegrid-solved-groups'>
-								{pendingSolvedGroups.map(
-									(group: string[], idx: number) => {
-										const groupIdx =
-											activePuzzle.groups.findIndex(
-												(g: string[]) =>
-													g.length === group.length &&
-													g.every((w: string) =>
-														group.includes(w)
-													)
-											);
-										let groupLabel = `Group ${
-											groupIdx + 1
-										}`;
-										if (
-											activePuzzle.groupLabels &&
-											Array.isArray(
-												activePuzzle.groupLabels
-											) &&
-											activePuzzle.groupLabels[groupIdx]
-										) {
-											groupLabel =
-												activePuzzle.groupLabels[groupIdx];
-										}
-										return (
-											<section
-												className={`vibegrid-solved-group vibegrid-solved-group-${
-													[
-														'easy',
-														'medium',
-														'hard',
-														'expert',
-													][idx]
-												}`}
-												key={idx}
-												role='img'
-												aria-label={`Correct group ${groupLabel}. ${group.join(
-													','
-												)}`}
-											>
-												<h3 className='vibegrid-solved-category'>
-													{groupLabel}
-												</h3>
-												<ol className='vibegrid-solved-word-list'>
-													{group.map((word: string) => (
-														<li
-															className='vibegrid-solved-word'
-															key={word}
-														>
-															{word}
-														</li>
-													))}
-												</ol>
-											</section>
-										);
-									}
-								)}
-							</div>
-						)}
-						<div className='daily-center-flex-row'>
-							<div
-								className='vibegrid-grid daily-grid'
-								data-cols={gridCols}
-								data-rows={gridRows}
-								style={{
-									gridTemplateColumns: `repeat(${gridCols}, 1fr)`,
-								}}
-							>
-								{gridWords.map((word: string) => (
-									<WordButton
-										key={word}
-										word={word}
-										isSelected={selectedWords.includes(
-											word
-										)}
-										isLocked={lockedWords.includes(word)}
-										isBurned={burnedWildcards.includes(
-											word
-										)}
-										onClick={() => handleWordTap(word)}
-										onContextMenu={(e: React.MouseEvent) =>
-											handleWordRightClick(word, e)
-										}
-										burnSuspect={burnSuspect === word}
-									/>
-								))}
-								{animatingGroup &&
-									animatingGroup.map((word: string) => (
-										<WordButton
-											key={word + '-animating'}
-											word={word}
-											isSelected={false}
-											isLocked={true}
-											onClick={() => {}}
-											className='word-btn animating-to-solved'
-										/>
-									))}
-							</div>
-						</div>
-						<div className='vibegrid-controls'>
-							{!burnSuspect && (
-								<div
-									className='vibegrid-submit-wrapper'
-									style={{ justifyContent: 'center' }}
-								>
-									<button
-										className='vibegrid-submit'
-										onClick={handleSubmit}
-										disabled={
-											attemptsLeft === 0 || gameOver
-										}
-										style={{ margin: '0 auto' }}
-									>
-										Submit
-									</button>
-								</div>
-							)}
-							{burnSuspect && (
-								<div className='burn-status-bar'>
-									🔥 Burn active 🔥 <b>{burnSuspect}</b>
-									<button
-										className='burn-btn'
-										onClick={confirmBurn}
-									>
-										Confirm Burn
-									</button>
-								</div>
-							)}
-							<div className='daily-controls-flex-col'>
-								<FeedbackBanner message={feedback} />
-								<div className='vibegrid-attempts-bar'>
-									{[...Array(attemptsLeft > 4 ? 5 : 4)].map(
-										(_, i) => (
-											<span
-												key={i}
-												className={
-													'vibegrid-attempt-dot' +
-													(i >= attemptsLeft ? ' used' : '')
-												}
-											></span>
-										)
-									)}
-								</div>
-								<div className='vibegrid-attempts'>
-									Attempts Left: {attemptsLeft}
-								</div>
-								<div className='vibegrid-attempts'>
-									<button
-										className='randomize-btn'
-										aria-label='Randomize word order'
-										onClick={handleRandomize}
-									>
-										Mix It Up!
-									</button>
-									<button
-										className='deselect-btn'
-										aria-label='Deselect all'
-										onClick={() => setSelectedWords([])}
-									>
-										Deselect All
-									</button>
-								</div>
-							</div>
-							<button
-								className='share-btn'
-								onClick={handleShare}
-							>
-								<FontAwesomeIcon
-									icon={faShareAlt}
-									className='share-icon'
+				{/* Dimmed grid overlay if pregame modal or countdown is active */}
+				<div
+					className={`daily-center-flex-row${
+						showPreGameModal || showCountdown
+							? ' dimmed-grid'
+							: ''
+					}`}
+				>
+					<div
+						className='gridRoyale-grid daily-grid'
+						data-cols={gridCols}
+						data-rows={gridRows}
+						style={{
+							gridTemplateColumns: `repeat(${gridCols}, 1fr)`,
+						}}
+					>
+						{gridWords.map((word: string) => (
+							<WordButton
+								key={word}
+								word={word}
+								isSelected={selectedWords.includes(word)}
+								isLocked={lockedWords.includes(word)}
+								isBurned={burnedWildcards.includes(word)}
+								onClick={() =>
+									!showPreGameModal &&
+									!showCountdown &&
+									handleWordTap(word)
+								}
+								onContextMenu={(e: React.MouseEvent) =>
+									!showPreGameModal &&
+									!showCountdown &&
+									handleWordRightClick(word, e)
+								}
+								burnSuspect={burnSuspect === word}
+							/>
+						))}
+						{animatingGroup &&
+							animatingGroup.map((word: string) => (
+								<WordButton
+									key={word + '-animating'}
+									word={word}
+									isSelected={false}
+									isLocked={true}
+									onClick={() => {}}
+									className='word-btn animating-to-solved'
 								/>
-								Share
+							))}
+					</div>
+				</div>
+				<div className='gridRoyale-controls'>
+					{!burnSuspect && (
+						<div
+							className='gridRoyale-submit-wrapper'
+							style={{ justifyContent: 'center' }}
+						>
+							<button
+								className='gridRoyale-submit'
+								onClick={handleSubmit}
+								disabled={attemptsLeft === 0 || gameOver}
+								style={{ margin: '0 auto' }}
+							>
+								Submit
 							</button>
 						</div>
-					</>
-				)}
-				{/* Show stats modal in place of grid if game over */}
+					)}
+					{burnSuspect && (
+						<div className='burn-status-bar'>
+							🔥 Burn active 🔥 <b>{burnSuspect}</b>
+							<button
+								className='burn-btn'
+								onClick={confirmBurn}
+							>
+								Confirm Burn
+							</button>
+						</div>
+					)}
+					<div className='daily-controls-flex-col'>
+						<FeedbackBanner message={feedback} />
+						<div className='gridRoyale-attempts-bar'>
+							{[...Array(attemptsLeft > 4 ? 5 : 4)].map(
+								(_, i) => (
+									<span
+										key={i}
+										className={
+											'gridRoyale-attempt-dot' +
+											(i >= attemptsLeft ? ' used' : '')
+										}
+									></span>
+								)
+							)}
+						</div>
+						<div className='gridRoyale-attempts'>
+							Attempts Left: {attemptsLeft}
+						</div>
+						<div className='gridRoyale-attempts'>
+							<button
+								className='randomize-btn'
+								aria-label='Randomize word order'
+								onClick={handleRandomize}
+							>
+								Mix It Up!
+							</button>
+							<button
+								className='deselect-btn'
+								aria-label='Deselect all'
+								onClick={() => setSelectedWords([])}
+							>
+								Deselect All
+							</button>
+						</div>
+					</div>
+					<button
+						className='share-btn'
+						onClick={handleShare}
+					>
+						<FontAwesomeIcon
+							icon={faShareAlt}
+							className='share-icon'
+						/>
+						Share
+					</button>
+				</div>
 				{gameOver && (
 					<EndGameModal
 						message={
@@ -652,7 +726,6 @@ export default function Daily(props: DailyPageProps) {
 						onShare={() => setShowShare(true)}
 					/>
 				)}
-				{/* Always render the share modal so it can appear above EndGameModal */}
 				<Modal
 					open={showShare}
 					onClose={() => setShowShare(false)}
@@ -663,7 +736,7 @@ export default function Daily(props: DailyPageProps) {
 					>
 						<img
 							src='https://i.imgur.com/1jPtNmW.png'
-							alt='VibeGrid Logo'
+							alt='Grid Royale Logo'
 							style={{
 								width: 180,
 								height: 180,
@@ -671,7 +744,7 @@ export default function Daily(props: DailyPageProps) {
 								borderRadius: 16,
 							}}
 						/>
-						<h2>Share your VibeGrid result!</h2>
+						<h2>Share your Grid Royale result!</h2>
 						<div
 							style={{
 								margin: '10px 0 18px',
@@ -684,8 +757,8 @@ export default function Daily(props: DailyPageProps) {
 									fontSize: '1.2em',
 								}}
 							>
-								I scored <b>{getFinalScore()}</b> on
-								VibeGrid!
+								I scored <b>{getFinalScore()}</b> on Grid
+								Royale!
 							</div>
 							<div
 								style={{

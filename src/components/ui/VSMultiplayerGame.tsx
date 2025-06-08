@@ -2,6 +2,7 @@ import React, {
 	useEffect,
 	useState,
 	useCallback,
+	useContext,
 } from 'react';
 import { useMultiplayer } from './MultiplayerProvider';
 import {
@@ -17,6 +18,9 @@ import { WordButton } from './Buttons';
 import FeedbackBanner from './FeedbackBanner';
 import { Modal } from './Modal';
 import InMatchChatWindow from './InMatchChatWindow';
+import MatchChatWindow from './MatchChatWindow';
+import { useNotificationBanner } from './MultiplayerProvider';
+import { UserSettingsContext } from './UserSettingsProvider';
 
 // Dummy puzzle for now; replace with actual puzzle from context/server
 const demoPuzzle = {
@@ -31,9 +35,20 @@ const demoPuzzle = {
 	wildcards: [],
 };
 
+// Types for chat messages
+interface MatchChatMessage {
+	id: string;
+	sender: string;
+	content: string;
+	type: 'text' | 'emoji' | 'quickfire';
+	timestamp: number;
+}
+
 // --- Multiplayer Game Logic and UI ---
 const VSMultiplayerGame: React.FC = () => {
 	const multiplayer = useMultiplayer();
+	const { settings } = useContext(UserSettingsContext);
+	const { notify } = useNotificationBanner();
 	const [selectedWords, setSelectedWords] = useState<
 		string[]
 	>([]);
@@ -65,6 +80,12 @@ const VSMultiplayerGame: React.FC = () => {
 	);
 	const [showInMatchChat, setShowInMatchChat] =
 		useState(false);
+	const [showChat, setShowChat] = useState(false);
+	const [chatMessages, setChatMessages] = useState<
+		MatchChatMessage[]
+	>([]);
+	const userId = multiplayer?.userId || '';
+	const matchId = multiplayer?.matchId || '';
 
 	// TODO: Replace with puzzle from server/context
 	const puzzle = demoPuzzle;
@@ -147,6 +168,65 @@ const VSMultiplayerGame: React.FC = () => {
 		multiplayer,
 	]);
 
+	// Puzzle group size and count
+	const groupSize = puzzle.groups[0]?.length || 4;
+	const groupCount = puzzle.groups.length;
+	const gridCols = puzzle.size?.cols || 4;
+
+	// Group solve notification
+	const handleGroupSolve = useCallback(
+		(groupLabel: string) => {
+			notify(
+				'system',
+				`🎉 You solved the '${groupLabel}' group!`
+			);
+		},
+		[notify]
+	);
+
+	// Burn notification (example, add where burn logic is handled)
+	const handleBurn = useCallback(
+		(burnedWord: string, isWildcard: boolean) => {
+			if (isWildcard) {
+				notify(
+					'burn',
+					`🔥 Burned wildcard: ${burnedWord} (+Bonus, +1 Attempt)`
+				);
+			} else {
+				notify(
+					'burn',
+					`💀 Incorrect burn: ${burnedWord} (-1 Attempt)`
+				);
+			}
+		},
+		[notify]
+	);
+
+	// Milestone notification (e.g. final 2 attempts)
+	useEffect(() => {
+		if (attemptsLeft === 2 && !gameOver) {
+			notify('system', '⚔️ Final 2 attempts remaining!');
+		}
+	}, [attemptsLeft, gameOver, notify]);
+
+	// Victory/defeat notification
+	useEffect(() => {
+		if (gameOver) {
+			if (result === 'win') {
+				notify('achievement', '🏆 You won the match!');
+			} else if (result === 'lose') {
+				notify('system', '💀 You lost the match.');
+			} else if (result === 'draw') {
+				notify('system', '🤝 Draw!');
+			}
+		}
+	}, [gameOver, result, notify]);
+
+	// Achievement unlocks (if socket/achievement system is available)
+	// multiplayer.socket?.on('achievement:unlocked', (data) => {
+	//   notify('achievement', `🏆 Achievement Unlocked: ${data.achievement.label}`);
+	// });
+
 	// Handle guess submission
 	const handleSubmit = useCallback(() => {
 		if (gameOver) return;
@@ -168,6 +248,7 @@ const VSMultiplayerGame: React.FC = () => {
 			setSolvedGroups((prev) => [...prev, groupMatch]);
 			setFeedback('Group locked in!');
 			setSelectedWords([]);
+			handleGroupSolve(groupMatch[0]); // Notify group solve
 			// Check for win
 			if (solvedGroups.length + 1 === groupCount) {
 				setGameOver(true);
@@ -249,6 +330,34 @@ const VSMultiplayerGame: React.FC = () => {
 			? (opponentProgress.time / 1000).toFixed(2)
 			: null;
 
+	// Socket event: receive chat message
+	useEffect(() => {
+		if (!multiplayer?.socket) return;
+		const handler = (msg: MatchChatMessage) =>
+			setChatMessages((prev) => [...prev, msg]);
+		multiplayer.socket.on('match-chat', handler);
+		return () => {
+			multiplayer.socket?.off('match-chat', handler);
+		};
+	}, [multiplayer?.socket]);
+
+	const sendMessage = (
+		msg: Omit<MatchChatMessage, 'id' | 'timestamp'>
+	) => {
+		const fullMsg: MatchChatMessage = {
+			...msg,
+			id: Math.random().toString(36).slice(2),
+			timestamp: Date.now(),
+		};
+		if (multiplayer.socket) {
+			multiplayer.socket.emit('match-chat', {
+				...fullMsg,
+				matchId,
+			});
+		}
+		setChatMessages((prev) => [...prev, fullMsg]);
+	};
+
 	return (
 		<div
 			className='vsmultiplayer-game-container'
@@ -290,7 +399,7 @@ const VSMultiplayerGame: React.FC = () => {
 				</div>
 			</div>
 			<div
-				className='vibegrid-grid'
+				className='gridRoyale-grid'
 				style={{
 					gridTemplateColumns: `repeat(${gridCols}, 1fr)`,
 					margin: '0 auto',
@@ -309,7 +418,7 @@ const VSMultiplayerGame: React.FC = () => {
 			</div>
 			<div style={{ margin: '18px 0' }}>
 				<button
-					className='vibegrid-submit'
+					className='gridRoyale-submit'
 					onClick={handleSubmit}
 					disabled={
 						gameOver || selectedWords.length !== groupSize
@@ -336,7 +445,7 @@ const VSMultiplayerGame: React.FC = () => {
 						{oppTime && <div>Time: {oppTime}s</div>}
 					</div>
 					<button
-						className='vibegrid-submit'
+						className='gridRoyale-submit'
 						onClick={() => window.location.assign('/')}
 					>
 						Back to Home
@@ -356,6 +465,20 @@ const VSMultiplayerGame: React.FC = () => {
 					onClose={() => setShowInMatchChat(false)}
 				/>
 			)}
+			<button
+				onClick={() => setShowChat((v) => !v)}
+				className='match-chat-toggle-btn'
+			>
+				Chat
+			</button>
+			<MatchChatWindow
+				open={showChat}
+				onClose={() => setShowChat(false)}
+				matchId={matchId}
+				userId={userId}
+				sendMessage={sendMessage}
+				messages={chatMessages}
+			/>
 		</div>
 	);
 };

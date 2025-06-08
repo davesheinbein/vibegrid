@@ -65,6 +65,7 @@ const QA_SIDEBAR = [
 		action: 'achieve-test',
 	},
 	{ label: 'Simulate Notification', action: 'notif-test' },
+	{ label: 'Settings', action: 'settings' },
 ];
 
 export default function Admin() {
@@ -290,39 +291,45 @@ export default function Admin() {
 					}
 					break;
 				}
-				case 'vs-bot': {
-					await axios.post('/api/admin/qa/vs-bot', {
-						userId: users[0]?.id,
-					});
-					alert('VS Test Room (Bot) scenario triggered.');
-					break;
-				}
-				case 'god-mode': {
-					await axios.post('/api/admin/qa/god-mode', {
-						userId: users[0]?.id,
-					});
-					alert('God Mode toggled for test user.');
-					break;
-				}
-				case 'achieve-test': {
-					await axios.post('/api/admin/test-achievement', {
-						userId: users[0]?.id,
-						achievementId: 'test-achievement-id',
-					});
-					alert('Simulated achievement unlock triggered.');
-					break;
-				}
-				case 'notif-test': {
-					await axios.post('/api/admin/test-notification', {
-						userId: users[0]?.id,
-						message:
-							'This is a test notification from QA Tools.',
-					});
-					alert('Simulated notification sent.');
-					break;
+				case 'settings': {
+					// Show settings panel modal
+					const panel = document.createElement('div');
+					panel.id = 'settings-panel-modal';
+					panel.style.position = 'fixed';
+					panel.style.top = '0';
+					panel.style.left = '0';
+					panel.style.width = '100vw';
+					panel.style.height = '100vh';
+					panel.style.background = 'rgba(0,0,0,0.25)';
+					panel.style.zIndex = '9999';
+					panel.onclick = () => panel.remove();
+					const inner = document.createElement('div');
+					inner.style.background = '#fff';
+					inner.style.borderRadius = '12px';
+					inner.style.maxWidth = '420px';
+					inner.style.margin = '60px auto';
+					inner.style.padding = '0';
+					inner.onclick = (e) => e.stopPropagation();
+					panel.appendChild(inner);
+					document.body.appendChild(panel);
+					import('../components/ui/SettingsPanel').then(
+						({ default: SettingsPanel }) => {
+							const root = document.createElement('div');
+							inner.appendChild(root);
+							// @ts-ignore
+							import('react-dom/client').then(
+								(ReactDOMClient) => {
+									const rootInstance =
+										ReactDOMClient.createRoot(root);
+									rootInstance.render(<SettingsPanel />);
+								}
+							);
+						}
+					);
+					return;
 				}
 				default:
-					alert('Unknown QA scenario.');
+					break;
 			}
 		} catch (err: any) {
 			alert(
@@ -547,7 +554,7 @@ export default function Admin() {
 				}
 			`}</style>
 			<h1 className='admin-header'>
-				VibeGrid Admin Dashboard
+				Grid Royale Admin Dashboard
 			</h1>
 			<nav className='admin-top-nav'>
 				{TOP_NAV.map((tab) => (

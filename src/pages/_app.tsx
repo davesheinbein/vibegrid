@@ -6,6 +6,8 @@ import { FriendsProvider } from '../components/ui/FriendsProvider';
 import { FriendsToggleButton } from '../components/ui/Buttons';
 import FriendsSidebar from '../components/ui/FriendsSidebar';
 import { SessionProvider } from 'next-auth/react';
+import { NotificationBannerProvider } from '../components/ui/MultiplayerProvider';
+import { UserSettingsProvider } from '../components/ui/UserSettingsProvider';
 
 export default function App({
 	Component,
@@ -13,13 +15,17 @@ export default function App({
 }: AppProps) {
 	return (
 		<SessionProvider session={pageProps.session}>
-			<MultiplayerProvider>
-				<FriendsProvider>
-					<FriendsToggleButton />
-					<FriendsSidebar />
-					<Component {...pageProps} />
-				</FriendsProvider>
-			</MultiplayerProvider>
+			<UserSettingsProvider>
+				<NotificationBannerProvider>
+					<MultiplayerProvider>
+						<FriendsProvider>
+							<FriendsToggleButton />
+							<FriendsSidebar />
+							<Component {...pageProps} />
+						</FriendsProvider>
+					</MultiplayerProvider>
+				</NotificationBannerProvider>
+			</UserSettingsProvider>
 		</SessionProvider>
 	);
 }

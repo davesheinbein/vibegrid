@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useContext } from 'react';
 import { useRouter } from 'next/router';
 import CustomPuzzleModal from '../components/modal/CustomPuzzleModal';
 import {
@@ -7,6 +7,9 @@ import {
 	getShareText,
 } from '../utils/helpers';
 import { GoBackButton } from '../components/ui/Buttons';
+import { useNotificationBanner } from '../components/ui/MultiplayerProvider';
+import MatchChatWindow from '../components/ui/MatchChatWindow';
+import { UserSettingsContext } from '../components/ui/UserSettingsProvider';
 
 export default function Browse() {
 	const router = useRouter();
@@ -29,6 +32,32 @@ export default function Browse() {
 	const [tabPuzzles, setTabPuzzles] = React.useState<any[]>(
 		[]
 	);
+	const { notify } = useNotificationBanner();
+	const [showChat, setShowChat] = React.useState(false);
+	const [chatMessages, setChatMessages] = React.useState<
+		any[]
+	>([]);
+	const { settings } = useContext(UserSettingsContext);
+
+	// Generate a per-match chat room id for custom puzzle play
+	const userId = user?.email || 'guest';
+	const matchId = customPuzzle
+		? `${customPuzzle._id || customPuzzle.id}-${userId}`
+		: '';
+
+	// Ephemeral chat logic (stub, can be replaced with socket.io logic)
+	const sendMessage = (msg: {
+		sender: string;
+		content: string;
+		type: string;
+	}) => {
+		const fullMsg = {
+			...msg,
+			id: Math.random().toString(36).slice(2),
+			timestamp: Date.now(),
+		};
+		setChatMessages((prev) => [...prev, fullMsg]);
+	};
 
 	React.useEffect(() => {
 		async function fetchPuzzles() {
@@ -65,20 +94,44 @@ export default function Browse() {
 
 	if (mode === 'custom' && customPuzzle) {
 		return (
-			<CustomPuzzleModal
-				open={true}
-				onClose={() => setMode('browse')}
-				setCustomPuzzle={setCustomPuzzle}
-				setMode={handleSetMode}
-				user={user}
-				setShowSignInModal={() => {}}
-			/>
+			<>
+				{/* Notification Banner (global, already in _app, but can trigger here) */}
+				{/* In-match chat window for custom puzzle play */}
+				<button
+					className='match-chat-toggle-btn'
+					onClick={() => setShowChat((v) => !v)}
+					style={{
+						position: 'absolute',
+						top: 16,
+						right: 16,
+						zIndex: 10,
+					}}
+				>
+					💬 Chat
+				</button>
+				<MatchChatWindow
+					open={showChat}
+					onClose={() => setShowChat(false)}
+					matchId={matchId}
+					userId={userId}
+					sendMessage={sendMessage}
+					messages={chatMessages}
+				/>
+				<CustomPuzzleModal
+					open={true}
+					onClose={() => setMode('browse')}
+					setCustomPuzzle={setCustomPuzzle}
+					setMode={handleSetMode}
+					user={user}
+					setShowSignInModal={() => {}}
+				/>
+			</>
 		);
 	}
 
 	return (
 		<div
-			className='vibegrid-container'
+			className='gridRoyale-container'
 			style={{
 				minHeight: '100vh',
 				padding: 24,
@@ -92,7 +145,7 @@ export default function Browse() {
 				/>
 
 				<div className='browse-puzzles-header-title'>
-					<h1 className='vibegrid-title'>
+					<h1 className='gridRoyale-title'>
 						Browse Custom Puzzles
 					</h1>
 					<div className='browse-puzzles-tabs'>
@@ -179,7 +232,7 @@ export default function Browse() {
 									}}
 								>
 									<button
-										className='vibegrid-submit'
+										className='gridRoyale-submit'
 										onClick={() => {
 											setCustomPuzzle(puzzle);
 											setMode('custom');
@@ -190,7 +243,7 @@ export default function Browse() {
 										Play
 									</button>
 									<button
-										className='vibegrid-submit'
+										className='gridRoyale-submit'
 										onClick={() => {
 											const url =
 												router.basePath +

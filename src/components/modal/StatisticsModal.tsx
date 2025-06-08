@@ -74,7 +74,7 @@ const StatisticsModal: React.FC<StatisticsModalProps> = ({
 	} else {
 		content = (
 			<div className='modal-stats-complete'>
-				<h2>Your VibeGrid Stats</h2>
+				<h2>Your Grid Royale Stats</h2>
 				<div className='modal-stats-summary'>
 					Games Played: 12
 					<br />

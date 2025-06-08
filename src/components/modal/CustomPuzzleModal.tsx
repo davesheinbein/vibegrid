@@ -712,7 +712,7 @@ const CustomPuzzleModal: React.FC<
 											</span>
 										)}
 									</h4>
-									<div className='vibegrid-grid share-modal-preview-grid'>
+									<div className='gridRoyale-grid share-modal-preview-grid'>
 										{allWords.map(
 											(word: string, idx: number) => (
 												<WordButton
@@ -729,7 +729,7 @@ const CustomPuzzleModal: React.FC<
 									</div>
 									<div className='share-modal-preview-btns'>
 										<button
-											className='vibegrid-submit'
+											className='gridRoyale-submit'
 											onClick={handleSave}
 											type='button'
 											disabled={loading}
@@ -737,7 +737,7 @@ const CustomPuzzleModal: React.FC<
 											{loading ? 'Saving...' : 'Save'}
 										</button>
 										<button
-											className='vibegrid-submit'
+											className='gridRoyale-submit'
 											onClick={handlePlayNow}
 											type='button'
 											disabled={loading}
@@ -746,7 +746,7 @@ const CustomPuzzleModal: React.FC<
 										</button>
 										{shareId && (
 											<button
-												className='vibegrid-submit'
+												className='gridRoyale-submit'
 												onClick={handleCopyLink}
 												type='button'
 											>
@@ -783,7 +783,7 @@ const CustomPuzzleModal: React.FC<
 						{step > 0 && step < steps.length && (
 							<button
 								type='button'
-								className='vibegrid-submit'
+								className='gridRoyale-submit'
 								onClick={handleBack}
 							>
 								Back
@@ -793,7 +793,7 @@ const CustomPuzzleModal: React.FC<
 						{step < steps.length - 1 && (
 							<button
 								type='button'
-								className='vibegrid-submit'
+								className='gridRoyale-submit'
 								onClick={handleNext}
 								disabled={
 									!steps[step].validate({
@@ -816,7 +816,7 @@ const CustomPuzzleModal: React.FC<
 						{step === steps.length - 1 && (
 							<button
 								type='submit'
-								className='vibegrid-submit share-modal-finish-btn'
+								className='gridRoyale-submit share-modal-finish-btn'
 							>
 								Finish & Preview
 							</button>

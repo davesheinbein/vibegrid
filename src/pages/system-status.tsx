@@ -196,7 +196,7 @@ const SystemStatus: React.FC = () => {
 				margin: '0 auto',
 			}}
 		>
-			<h1>VibeGrid System Status</h1>
+			<h1>Grid Royale System Status</h1>
 			<div style={{ marginBottom: 16 }}>
 				<label>
 					<input

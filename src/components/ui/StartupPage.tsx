@@ -1,4 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import React, {
+	useState,
+	useEffect,
+	useContext,
+} from 'react';
 import { ShareButton } from './Buttons';
 import Footer from './Footer';
 import VSModeModal from './VSModeModal';
@@ -6,6 +10,8 @@ import VSRoomModal from './VSRoomModal';
 import VSMultiplayerGame from './VSMultiplayerGame';
 import { useMultiplayer } from './MultiplayerProvider';
 import { Modal } from './Modal';
+import { UserSettingsContext } from './UserSettingsProvider';
+import { useRouter } from 'next/router';
 
 interface StartupPageProps {
 	onStartDaily: () => void;
@@ -20,7 +26,9 @@ const StartupPage: React.FC<StartupPageProps> = ({
 	onBrowseCustom,
 	onShare,
 }) => {
+	const router = useRouter();
 	const multiplayer = useMultiplayer();
+	const { settings } = useContext(UserSettingsContext);
 	const [showVSModeModal, setShowVSModeModal] =
 		useState(false);
 	const [showRoomModal, setShowRoomModal] = useState(false);
@@ -34,6 +42,10 @@ const StartupPage: React.FC<StartupPageProps> = ({
 		useState('');
 	const [matchmakingTimeout, setMatchmakingTimeout] =
 		useState<NodeJS.Timeout | null>(null);
+	const [inVSBotGame, setInVSBotGame] = useState(false);
+	const [vsBotDifficulty, setVSBotDifficulty] = useState<
+		'easy' | 'medium' | 'hard' | 'legendary' | null
+	>(null);
 
 	useEffect(() => {
 		if (multiplayer.matchStarted) {
@@ -45,7 +57,8 @@ const StartupPage: React.FC<StartupPageProps> = ({
 
 	// Handle VS Mode selection
 	const handleVSModeSelect = (
-		mode: 'room' | 'matchmaking'
+		mode: 'room' | 'matchmaking' | 'bot',
+		botDifficulty?: 'easy' | 'medium' | 'hard' | 'legendary'
 	) => {
 		setShowVSModeModal(false);
 		if (mode === 'room') setShowRoomModal(true);
@@ -71,6 +84,9 @@ const StartupPage: React.FC<StartupPageProps> = ({
 					multiplayer.joinRoom(roomCode);
 				}
 			);
+		} else if (mode === 'bot' && botDifficulty) {
+			setVSBotDifficulty(botDifficulty);
+			setInVSBotGame(true);
 		}
 	};
 
@@ -87,10 +103,34 @@ const StartupPage: React.FC<StartupPageProps> = ({
 		return <VSMultiplayerGame />;
 	}
 
+	if (inVSBotGame && vsBotDifficulty) {
+		// TODO: Replace with actual VSBotGame component when implemented
+		return (
+			<div style={{ padding: 32, textAlign: 'center' }}>
+				<h2>VS Bot Mode (WIP)</h2>
+				<p>
+					Difficulty: <b>{vsBotDifficulty}</b>
+				</p>
+				{/* Integrate NotificationBanner and MatchChatWindow here */}
+				<div style={{ margin: '24px 0' }}>
+					<button
+						className='gridRoyale-submit'
+						onClick={() => setInVSBotGame(false)}
+					>
+						Exit VS Bot Game
+					</button>
+				</div>
+				<div style={{ color: '#64748b', marginTop: 24 }}>
+					(Game logic, chat, and notifications coming soon)
+				</div>
+			</div>
+		);
+	}
+
 	return (
 		<div className='fullscreen-bg'>
 			<div
-				className='startup-page vibegrid-container'
+				className='startup-page gridRoyale-container'
 				style={{
 					minHeight: '100vh',
 					display: 'flex',
@@ -103,11 +143,11 @@ const StartupPage: React.FC<StartupPageProps> = ({
 			>
 				<img
 					src='https://i.imgur.com/1jPtNmW.png'
-					alt='VibeGrid logo'
+					alt='Grid Royale logo'
 					style={{ width: 360 }}
 				/>
 				<h1
-					className='vibegrid-title'
+					className='gridRoyale-title'
 					style={{
 						fontSize: 44,
 						margin: 0,
@@ -115,10 +155,10 @@ const StartupPage: React.FC<StartupPageProps> = ({
 						letterSpacing: 1,
 					}}
 				>
-					VibeGrid
+					Grid Royale
 				</h1>
 				<p
-					className='vibegrid-subtitle'
+					className='gridRoyale-subtitle'
 					style={{
 						color: '#64748b',
 						fontSize: 20,
@@ -128,88 +168,53 @@ const StartupPage: React.FC<StartupPageProps> = ({
 					A daily word grouping puzzle. Can you find the
 					vibe?
 				</p>
-				<div
-					style={{
-						display: 'flex',
-						flexDirection: 'column',
-						gap: 20,
-						alignItems: 'center',
-						width: '100%',
-						maxWidth: 340,
-					}}
-				>
+				<div className='startup-main-menu'>
 					<button
-						className='vibegrid-submit'
+						className='gridRoyale-submit startup-btn-daily'
 						onClick={onStartDaily}
-						style={{
-							width: '100%',
-							fontSize: 20,
-							padding: '0.8em 0',
-							borderRadius: 12,
-							background:
-								'linear-gradient(90deg,#38bdf8 0%,#fbbf24 100%)',
-							color: '#fff',
-							fontWeight: 700,
-							boxShadow: '0 2px 8px 0 rgba(30,41,59,0.10)',
-						}}
 					>
 						Play Daily Puzzle
 					</button>
 					<button
-						className='vibegrid-submit'
+						className='gridRoyale-submit startup-btn-vs'
 						onClick={() => setShowVSModeModal(true)}
-						style={{
-							width: '100%',
-							fontSize: 20,
-							padding: '0.8em 0',
-							borderRadius: 12,
-							background:
-								'linear-gradient(90deg,#fbbf24 0%,#a7f3d0 100%)',
-							color: '#2563eb',
-							fontWeight: 700,
-							boxShadow: '0 2px 8px 0 rgba(30,41,59,0.10)',
-						}}
 					>
 						VS Mode
 					</button>
 					<button
-						className='vibegrid-submit'
+						className='gridRoyale-submit startup-btn-custom'
 						onClick={onStartCustom}
-						style={{
-							width: '100%',
-							fontSize: 20,
-							padding: '0.8em 0',
-							borderRadius: 12,
-							background:
-								'linear-gradient(90deg,#a7f3d0 0%,#38bdf8 100%)',
-							color: '#2563eb',
-							fontWeight: 700,
-							boxShadow: '0 2px 8px 0 rgba(30,41,59,0.10)',
-						}}
 					>
 						Create Custom Puzzle
 					</button>
 					<button
-						className='vibegrid-submit'
+						className='gridRoyale-submit startup-btn-browse'
 						onClick={onBrowseCustom}
-						style={{
-							width: '100%',
-							fontSize: 20,
-							padding: '0.8em 0',
-							borderRadius: 12,
-							background:
-								'linear-gradient(90deg,#fbbf24 0%,#38bdf8 100%)',
-							color: '#fff',
-							fontWeight: 700,
-							boxShadow: '0 2px 8px 0 rgba(30,41,59,0.10)',
-						}}
 					>
 						Browse Custom Puzzles
 					</button>
+					<button
+						onClick={() => router.push('/shop')}
+						className='startup-nav-btn startup-btn-shop'
+					>
+						🛒 Shop
+					</button>
+					<button
+						onClick={() => router.push('/customization')}
+						className='startup-nav-btn startup-btn-customization'
+					>
+						🎨 Customization
+					</button>
+					<button
+						onClick={() => router.push('/achievements')}
+						className='startup-nav-btn startup-btn-achievements'
+					>
+						🏆 Achievements
+					</button>
 					<ShareButton
-						className='vibegrid-submit'
+						className='gridRoyale-submit startup-share-btn'
 						onClick={onShare}
-						label='Share VibeGrid'
+						label='Share'
 					/>
 				</div>
 				<Footer />
@@ -263,7 +268,7 @@ const StartupPage: React.FC<StartupPageProps> = ({
 						</div>
 						{matchmakingError && (
 							<button
-								className='vibegrid-submit'
+								className='gridRoyale-submit'
 								onClick={() => {
 									setShowMatchmaking(false);
 									setMatchmakingError('');

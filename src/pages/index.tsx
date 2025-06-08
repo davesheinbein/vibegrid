@@ -54,7 +54,7 @@ export default function Home() {
 					onClose={() => setShowShareModal(false)}
 				>
 					<div className='share-modal-content'>
-						<h2>Share your VibeGrid result!</h2>
+						<h2>Share your Grid Royale result!</h2>
 						<div className='share-links-grid'>
 							{(() => {
 								const iconMap = {
