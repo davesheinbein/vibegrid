@@ -373,7 +373,7 @@ const CustomPuzzleModal: React.FC<
 	if (!open) return null;
 	return (
 		<Modal open={open} onClose={onClose}>
-			<div className='share-modal-content custom-puzzle-modal-content'>
+			<div className='custom-puzzle-modal-content'>
 				<form
 					onSubmit={handleSubmit}
 					className='share-modal-form'

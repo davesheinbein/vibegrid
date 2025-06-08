@@ -1,24 +1,18 @@
 import React from 'react';
 import { useFriends } from './FriendsProvider';
-import { FriendsToggleButton } from './Buttons';
 import FriendChatWindow from './FriendChatWindow';
 import { useRouter } from 'next/router';
 import FriendCard from './FriendCard';
 
 const FriendsSidebar: React.FC = () => {
 	const {
-		friends,
-		requests,
-		recentMatches,
-		onlineFriends,
-		unreadMessages,
-		sendFriendRequest,
-		acceptFriendRequest,
-		declineFriendRequest,
-		removeFriend,
-		sendChallenge,
-		loadChatHistory,
-		clearUnread,
+		friends = [],
+		unreadMessages = {},
+		sendFriendRequest = () => {},
+		sendChallenge = () => {},
+		removeFriend = () => {},
+		isSidebarOpen,
+		toggleSidebar,
 	} = useFriends();
 	const router = useRouter();
 	const [show, setShow] = React.useState(false);
@@ -34,8 +28,8 @@ const FriendsSidebar: React.FC = () => {
 	});
 
 	// Filter friends by online/offline
-	const online = friends.filter((f) => f.online);
-	const offline = friends.filter((f) => !f.online);
+	const online = friends.filter((f: any) => f.online);
+	const offline = friends.filter((f: any) => !f.online);
 
 	// Handlers
 	const handleAddFriend = (e: React.FormEvent) => {
@@ -52,25 +46,21 @@ const FriendsSidebar: React.FC = () => {
 
 	return (
 		<>
-			<FriendsToggleButton
-				active={show}
-				onClick={() => setShow(!show)}
-			/>
-			{show && (
+			{isSidebarOpen && (
 				<div
 					className='friends-sidebar-overlay'
 					style={{
 						position: 'fixed',
 						inset: 0,
-						zIndex: 199,
+						zIndex: 9998,
 						background: 'transparent',
 					}}
-					onClick={() => setShow(false)}
+					onClick={toggleSidebar}
 				/>
 			)}
 			<aside
 				className={`friends-sidebar glassy-sidebar${
-					show ? ' open' : ''
+					isSidebarOpen ? ' open' : ''
 				}`}
 				style={{
 					transition: 'all 0.25s cubic-bezier(.4,0,.2,1)',
@@ -80,20 +70,20 @@ const FriendsSidebar: React.FC = () => {
 					background: 'rgba(255,255,255,0.18)',
 					borderRadius: '1.5rem',
 					border: '1px solid rgba(255,255,255,0.24)',
-					right: show ? 0 : '-420px',
-					opacity: show ? 1 : 0,
-					pointerEvents: show ? 'auto' : 'none',
+					right: isSidebarOpen ? 0 : '-420px',
+					opacity: isSidebarOpen ? 1 : 0,
+					pointerEvents: isSidebarOpen ? 'auto' : 'none',
 					position: 'fixed',
 					top: 0,
 					width: 380,
 					height: '100vh',
-					zIndex: 200,
+					zIndex: 9999,
 					display: 'flex',
 					flexDirection: 'column',
 					padding: '1.5rem 0.5rem 1.5rem 1.5rem',
 				}}
 			>
-				{show && (
+				{isSidebarOpen && (
 					<button
 						className='friends-sidebar-close-btn'
 						onClick={() => setShow(false)}
@@ -122,7 +112,7 @@ const FriendsSidebar: React.FC = () => {
 						</span>
 					</button>
 				)}
-				{show && (
+				{isSidebarOpen && (
 					<div className='friends-sidebar-content'>
 						<div className='friends-sidebar-header'>
 							<h2
@@ -261,7 +251,7 @@ const FriendsSidebar: React.FC = () => {
 						</div>
 						{openChatFriendId && (
 							<FriendChatWindow
-								friendId={openChatFriendId}
+								chatId={openChatFriendId}
 								onClose={() => setOpenChatFriendId(null)}
 							/>
 						)}

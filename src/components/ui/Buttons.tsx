@@ -3,6 +3,7 @@ import {
 	getShareUrl,
 	copyToClipboard,
 } from '../../utils/helpers';
+import { useFriends } from './FriendsProvider';
 
 export const GoBackButton: React.FC<{
 	onClick: () => void;
@@ -39,6 +40,7 @@ interface WordButtonProps {
 	isSelected: boolean;
 	isLocked: boolean;
 	onClick: () => void;
+	isBurned?: boolean; // NEW: for burned wildcards
 
 	onKeyDown?: (
 		e: React.KeyboardEvent<HTMLDivElement>
@@ -58,19 +60,21 @@ export const WordButton: React.FC<
 	onClick,
 	onKeyDown,
 	burnSuspect,
+	isBurned,
 	...rest
 }) => {
 	let className = 'word-btn';
-	if (isLocked) className += ' locked';
+	if (isBurned) className += ' burned';
+	else if (isLocked) className += ' locked';
 	else if (isSelected) className += ' selected';
 	if (burnSuspect) className += ' burn-suspect';
 
 	return (
 		<div
 			className={className}
-			onClick={onClick}
-			tabIndex={isLocked ? -1 : 0}
-			aria-disabled={isLocked}
+			onClick={isBurned || isLocked ? undefined : onClick}
+			tabIndex={isBurned || isLocked ? -1 : 0}
+			aria-disabled={isBurned || isLocked}
 			role='button'
 			onKeyDown={onKeyDown}
 			{...rest}
@@ -230,33 +234,35 @@ export const CopyLinkButton: React.FC = () => {
 	);
 };
 
-export const FriendsToggleButton: React.FC<{
-	active: boolean;
-	onClick: () => void;
-}> = ({ active, onClick }) => (
-	<button
-		onClick={onClick}
-		className={`friends-toggle-btn${
-			active ? ' active' : ''
-		}`}
-		aria-label={
-			active
-				? 'Close friends sidebar'
-				: 'Open friends sidebar'
-		}
-		style={{
-			position: 'absolute',
-			top: 24,
-			right: active ? 320 : 24,
-		}}
-	>
-		<span className='friends-toggle-glow' />
-		<span
-			className='friends-toggle-icon'
-			role='img'
-			aria-label='Friends'
+export const FriendsToggleButton: React.FC = () => {
+	const { isSidebarOpen, toggleSidebar } = useFriends();
+	return (
+		<button
+			onClick={toggleSidebar}
+			className={`friends-toggle-btn${
+				isSidebarOpen ? ' active' : ''
+			}`}
+			aria-label={
+				isSidebarOpen
+					? 'Close friends sidebar'
+					: 'Open friends sidebar'
+			}
+			style={{
+				position: 'fixed',
+				top: 24,
+				right: 24,
+				zIndex: 9999,
+				boxShadow: '0 2px 12px 0 #e3eaff55',
+			}}
 		>
-			👥
-		</span>
-	</button>
-);
+			<span className='friends-toggle-glow' />
+			<span
+				className='friends-toggle-icon'
+				role='img'
+				aria-label='Friends'
+			>
+				👥
+			</span>
+		</button>
+	);
+};

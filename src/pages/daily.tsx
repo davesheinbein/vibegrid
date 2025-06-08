@@ -67,6 +67,13 @@ export default function Daily(props: DailyPageProps) {
 		null
 	);
 	const [showShare, setShowShare] = useState(false);
+	const [user, setUser] = useState<{
+		name: string;
+		email: string;
+		photoUrl?: string;
+	} | null>(null);
+	const [showGameOverBanner, setShowGameOverBanner] =
+		useState(false);
 
 	const activePuzzle = dailyPuzzle;
 	const gridCols = activePuzzle.size?.cols || 4;
@@ -158,6 +165,7 @@ export default function Daily(props: DailyPageProps) {
 			setBurnBonus(
 				(prev) => prev + (attemptsLeft >= 2 ? 10 : 5)
 			);
+			setAttemptsLeft((prev) => prev + 1); // Always increment by 1 for each wildcard burn
 			setFeedback('🔥 Correct burn! Bonus awarded!');
 			if (
 				activePuzzle.wildcards &&
@@ -166,7 +174,6 @@ export default function Daily(props: DailyPageProps) {
 					newBurned.includes(w)
 				)
 			) {
-				setAttemptsLeft((prev) => prev + 1);
 				setFeedback(
 					'🔥 All wildcards burned! Extra attempt awarded!'
 				);
@@ -199,7 +206,10 @@ export default function Daily(props: DailyPageProps) {
 		}
 	};
 
-	const handleWordRightClick = (word: string, e: React.MouseEvent) => {
+	const handleWordRightClick = (
+		word: string,
+		e: React.MouseEvent
+	) => {
 		e.preventDefault();
 		if (lockedWords.includes(word) || gameOver) return;
 		setBurnSuspect((prev) => (prev === word ? null : word));
@@ -271,13 +281,37 @@ export default function Daily(props: DailyPageProps) {
 		}
 		setShowShare(true);
 	};
+
+	// Helper to check if all groups are solved (excluding wildcards)
+	const allGroupsSolved = () => {
+		// Only count groups, not wildcards
+		const solvedWords = pendingSolvedGroups.flat();
+		const groupWords = activePuzzle.groups.flat();
+		return groupWords.every((w: string) =>
+			solvedWords.includes(w)
+		);
+	};
+
+	// Calculate final score
+	const getFinalScore = () => {
+		// 100 base for win, 0 for loss
+		const base = allGroupsSolved() ? 100 : 0;
+		// Each remaining attempt is worth 10 points (if win)
+		const attemptsBonus = allGroupsSolved()
+			? attemptsLeft * 10
+			: 0;
+		// burnBonus is already tracked
+		return base + burnBonus + attemptsBonus;
+	};
+
 	const getShareText = () => {
 		const solved = solvedGroups.length;
 		const attempts = 4 - attemptsLeft;
 		const words = lockedWords.length;
 		const total = gridWordCount;
-		const emoji = words === total ? '🔥' : '✨';
-		return `VibeGrid: ${solved}/${groupCount} groups solved in ${attempts} attempts! ${emoji} Play: https://vibegrid.app`;
+		const score = getFinalScore();
+		const url = getShareUrl();
+		return `I scored ${score} in ${solved}/${groupCount} groups solved in ${attempts} attempts! on VibeGrid!\nCan you beat my score? Try the daily puzzle:\n${url}`;
 	};
 	const getShareUrl = () => 'https://vibegrid.app';
 	const getShareTitle = () =>
@@ -329,9 +363,37 @@ export default function Daily(props: DailyPageProps) {
 		},
 	];
 
+	useEffect(() => {
+		if (!gameOver) {
+			if (allGroupsSolved()) {
+				setGameOver(true);
+				setShowGameOverBanner(false);
+				setEndTime(Date.now());
+			} else if (attemptsLeft === 0) {
+				setGameOver(true);
+				setShowGameOverBanner(true);
+				setEndTime(Date.now());
+			}
+		}
+	}, [attemptsLeft, pendingSolvedGroups, gameOver]);
+
+	useEffect(() => {
+		if (attemptsLeft === 0 && !gameOver) {
+			setGameOver(true);
+			setShowGameOverBanner(true);
+			// Optionally, save stats if user is signed in
+			if (user) {
+				// saveUserStats(user, ...); // implement as needed
+			}
+		}
+	}, [attemptsLeft, gameOver, user]);
+
 	return (
 		<div className='fullscreen-bg'>
 			<div className='vibegrid-container'>
+				{showGameOverBanner && (
+					<FeedbackBanner message='Game Over! You are out of attempts.' />
+				)}
 				<div className='vibegrid-header-row'>
 					<GoBackButton
 						onClick={
@@ -394,253 +456,332 @@ export default function Daily(props: DailyPageProps) {
 					</div>
 				</div>
 
-				{/* Solved groups, grid, controls, etc. remain unchanged */}
-				{solvedGroups.length > 0 && (
-					<div className='vibegrid-solved-groups'>
-						{pendingSolvedGroups.map(
-							(group: string[], idx: number) => {
-								const groupIdx =
-									activePuzzle.groups.findIndex(
-										(g: string[]) =>
-											g.length === group.length &&
-											g.every((w: string) =>
-												group.includes(w)
-											)
-									);
-								let groupLabel = `Group ${groupIdx + 1}`;
-								if (
-									activePuzzle.groupLabels &&
-									Array.isArray(activePuzzle.groupLabels) &&
-									activePuzzle.groupLabels[groupIdx]
-								) {
-									groupLabel =
-										activePuzzle.groupLabels[groupIdx];
-								}
-								return (
-									<section
-										className={`vibegrid-solved-group vibegrid-solved-group-${
-											['easy', 'medium', 'hard', 'expert'][
-												idx
-											]
-										}`}
-										key={idx}
-										role='img'
-										aria-label={`Correct group ${groupLabel}. ${group.join(
-											','
-										)}`}
-									>
-										<h3 className='vibegrid-solved-category'>
-											{groupLabel}
-										</h3>
-										<ol className='vibegrid-solved-word-list'>
-											{group.map((word: string) => (
-												<li
-													className='vibegrid-solved-word'
-													key={word}
-												>
-													{word}
-												</li>
-											))}
-										</ol>
-									</section>
-								);
-							}
-						)}
-					</div>
-				)}
-				<div className='daily-center-flex-row'>
-					<div
-						className='vibegrid-grid daily-grid'
-						data-cols={gridCols}
-						data-rows={gridRows}
-						style={{
-							gridTemplateColumns: `repeat(${gridCols}, 1fr)`,
-						}}
-					>
-						{gridWords.map((word: string) => (
-							<WordButton
-								key={word}
-								word={word}
-								isSelected={selectedWords.includes(word)}
-								isLocked={lockedWords.includes(word)}
-								onClick={() => handleWordTap(word)}
-								onContextMenu={(e: React.MouseEvent) => handleWordRightClick(word, e)}
-								burnSuspect={burnSuspect === word}
-							/>
-						))}
-						{animatingGroup &&
-							animatingGroup.map((word: string) => (
-								<WordButton
-									key={word + '-animating'}
-									word={word}
-									isSelected={false}
-									isLocked={true}
-									onClick={() => {}}
-									className='word-btn animating-to-solved'
-								/>
-							))}
-					</div>
-				</div>
-				<div className='vibegrid-controls'>
-					<div
-						className='vibegrid-submit-wrapper'
-						style={{ justifyContent: 'center' }}
-					>
-						<button
-							className='vibegrid-submit'
-							onClick={handleSubmit}
-							disabled={attemptsLeft === 0 || gameOver}
-							style={{ margin: '0 auto' }}
-						>
-							Submit
-						</button>
-					</div>
-					{burnSuspect && (
-						<div className='burn-status-bar'>
-							🔥 Burn active 🔥 <b>{burnSuspect}</b>
-							<button
-								className='burn-btn'
-								onClick={confirmBurn}
-							>
-								Confirm Burn
-							</button>
-						</div>
-					)}
-					<div className='daily-controls-flex-col'>
-						<FeedbackBanner message={feedback} />
-						<div className='vibegrid-attempts-bar'>
-							{[...Array(attemptsLeft > 4 ? 5 : 4)].map(
-								(_, i) => (
-									<span
-										key={i}
-										className={
-											'vibegrid-attempt-dot' +
-											(i >= attemptsLeft ? ' used' : '')
-										}
-									></span>
-								)
-							)}
-						</div>
-						<div className='vibegrid-attempts'>
-							Attempts Left: {attemptsLeft}
-						</div>
-						<div className='vibegrid-attempts'>
-							<button
-								className='randomize-btn'
-								aria-label='Randomize word order'
-								onClick={handleRandomize}
-							>
-								Mix It Up!
-							</button>
-							<button
-								className='deselect-btn'
-								aria-label='Deselect all'
-								onClick={() => setSelectedWords([])}
-							>
-								Deselect All
-							</button>
-						</div>
-					</div>
-					<button
-						className='share-btn'
-						onClick={handleShare}
-					>
-						<FontAwesomeIcon
-							icon={faShareAlt}
-							className='share-icon'
-						/>
-						Share
-					</button>
-					{showShare && (
-						<Modal
-							open={showShare}
-							onClose={() => setShowShare(false)}
-						>
-							<div className='share-modal-content'>
-								<h2>Share your VibeGrid result!</h2>
-								<div className='share-links-grid'>
-									{(() => {
-										const rows = [];
-										for (
-											let i = 0;
-											i < shareLinks.length;
-											i += 3
-										) {
-											rows.push(
-												<div
-													className='share-links-row'
-													key={i}
-												>
-													{shareLinks
-														.slice(i, i + 3)
-														.map((link) => {
-															let brandColor = '#64748b';
-															switch (link.name) {
-																case 'X':
-																	brandColor = '#222';
-																	break;
-																case 'Meta':
-																	brandColor = '#1877F3';
-																	break;
-																case 'Reddit':
-																	brandColor = '#FF4500';
-																	break;
-																case 'LinkedIn':
-																	brandColor = '#0077B5';
-																	break;
-																case 'TikTok':
-																	brandColor = '#000';
-																	break;
-																case 'Instagram':
-																	brandColor = '#E1306C';
-																	break;
-																default:
-																	break;
-															}
-															return (
-																<a
-																	href={link.url}
-																	target='_blank'
-																	rel='noopener noreferrer'
-																	className={`share-link share-link--${link.name.toLowerCase()}`}
-																	data-platform={link.name}
-																	key={link.name}
-																>
-																	<span className='share-link-icon'>
-																		{link.icon}
-																	</span>
-																	<span className='share-link-text'>
-																		{link.name}
-																	</span>
-																</a>
-															);
-														})}
-												</div>
+				{/* Hide grid, submit, and controls if game over */}
+				{!gameOver && (
+					<>
+						{solvedGroups.length > 0 && (
+							<div className='vibegrid-solved-groups'>
+								{pendingSolvedGroups.map(
+									(group: string[], idx: number) => {
+										const groupIdx =
+											activePuzzle.groups.findIndex(
+												(g: string[]) =>
+													g.length === group.length &&
+													g.every((w: string) =>
+														group.includes(w)
+													)
 											);
+										let groupLabel = `Group ${
+											groupIdx + 1
+										}`;
+										if (
+											activePuzzle.groupLabels &&
+											Array.isArray(
+												activePuzzle.groupLabels
+											) &&
+											activePuzzle.groupLabels[groupIdx]
+										) {
+											groupLabel =
+												activePuzzle.groupLabels[groupIdx];
 										}
-										return rows;
-									})()}
+										return (
+											<section
+												className={`vibegrid-solved-group vibegrid-solved-group-${
+													[
+														'easy',
+														'medium',
+														'hard',
+														'expert',
+													][idx]
+												}`}
+												key={idx}
+												role='img'
+												aria-label={`Correct group ${groupLabel}. ${group.join(
+													','
+												)}`}
+											>
+												<h3 className='vibegrid-solved-category'>
+													{groupLabel}
+												</h3>
+												<ol className='vibegrid-solved-word-list'>
+													{group.map((word: string) => (
+														<li
+															className='vibegrid-solved-word'
+															key={word}
+														>
+															{word}
+														</li>
+													))}
+												</ol>
+											</section>
+										);
+									}
+								)}
+							</div>
+						)}
+						<div className='daily-center-flex-row'>
+							<div
+								className='vibegrid-grid daily-grid'
+								data-cols={gridCols}
+								data-rows={gridRows}
+								style={{
+									gridTemplateColumns: `repeat(${gridCols}, 1fr)`,
+								}}
+							>
+								{gridWords.map((word: string) => (
+									<WordButton
+										key={word}
+										word={word}
+										isSelected={selectedWords.includes(
+											word
+										)}
+										isLocked={lockedWords.includes(word)}
+										isBurned={burnedWildcards.includes(
+											word
+										)}
+										onClick={() => handleWordTap(word)}
+										onContextMenu={(e: React.MouseEvent) =>
+											handleWordRightClick(word, e)
+										}
+										burnSuspect={burnSuspect === word}
+									/>
+								))}
+								{animatingGroup &&
+									animatingGroup.map((word: string) => (
+										<WordButton
+											key={word + '-animating'}
+											word={word}
+											isSelected={false}
+											isLocked={true}
+											onClick={() => {}}
+											className='word-btn animating-to-solved'
+										/>
+									))}
+							</div>
+						</div>
+						<div className='vibegrid-controls'>
+							{!burnSuspect && (
+								<div
+									className='vibegrid-submit-wrapper'
+									style={{ justifyContent: 'center' }}
+								>
+									<button
+										className='vibegrid-submit'
+										onClick={handleSubmit}
+										disabled={
+											attemptsLeft === 0 || gameOver
+										}
+										style={{ margin: '0 auto' }}
+									>
+										Submit
+									</button>
+								</div>
+							)}
+							{burnSuspect && (
+								<div className='burn-status-bar'>
+									🔥 Burn active 🔥 <b>{burnSuspect}</b>
+									<button
+										className='burn-btn'
+										onClick={confirmBurn}
+									>
+										Confirm Burn
+									</button>
+								</div>
+							)}
+							<div className='daily-controls-flex-col'>
+								<FeedbackBanner message={feedback} />
+								<div className='vibegrid-attempts-bar'>
+									{[...Array(attemptsLeft > 4 ? 5 : 4)].map(
+										(_, i) => (
+											<span
+												key={i}
+												className={
+													'vibegrid-attempt-dot' +
+													(i >= attemptsLeft ? ' used' : '')
+												}
+											></span>
+										)
+									)}
+								</div>
+								<div className='vibegrid-attempts'>
+									Attempts Left: {attemptsLeft}
+								</div>
+								<div className='vibegrid-attempts'>
+									<button
+										className='randomize-btn'
+										aria-label='Randomize word order'
+										onClick={handleRandomize}
+									>
+										Mix It Up!
+									</button>
+									<button
+										className='deselect-btn'
+										aria-label='Deselect all'
+										onClick={() => setSelectedWords([])}
+									>
+										Deselect All
+									</button>
 								</div>
 							</div>
-						</Modal>
-					)}
-				</div>
+							<button
+								className='share-btn'
+								onClick={handleShare}
+							>
+								<FontAwesomeIcon
+									icon={faShareAlt}
+									className='share-icon'
+								/>
+								Share
+							</button>
+						</div>
+					</>
+				)}
+				{/* Show stats modal in place of grid if game over */}
 				{gameOver && (
 					<EndGameModal
 						message={
-							lockedWords.length === gridWordCount
+							allGroupsSolved()
 								? 'You nailed it!'
 								: 'Vibe check failed.'
 						}
 						onRestart={handleRestart}
+						score={getFinalScore()}
+						attemptsLeft={attemptsLeft}
+						burnBonus={burnBonus}
+						win={allGroupsSolved()}
+						onShare={() => setShowShare(true)}
 					/>
 				)}
+				{/* Always render the share modal so it can appear above EndGameModal */}
+				<Modal
+					open={showShare}
+					onClose={() => setShowShare(false)}
+				>
+					<div
+						className='share-modal-content'
+						style={{ textAlign: 'center' }}
+					>
+						<img
+							src='https://i.imgur.com/1jPtNmW.png'
+							alt='VibeGrid Logo'
+							style={{
+								width: 180,
+								height: 180,
+								margin: '10px auto 0',
+								borderRadius: 16,
+							}}
+						/>
+						<h2>Share your VibeGrid result!</h2>
+						<div
+							style={{
+								margin: '10px 0 18px',
+								fontSize: '1.1em',
+							}}
+						>
+							<div
+								style={{
+									fontWeight: 600,
+									fontSize: '1.2em',
+								}}
+							>
+								I scored <b>{getFinalScore()}</b> on
+								VibeGrid!
+							</div>
+							<div
+								style={{
+									marginTop: 8,
+									color: '#2563eb',
+									fontSize: '1em',
+								}}
+							>
+								Can you beat my score? Try the daily puzzle:
+								<br />
+								<a
+									href={getShareUrl()}
+									target='_blank'
+									rel='noopener noreferrer'
+									style={{
+										color: '#2563eb',
+										fontWeight: 600,
+										wordBreak: 'break-all',
+									}}
+								>
+									{getShareUrl()}
+								</a>
+							</div>
+						</div>
+						<div className='share-links-grid'>
+							{(() => {
+								const rows = [];
+								for (
+									let i = 0;
+									i < shareLinks.length;
+									i += 3
+								) {
+									rows.push(
+										<div
+											className='share-links-row'
+											key={i}
+										>
+											{shareLinks
+												.slice(i, i + 3)
+												.map((link) => {
+													let brandColor = '#64748b';
+													switch (link.name) {
+														case 'X':
+															brandColor = '#222';
+															break;
+														case 'Meta':
+															brandColor = '#1877F3';
+															break;
+														case 'Reddit':
+															brandColor = '#FF4500';
+															break;
+														case 'LinkedIn':
+															brandColor = '#0077B5';
+															break;
+														case 'TikTok':
+															brandColor = '#000';
+															break;
+														case 'Instagram':
+															brandColor = '#E1306C';
+															break;
+														default:
+															break;
+													}
+													return (
+														<a
+															href={link.url}
+															target='_blank'
+															rel='noopener noreferrer'
+															className={`share-link share-link--${link.name.toLowerCase()}`}
+															data-platform={link.name}
+															key={link.name}
+															style={{ color: brandColor }}
+														>
+															<span className='share-link-icon'>
+																{link.icon}
+															</span>
+															<span className='share-link-text'>
+																{link.name}
+															</span>
+														</a>
+													);
+												})}
+										</div>
+									);
+								}
+								return rows;
+							})()}
+						</div>
+					</div>
+				</Modal>
 				<StatisticsModal
 					open={showStats}
 					onClose={() => setShowStats(false)}
-					user={null}
-					setUser={() => {}}
-					dailyCompleted={true}
+					user={user}
+					setUser={setUser}
+					dailyCompleted={gameOver && allGroupsSolved()}
 				/>
 				<RulesModal
 					open={showRules}

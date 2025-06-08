@@ -1,10 +1,12 @@
 .endgame-modal {
 	background: rgba(37, 99, 235, 0.1);
 }
+
 .endgame-modal .modal-content {
 	background: #fff;
 	color: #0a174e;
 }
+
 .share-modal {
 	position: fixed;
 	inset: 0;
@@ -14,10 +16,10 @@
 	background: rgba(30, 41, 59, 0.55);
 	z-index: 100;
 	animation: fadeIn 0.2s;
+
 	&-content {
 		background: #fff;
 		color: #222;
-		padding: 2.2rem 2rem 1.7rem 2rem;
 		border-radius: 1.2rem;
 		text-align: center;
 		min-width: 200px;
@@ -29,16 +31,20 @@
 		align-items: center;
 		gap: 1.2rem;
 		max-width: 600px;
+		box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.28);
+
 		h2 {
 			font-size: 1.35rem;
 			margin-bottom: 0.7rem;
 			color: #0f172a;
 		}
 	}
+
 	&-preview-btns,
 	&-nav-btns {
 		display: flex;
 		margin-top: 20px;
+		margin-bottom: 20px;
 
 		.vibegrid-submit {
 			max-width: fit-content;
@@ -57,6 +63,7 @@
 		}
 	}
 }
+
 .share-modal-content button,
 .share-modal-close {
 	padding: 20px;
@@ -77,6 +84,7 @@
 	align-items: center;
 	justify-content: center;
 }
+
 .share-modal-content button:hover,
 .share-modal-close:hover {
 	background: linear-gradient(
@@ -85,6 +93,7 @@
 		#ff9966 100%
 	);
 }
+
 .share-modal-close {
 	position: absolute;
 	top: 16px;
@@ -99,20 +108,24 @@
 	z-index: 10;
 	padding: 0;
 }
+
 .modal-close-absolute {
 	position: absolute;
 	top: 12px;
 	right: 12px;
 	z-index: 2;
 }
+
 .share-modal-stepper {
 	margin-bottom: 16px;
 }
+
 .share-modal-stepper-row {
 	display: flex;
 	align-items: center;
 	gap: 8px;
 }
+
 .share-modal-stepper-dot {
 	width: 18px;
 	height: 18px;
@@ -121,10 +134,12 @@
 	border: 1px solid #cbd5e1;
 	transition: background 0.2s;
 }
+
 .share-modal-stepper-dot.active {
 	background: #38bdf8;
 	border: 2px solid #0ea5e9;
 }
+
 .share-modal-form {
 	transition: all 0.3s;
 	width: 100%;
@@ -136,11 +151,13 @@
 	margin: 0.5rem 0 1.2rem 0;
 	text-align: center;
 }
+
 .endgame-modal-link {
 	color: #2563eb;
 	text-decoration: underline;
 	cursor: pointer;
 }
+
 .endgame-modal-share {
 	margin: 1.5rem 0 1rem 0;
 	display: flex;
@@ -148,12 +165,14 @@
 	align-items: center;
 	gap: 12px;
 }
+
 .endgame-modal-share-btns {
 	display: flex;
 	gap: 12px;
 	flex-wrap: wrap;
 	justify-content: center;
 }
+
 .endgame-modal-home-btn {
 	margin-top: 12px;
 }
@@ -161,12 +180,12 @@
 .modal-stats-modal {
 	border-radius: 18px;
 	background: rgba(255, 255, 255, 0.92);
-	box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.18);
 	padding: 2.2em 2.5em 2em 2.5em;
 	font-size: 1.08rem;
 	color: #1e293b;
 	transition: background 0.22s, box-shadow 0.22s;
 }
+
 .modal-stats-body,
 .stats-modal-signin-body {
 	padding: 1.5em 0.5em 0.5em 0.5em;
@@ -174,13 +193,26 @@
 	background: none;
 	font-size: 1.05rem;
 }
+
 .stats-modal-signin-content {
 	display: flex;
 	flex-direction: column;
 	align-items: center;
 	gap: 1.2em;
-	padding: 1.2em 0.5em;
 }
+
+.stats-modal-lottie-container {
+	width: 100%;
+	height: 100%;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+}
+.stats-modal-signin-icon {
+	width: 100%;
+	height: 100%;
+}
+
 .modal-stats-incomplete,
 .modal-stats-complete {
 	display: flex;
@@ -189,6 +221,7 @@
 	gap: 1.2em;
 	padding: 1.2em 0.5em;
 }
+
 .modal-stats-title,
 .modal-stats-complete h2 {
 	font-size: 1.5rem;
@@ -197,12 +230,14 @@
 	color: #003087;
 	letter-spacing: 0.01em;
 }
+
 .modal-stats-desc {
 	font-size: 1.08rem;
 	color: #64748b;
 	margin-bottom: 1.2em;
 	text-align: center;
 }
+
 .modal-stats-ok-btn {
 	border-radius: 12px;
 	font-size: 1rem;
@@ -220,6 +255,7 @@
 		transform 0.12s;
 	cursor: pointer;
 }
+
 .modal-stats-ok-btn:hover {
 	background: linear-gradient(
 		90deg,
@@ -229,6 +265,7 @@
 	box-shadow: 0 4px 16px 0 #38bdf855;
 	transform: translateY(-2px) scale(1.03);
 }
+
 .modal-stats-ok-btn:active {
 	background: linear-gradient(
 		90deg,
@@ -260,6 +297,7 @@
 	box-shadow: 0 2px 8px 0 #e3eaff33;
 	cursor: pointer;
 }
+
 .share-modal-close:hover,
 .modal-close-absolute:hover {
 	background: #38bdf8;
@@ -278,6 +316,7 @@ body.dark-mode .endgame-modal,
 	box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.28);
 	border: 1.5px solid rgba(148, 163, 184, 0.18);
 }
+
 body.dark-mode .share-modal-content,
 .dark-mode .share-modal-content,
 body.dark-mode .modal-stats-modal,
@@ -287,11 +326,13 @@ body.dark-mode .endgame-modal .modal-content,
 	background: rgba(30, 41, 59, 0.92);
 	color: #f1f5f9;
 }
+
 body.dark-mode .modal-stats-modal,
 .dark-mode .modal-stats-modal {
 	background: rgba(30, 41, 59, 0.92);
 	color: #f1f5f9;
 }
+
 body.dark-mode .modal-stats-ok-btn,
 .dark-mode .modal-stats-ok-btn {
 	background: linear-gradient(
@@ -301,6 +342,7 @@ body.dark-mode .modal-stats-ok-btn,
 	);
 	color: #1e293b;
 }
+
 body.dark-mode .modal-stats-ok-btn:hover,
 .dark-mode .modal-stats-ok-btn:hover {
 	background: linear-gradient(
@@ -310,6 +352,7 @@ body.dark-mode .modal-stats-ok-btn:hover,
 	);
 	color: #fff;
 }
+
 body.dark-mode .share-modal-close,
 .dark-mode .share-modal-close,
 body.dark-mode .modal-close-absolute,
@@ -317,6 +360,7 @@ body.dark-mode .modal-close-absolute,
 	background: rgba(30, 41, 59, 0.7);
 	color: #fbbf24;
 }
+
 body.dark-mode .share-modal-close:hover,
 .dark-mode .share-modal-close:hover,
 body.dark-mode .modal-close-absolute:hover,
@@ -324,6 +368,7 @@ body.dark-mode .modal-close-absolute:hover,
 	background: #fbbf24;
 	color: #1e293b;
 }
+
 .share-links-grid {
 	display: flex;
 	flex-direction: column;
@@ -362,22 +407,27 @@ body.dark-mode .modal-close-absolute:hover,
 				background: #222 !important;
 				border-color: #222 !important;
 			}
+
 			&--meta {
 				background: #1877f3 !important;
 				border-color: #1877f3 !important;
 			}
+
 			&--reddit {
 				background: #ff4500 !important;
 				border-color: #ff4500 !important;
 			}
+
 			&--linkedin {
 				background: #0077b5 !important;
 				border-color: #0077b5 !important;
 			}
+
 			&--tiktok {
 				background: #000 !important;
 				border-color: #000 !important;
 			}
+
 			&--instagram {
 				background: linear-gradient(
 					90deg,
@@ -418,26 +468,31 @@ body.dark-mode .modal-close-absolute:hover,
 					color: #fff;
 					border-color: #fff2;
 				}
+
 				&.share-link--meta {
 					background: #1877f3;
 					color: #fff;
 					border-color: #fff2;
 				}
+
 				&.share-link--reddit {
 					background: #ff4500;
 					color: #fff;
 					border-color: #fff2;
 				}
+
 				&.share-link--linkedin {
 					background: #0077b5;
 					color: #fff;
 					border-color: #fff2;
 				}
+
 				&.share-link--tiktok {
 					background: #000;
 					color: #fff;
 					border-color: #fff2;
 				}
+
 				&.share-link--instagram {
 					background: linear-gradient(
 						135deg,
@@ -466,26 +521,33 @@ body.dark-mode .modal-close-absolute:hover,
 	&.share-link--x {
 		font-family: 'Arial Black', Arial, sans-serif;
 	}
+
 	&.share-link--meta {
 		font-family: 'Segoe UI', Arial, sans-serif;
 	}
+
 	&.share-link--reddit {
 		font-family: 'Verdana', Arial, sans-serif;
 	}
+
 	&.share-link--linkedin {
 		font-family: 'Segoe UI', Arial, sans-serif;
 	}
+
 	&.share-link--tiktok {
 		font-family: 'Montserrat', Arial, sans-serif;
 	}
+
 	&.share-link--instagram {
 		font-family: 'Comic Sans MS', 'Comic Sans', cursive,
 			Arial, sans-serif;
 	}
+
 	&.share-link--copy {
 		font-family: 'Arial Black', Arial, sans-serif;
 	}
 }
+
 .share-link--copy {
 	display: flex;
 	align-items: center;

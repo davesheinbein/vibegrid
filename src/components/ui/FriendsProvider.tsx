@@ -70,6 +70,8 @@ interface FriendsContextType {
 	) => string;
 	addNotification: (notification: Notification) => void;
 	markNotificationRead: (id: string) => void;
+	isSidebarOpen: boolean;
+	toggleSidebar: () => void;
 }
 
 const FriendsContext = createContext<
@@ -108,6 +110,7 @@ export const FriendsProvider: React.FC<{
 	const [notifications, setNotifications] = useState<
 		Notification[]
 	>([]);
+	const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
 	const socketRef = useRef<Socket | null>(null);
 
@@ -280,6 +283,8 @@ export const FriendsProvider: React.FC<{
 		});
 	};
 
+	const toggleSidebar = () => setIsSidebarOpen((v) => !v);
+
 	return (
 		<FriendsContext.Provider
 			value={{
@@ -303,6 +308,8 @@ export const FriendsProvider: React.FC<{
 				loadChatHistory,
 				clearUnread,
 				createGroup,
+				isSidebarOpen,
+				toggleSidebar,
 			}}
 		>
 			{children}

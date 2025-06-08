@@ -230,8 +230,11 @@
 			cubic-bezier(0.4, 0.2, 0.2, 1) forwards;
 		opacity: 1;
 		pointer-events: none;
-		background: #f0f9ff;
-		background: red;
+		background: linear-gradient(
+			180deg,
+			#1cf3de 0%,
+			#1093f7 100%
+		);
 		box-shadow: 0 4px 16px 0 rgba(14, 165, 233, 0.13);
 	}
 
@@ -244,6 +247,23 @@
 			#fbbf24 0%,
 			#ff8800 100%
 		);
+	}
+
+	&.burned {
+		background: repeating-linear-gradient(
+			135deg,
+			#bdbdbd 0 8px,
+			#e0e0e0 8px 16px
+		);
+		color: #888;
+		border-color: #bdbdbd;
+		text-decoration: line-through;
+		pointer-events: none;
+		opacity: 0.7;
+		filter: grayscale(0.5);
+		box-shadow: 0 0 0 2px #bdbdbd44;
+		cursor: not-allowed;
+		font-style: italic;
 	}
 
 	@media (max-width: 300px) {
@@ -278,7 +298,6 @@ body.dark-mode .word-btn.selected {
 	max-height: 100vh;
 	max-width: 800px;
 	margin: 0 auto 0;
-	padding: 0 20px;
 	background: #fff;
 	border-radius: 18px;
 	box-shadow: 0 4px 32px 0 rgba(30, 41, 59, 0.13);

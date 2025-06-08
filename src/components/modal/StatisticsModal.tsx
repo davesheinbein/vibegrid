@@ -124,9 +124,7 @@ const StatisticsModal: React.FC<StatisticsModalProps> = ({
 	}
 	return (
 		<Modal open={open} onClose={onClose}>
-			<div className='share-modal-content modal-stats-modal'>
-				{content}
-			</div>
+			<div className='modal-stats-modal'>{content}</div>
 		</Modal>
 	);
 };

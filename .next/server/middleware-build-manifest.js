@@ -25,10 +25,25 @@ globalThis.__BUILD_MANIFEST = {
       "static/chunks/main.js",
       "static/chunks/pages/_error.js"
     ],
-    "/daily": [
+    "/achievements": [
       "static/chunks/webpack.js",
       "static/chunks/main.js",
-      "static/chunks/pages/daily.js"
+      "static/chunks/pages/achievements.js"
+    ],
+    "/admin": [
+      "static/chunks/webpack.js",
+      "static/chunks/main.js",
+      "static/chunks/pages/admin.js"
+    ],
+    "/browse": [
+      "static/chunks/webpack.js",
+      "static/chunks/main.js",
+      "static/chunks/pages/browse.js"
+    ],
+    "/system-status": [
+      "static/chunks/webpack.js",
+      "static/chunks/main.js",
+      "static/chunks/pages/system-status.js"
     ]
   },
   "ampFirstPages": []

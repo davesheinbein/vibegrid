@@ -1,34 +1,223 @@
-// Example achievements config for VibeGrid
-// Add or edit achievements here; criteria is JSON for flexible logic
+// --- VibeGrid Achievements Config ---
+// This file defines all achievements, their criteria, and metadata for the game.
+// Each achievement should have: label, description, icon, criteria (event/progress/streak/meta), and optional secret flag.
+
 module.exports = [
-	// 1. Daily Puzzle Achievements
+	// 📚 Core Gameplay Achievements
 	{
-		label: 'First Solve',
-		description:
-			'Unlock when a user solves their first daily puzzle.',
+		label: 'First Taste',
+		description: 'Complete your first puzzle.',
 		icon: 'star',
 		criteria: {
 			type: 'event',
-			event: 'daily_puzzle_solved',
+			event: 'puzzle_completed',
 			count: 1,
 		},
 	},
 	{
-		label: 'Daily Streak Novice',
-		description:
-			'Complete 3 daily puzzles in a row without missing a day.',
+		label: 'Streak Starter',
+		description: 'Win 3 puzzles in a row.',
 		icon: 'fire',
 		criteria: {
 			type: 'streak',
-			key: 'dailyStreak',
+			key: 'winStreak',
 			target: 3,
 		},
 	},
 	{
-		label: 'Daily Streak Expert',
+		label: 'Word Whisperer',
 		description:
-			'Maintain a 7-day daily puzzle winning streak.',
+			'Solve a puzzle with no incorrect guesses.',
+		icon: 'magic',
+		criteria: {
+			type: 'event',
+			event: 'puzzle_perfect',
+			attemptsUsed: 0,
+		},
+	},
+	{
+		label: 'Burn, Baby, Burn',
+		description: 'Burn your first wildcard.',
 		icon: 'flame',
+		criteria: {
+			type: 'event',
+			event: 'wildcard_burned',
+			count: 1,
+		},
+	},
+	{
+		label: 'Too Hot to Handle',
+		description: 'Burn 5 wildcards in a single puzzle.',
+		icon: 'fire',
+		criteria: {
+			type: 'event',
+			event: 'wildcard_burned',
+			count: 5,
+			singlePuzzle: true,
+		},
+	},
+	{
+		label: 'Clutch Comeback',
+		description: 'Win with only 1 attempt remaining.',
+		icon: 'alert',
+		criteria: {
+			type: 'event',
+			event: 'puzzle_won_clutch',
+			attemptsLeft: 1,
+		},
+	},
+	{
+		label: 'On Fire',
+		description: 'Win 5 puzzles in a row.',
+		icon: 'fire',
+		criteria: {
+			type: 'streak',
+			key: 'winStreak',
+			target: 5,
+		},
+	},
+	{
+		label: 'Serial Burner',
+		description: 'Burn 10 words in a single puzzle.',
+		icon: 'fire',
+		criteria: {
+			type: 'event',
+			event: 'word_burned',
+			count: 10,
+			singlePuzzle: true,
+		},
+	},
+	{
+		label: 'No Second Chances',
+		description: 'Win a puzzle without burning any words.',
+		icon: 'gem',
+		criteria: {
+			type: 'event',
+			event: 'puzzle_won_no_burns',
+		},
+	},
+	{
+		label: 'Perfect Game',
+		description:
+			'Solve all groups with full attempts remaining.',
+		icon: 'gem',
+		criteria: {
+			type: 'event',
+			event: 'puzzle_perfect',
+			attemptsLeft: 'max',
+		},
+	},
+
+	// 🎯 Burn Mechanic Achievements
+	{
+		label: 'Risk Taker',
+		description: 'Burn 3 non-wildcards in one puzzle.',
+		icon: 'fire',
+		criteria: {
+			type: 'event',
+			event: 'nonwildcard_burned',
+			count: 3,
+			singlePuzzle: true,
+		},
+	},
+	{
+		label: 'Pyromaniac',
+		description: 'Burn 20 total words.',
+		icon: 'fire',
+		criteria: {
+			type: 'progress',
+			key: 'wordsBurned',
+			target: 20,
+		},
+	},
+	{
+		label: 'Wildcard Hunter',
+		description: 'Burn 5 wildcards in a row.',
+		icon: 'flame',
+		criteria: {
+			type: 'event',
+			event: 'wildcard_burned_streak',
+			count: 5,
+		},
+	},
+	{
+		label: 'Inferno',
+		description: 'Burn 50 total wildcards.',
+		icon: 'fire',
+		criteria: {
+			type: 'progress',
+			key: 'wildcardsBurned',
+			target: 50,
+		},
+	},
+	{
+		label: 'Burnt Out',
+		description:
+			'Lose a game by burning too many non-wildcards.',
+		icon: 'fire',
+		criteria: {
+			type: 'event',
+			event: 'lost_by_burn',
+			nonwildcards: true,
+		},
+	},
+
+	// 📈 Scoring Achievements
+	{
+		label: 'Hundred Club',
+		description: 'Score 100 points in a game.',
+		icon: 'trophy',
+		criteria: {
+			type: 'event',
+			event: 'score_achieved',
+			score: 100,
+		},
+	},
+	{
+		label: 'Score Chaser',
+		description: 'Hit a 200-point game.',
+		icon: 'trophy',
+		criteria: {
+			type: 'event',
+			event: 'score_achieved',
+			score: 200,
+		},
+	},
+	{
+		label: 'Maxed Out',
+		description:
+			'Achieve the highest possible score on a puzzle.',
+		icon: 'crown',
+		criteria: { type: 'event', event: 'score_maxed' },
+	},
+	{
+		label: 'Burn Bonus King',
+		description:
+			'Earn 50 points from burn bonuses in a game.',
+		icon: 'fire',
+		criteria: {
+			type: 'event',
+			event: 'burn_bonus',
+			points: 50,
+		},
+	},
+	{
+		label: 'Efficiency Expert',
+		description: 'Win with 5+ attempts remaining.',
+		icon: 'zap',
+		criteria: {
+			type: 'event',
+			event: 'puzzle_won',
+			attemptsLeft: 5,
+		},
+	},
+
+	// 🏆 Streak & Progression Achievements
+	{
+		label: 'New Routine',
+		description:
+			'Complete the daily puzzle 7 days in a row.',
+		icon: 'calendar',
 		criteria: {
 			type: 'streak',
 			key: 'dailyStreak',
@@ -36,61 +225,19 @@ module.exports = [
 		},
 	},
 	{
-		label: 'Lightning Solver',
-		description:
-			'Solve any daily puzzle in under 30 seconds.',
-		icon: 'zap',
-		criteria: {
-			type: 'event',
-			event: 'daily_puzzle_fast',
-			seconds: 30,
-		},
-	},
-	{
-		label: 'Perfect Game',
-		description:
-			'Solve all 4 groups without any incorrect attempts.',
-		icon: 'gem',
-		criteria: {
-			type: 'event',
-			event: 'daily_puzzle_perfect',
-		},
-	},
-	{
-		label: 'Daily Rookie',
-		description: 'Solve your first daily puzzle',
-		icon: 'star',
-		criteria: {
-			type: 'event',
-			event: 'daily_puzzle_solved',
-			count: 1,
-		},
-	},
-	{
-		label: 'Daily Enthusiast',
-		description:
-			'Solve daily puzzles for 5 consecutive days',
-		icon: 'fire',
+		label: 'Habit Formed',
+		description: '14-day daily streak.',
+		icon: 'calendar',
 		criteria: {
 			type: 'streak',
 			key: 'dailyStreak',
-			target: 5,
+			target: 14,
 		},
 	},
 	{
-		label: 'Daily Devotee',
-		description: '10-day winning streak on daily puzzles',
-		icon: 'flame',
-		criteria: {
-			type: 'streak',
-			key: 'dailyStreak',
-			target: 10,
-		},
-	},
-	{
-		label: 'Daily Champ',
-		description: '30-day winning streak (legendary status)',
-		icon: 'crown',
+		label: 'Loyal Player',
+		description: 'Play 30 consecutive daily puzzles.',
+		icon: 'calendar',
 		criteria: {
 			type: 'streak',
 			key: 'dailyStreak',
@@ -98,747 +245,696 @@ module.exports = [
 		},
 	},
 	{
-		label: 'No Mistakes',
-		description:
-			'Solve daily puzzle with zero failed attempts',
-		icon: 'gem',
-		criteria: {
-			type: 'event',
-			event: 'daily_puzzle_perfect',
-		},
-	},
-	{
-		label: 'Speed Demon',
-		description: 'Solve daily puzzle in under 20 seconds',
-		icon: 'zap',
-		criteria: {
-			type: 'event',
-			event: 'daily_puzzle_fast',
-			seconds: 20,
-		},
-	},
-	{
-		label: 'Close Call',
-		description:
-			'Solve daily puzzle with only 1 attempt left',
-		icon: 'alert',
-		criteria: {
-			type: 'event',
-			event: 'daily_puzzle_close_call',
-		},
-	},
-	{
-		label: 'Persistence',
-		description:
-			'Solve daily puzzle after failing the first attempt',
-		icon: 'repeat',
-		criteria: {
-			type: 'event',
-			event: 'daily_puzzle_persistence',
-		},
-	},
-	{
-		label: 'Wildcard Master',
-		description:
-			'Use every wildcard successfully in a daily puzzle',
-		icon: 'magic',
-		criteria: {
-			type: 'event',
-			event: 'daily_puzzle_all_wildcards',
-		},
-	},
-	{
-		label: 'Daily Comeback',
-		description:
-			'Solve a daily puzzle after unlocking only 1 group at first',
-		icon: 'comeback',
-		criteria: {
-			type: 'event',
-			event: 'daily_puzzle_comeback',
-		},
-	},
-
-	// 2. Custom Puzzle Achievements
-	{
-		label: 'Puzzle Creator',
-		description:
-			'Create and publish your first custom puzzle.',
-		icon: 'pencil',
-		criteria: {
-			type: 'event',
-			event: 'custom_puzzle_created',
-			count: 1,
-		},
-	},
-	{
-		label: 'Puzzle Architect',
-		description: 'Publish 5 custom puzzles.',
-		icon: 'blueprint',
-		criteria: {
-			type: 'progress',
-			key: 'customPuzzlesPublished',
-			target: 5,
-		},
-	},
-	{
-		label: 'Community Favorite',
-		description:
-			'Have a custom puzzle rated 4+ stars by at least 10 different users.',
-		icon: 'star',
-		criteria: {
-			type: 'event',
-			event: 'custom_puzzle_popular',
-			rating: 4,
-			raters: 10,
-		},
-	},
-	{
-		label: 'First Builder',
-		description: 'Create your first custom puzzle',
-		icon: 'pencil',
-		criteria: {
-			type: 'event',
-			event: 'custom_puzzle_created',
-			count: 1,
-		},
-	},
-	{
-		label: 'Puzzle Workshop',
-		description: 'Publish 5 custom puzzles',
-		icon: 'blueprint',
-		criteria: {
-			type: 'progress',
-			key: 'customPuzzlesPublished',
-			target: 5,
-		},
-	},
-	{
-		label: 'Puzzle Architect',
-		description: 'Publish 20 custom puzzles',
-		icon: 'building',
-		criteria: {
-			type: 'progress',
-			key: 'customPuzzlesPublished',
-			target: 20,
-		},
-	},
-	{
-		label: 'Puzzle Legend',
-		description: 'Publish 50 custom puzzles',
-		icon: 'trophy',
-		criteria: {
-			type: 'progress',
-			key: 'customPuzzlesPublished',
-			target: 50,
-		},
-	},
-	{
-		label: 'Community Star',
-		description:
-			'Have a puzzle favorited by 10 different users',
-		icon: 'star',
-		criteria: {
-			type: 'event',
-			event: 'custom_puzzle_favorited',
-			count: 10,
-		},
-	},
-	{
-		label: 'Critic’s Choice',
-		description:
-			'Your puzzle rates 4+ stars from at least 20 players',
-		icon: 'award',
-		criteria: {
-			type: 'event',
-			event: 'custom_puzzle_popular',
-			rating: 4,
-			raters: 20,
-		},
-	},
-	{
-		label: 'Explorer',
-		description:
-			'Play 20 custom puzzles from different creators',
-		icon: 'compass',
-		criteria: {
-			type: 'progress',
-			key: 'uniqueAuthorsPlayed',
-			target: 20,
-		},
-	},
-	{
-		label: 'Favorite Collector',
-		description:
-			'Favorite 50 puzzles (daily + custom combined)',
-		icon: 'heart',
-		criteria: {
-			type: 'progress',
-			key: 'puzzlesFavorited',
-			target: 50,
-		},
-	},
-	{
-		label: 'Creative Genius',
-		description:
-			'Create a custom puzzle that is solved 100 times',
-		icon: 'lightbulb',
-		criteria: {
-			type: 'event',
-			event: 'custom_puzzle_solved',
-			count: 100,
-		},
-	},
-	{
-		label: 'Secret Keeper',
-		description:
-			'Create a puzzle that stumps 90% of players who try it',
-		icon: 'lock',
-		criteria: {
-			type: 'event',
-			event: 'custom_puzzle_stump',
-			percent: 90,
-		},
-	},
-
-	// 3. VS Multiplayer Achievements
-	{
-		label: 'First Blood',
-		description: 'Win your first multiplayer match.',
-		icon: 'sword',
-		criteria: { type: 'event', event: 'vs_win', count: 1 },
-	},
-	{
-		label: 'Underdog Comeback',
-		description:
-			'Win a match after trailing behind in solved groups.',
-		icon: 'arrow-up',
-		criteria: { type: 'event', event: 'vs_comeback_win' },
-	},
-	{
-		label: 'Multiplayer Master',
-		description: 'Win 10 multiplayer matches.',
-		icon: 'trophy',
-		criteria: {
-			type: 'progress',
-			key: 'vsWins',
-			target: 10,
-		},
-	},
-	{
-		label: 'Quick Draw',
-		description:
-			'Win a multiplayer match within 60 seconds.',
-		icon: 'clock',
-		criteria: {
-			type: 'event',
-			event: 'vs_win_fast',
-			seconds: 60,
-		},
-	},
-	{
-		label: 'Social Competitor',
-		description:
-			'Play a multiplayer match with a friend from your friend list.',
-		icon: 'users',
-		criteria: { type: 'event', event: 'vs_with_friend' },
-	},
-	{
-		label: 'First Duel',
-		description: 'Play your first VS multiplayer match',
-		icon: 'swords',
-		criteria: {
-			type: 'event',
-			event: 'vs_played',
-			count: 1,
-		},
-	},
-	{
-		label: 'First Victory',
-		description: 'Win your first VS multiplayer match',
-		icon: 'trophy',
-		criteria: { type: 'event', event: 'vs_win', count: 1 },
-	},
-	{
-		label: 'Champion',
-		description: 'Win 10 multiplayer matches',
-		icon: 'medal',
-		criteria: {
-			type: 'progress',
-			key: 'vsWins',
-			target: 10,
-		},
-	},
-	{
-		label: 'Dominating Streak',
-		description: 'Win 5 multiplayer matches in a row',
-		icon: 'fire',
-		criteria: {
-			type: 'streak',
-			key: 'vsWinStreak',
-			target: 5,
-		},
-	},
-	{
-		label: 'Comeback Kid',
-		description:
-			'Win after being behind by 2 or more groups',
-		icon: 'comeback',
-		criteria: {
-			type: 'event',
-			event: 'vs_comeback_win',
-			groupsBehind: 2,
-		},
-	},
-	{
-		label: 'Quick Victory',
-		description: 'Win a match in under 30 seconds',
-		icon: 'zap',
-		criteria: {
-			type: 'event',
-			event: 'vs_win_fast',
-			seconds: 30,
-		},
-	},
-	{
-		label: 'Matchmaker',
-		description:
-			'Play 10 matches via matchmaking (random opponents)',
-		icon: 'users',
-		criteria: {
-			type: 'progress',
-			key: 'vsMatchmakingPlayed',
-			target: 10,
-		},
-	},
-	{
-		label: 'Room Master',
-		description:
-			'Host and complete 10 matches via room code',
-		icon: 'key',
-		criteria: {
-			type: 'progress',
-			key: 'vsRoomHosted',
-			target: 10,
-		},
-	},
-	{
-		label: 'Social Warrior',
-		description: 'Win a match against a friend',
-		icon: 'user-friends',
-		criteria: { type: 'event', event: 'vs_win_friend' },
-	},
-	{
-		label: 'MVP',
-		description:
-			'Get the highest number of solved groups in a multiplayer match',
-		icon: 'star',
-		criteria: { type: 'event', event: 'vs_mvp' },
-	},
-	{
-		label: 'Tactician',
-		description:
-			'Win a match without using any hints or wildcards',
-		icon: 'brain',
-		criteria: { type: 'event', event: 'vs_win_no_hints' },
-	},
-
-	// 4. Social & Interaction Achievements
-	{
-		label: 'Social Starter',
-		description: 'Send your first friend request.',
-		icon: 'user-plus',
-		criteria: {
-			type: 'event',
-			event: 'friend_request_sent',
-			count: 1,
-		},
-	},
-	{
-		label: 'Friendly Network',
-		description: 'Reach 10 accepted friends.',
-		icon: 'network',
-		criteria: {
-			type: 'progress',
-			key: 'friendsAccepted',
-			target: 10,
-		},
-	},
-	{
-		label: 'Chatty',
-		description: 'Send 100 direct messages.',
-		icon: 'message',
-		criteria: {
-			type: 'progress',
-			key: 'messagesSent',
-			target: 100,
-		},
-	},
-	{
-		label: 'Group Guru',
-		description: 'Create or join 3 different group chats.',
-		icon: 'group',
-		criteria: {
-			type: 'progress',
-			key: 'groupChats',
-			target: 3,
-		},
-	},
-	{
-		label: 'New Friend',
-		description: 'Send a friend request',
-		icon: 'user-plus',
-		criteria: {
-			type: 'event',
-			event: 'friend_request_sent',
-			count: 1,
-		},
-	},
-	{
-		label: 'Friendly Network',
-		description: 'Reach 10 accepted friends',
-		icon: 'network',
-		criteria: {
-			type: 'progress',
-			key: 'friendsAccepted',
-			target: 10,
-		},
-	},
-	{
-		label: 'Social Butterfly',
-		description: 'Have 50 friends',
-		icon: 'butterfly',
-		criteria: {
-			type: 'progress',
-			key: 'friendsAccepted',
-			target: 50,
-		},
-	},
-	{
-		label: 'Conversationalist',
-		description: 'Send 100 direct messages',
-		icon: 'message',
-		criteria: {
-			type: 'progress',
-			key: 'messagesSent',
-			target: 100,
-		},
-	},
-	{
-		label: 'Chat Groupie',
-		description: 'Create or join 5 group chats',
-		icon: 'group',
-		criteria: {
-			type: 'progress',
-			key: 'groupChats',
-			target: 5,
-		},
-	},
-	{
-		label: 'Supporter',
-		description:
-			'Send 10 friend requests that get accepted',
-		icon: 'handshake',
-		criteria: {
-			type: 'progress',
-			key: 'friendRequestsAccepted',
-			target: 10,
-		},
-	},
-	{
-		label: 'Popular Player',
-		description: 'Receive 50 friend requests',
-		icon: 'user-friends',
-		criteria: {
-			type: 'progress',
-			key: 'friendRequestsReceived',
-			target: 50,
-		},
-	},
-	{
-		label: 'Helper',
-		description:
-			'Send hints or challenges during multiplayer matches',
-		icon: 'question',
-		criteria: {
-			type: 'progress',
-			key: 'hintsSent',
-			target: 10,
-		},
-	},
-	{
-		label: 'Notifier',
-		description:
-			'Respond to 20 notifications within 1 hour',
-		icon: 'bell',
-		criteria: {
-			type: 'progress',
-			key: 'notificationsResponded',
-			target: 20,
-			withinHours: 1,
-		},
-	},
-
-	// 5. General & Miscellaneous Achievements
-	{
-		label: 'Dedicated Player',
-		description:
-			'Play 100 total puzzles (daily + custom + multiplayer).',
-		icon: 'infinity',
-		criteria: {
-			type: 'progress',
-			key: 'totalPuzzlesPlayed',
-			target: 100,
-		},
-	},
-	{
-		label: 'Comeback Kid',
-		description:
-			'Win a puzzle or match after using all your attempts.',
-		icon: 'refresh',
-		criteria: { type: 'event', event: 'comeback_win' },
-	},
-	{
-		label: 'Explorer',
-		description:
-			'Play puzzles created by at least 10 different authors.',
-		icon: 'compass',
-		criteria: {
-			type: 'progress',
-			key: 'uniqueAuthorsPlayed',
-			target: 10,
-		},
-	},
-	{
-		label: 'Collector',
-		description: 'Favorite 20 different puzzles.',
-		icon: 'heart',
-		criteria: {
-			type: 'progress',
-			key: 'puzzlesFavorited',
-			target: 20,
-		},
-	},
-	{
-		label: 'Puzzle Addict',
-		description: 'Play 100 total puzzles',
-		icon: 'infinity',
-		criteria: {
-			type: 'progress',
-			key: 'totalPuzzlesPlayed',
-			target: 100,
-		},
-	},
-	{
 		label: 'Completionist',
-		description: 'Solve 500 total puzzles',
+		description: 'Complete 50 different puzzles.',
 		icon: 'check',
 		criteria: {
 			type: 'progress',
-			key: 'totalPuzzlesSolved',
-			target: 500,
+			key: 'puzzlesCompleted',
+			target: 50,
+		},
+	},
+	{
+		label: 'Addicted',
+		description: 'Play 100 total games.',
+		icon: 'infinity',
+		criteria: {
+			type: 'progress',
+			key: 'gamesPlayed',
+			target: 100,
+		},
+	},
+
+	// 🌐 Community & Custom Puzzle Achievements
+	{
+		label: 'Explorer',
+		description: 'Play your first custom puzzle.',
+		icon: 'compass',
+		criteria: {
+			type: 'event',
+			event: 'custom_puzzle_played',
+			count: 1,
+		},
+	},
+	{
+		label: 'Puzzle Collector',
+		description: 'Play 10 custom puzzles.',
+		icon: 'compass',
+		criteria: {
+			type: 'progress',
+			key: 'customPuzzlesPlayed',
+			target: 10,
+		},
+	},
+	{
+		label: 'Community Hero',
+		description: 'Create your first custom puzzle.',
+		icon: 'pencil',
+		criteria: {
+			type: 'event',
+			event: 'custom_puzzle_created',
+			count: 1,
+		},
+	},
+	{
+		label: 'Curation Master',
+		description:
+			'Have 5 of your custom puzzles completed by others.',
+		icon: 'star',
+		criteria: {
+			type: 'progress',
+			key: 'customPuzzlesCompletedByOthers',
+			target: 5,
+		},
+	},
+	{
+		label: 'Word Artisan',
+		description: 'Create 10 custom puzzles.',
+		icon: 'pencil',
+		criteria: {
+			type: 'progress',
+			key: 'customPuzzlesCreated',
+			target: 10,
+		},
+	},
+
+	// 📊 Statistics & Milestone Achievements
+	{
+		label: 'Word Scholar',
+		description: 'Play puzzles in 10 different categories.',
+		icon: 'book',
+		criteria: {
+			type: 'progress',
+			key: 'categoriesPlayed',
+			target: 10,
+		},
+	},
+	{
+		label: 'Curious Cat',
+		description:
+			'Check the StatisticsModal for the first time.',
+		icon: 'search',
+		criteria: {
+			type: 'event',
+			event: 'stats_modal_opened',
+			count: 1,
+		},
+	},
+	{
+		label: 'Know Thyself',
+		description: 'Check your stats 10 times.',
+		icon: 'search',
+		criteria: {
+			type: 'progress',
+			key: 'statsChecked',
+			target: 10,
+		},
+	},
+	{
+		label: 'Obsessive Tracker',
+		description: 'Reach 100 total games played.',
+		icon: 'infinity',
+		criteria: {
+			type: 'progress',
+			key: 'gamesPlayed',
+			target: 100,
+		},
+	},
+	{
+		label: 'Collector’s Obsession',
+		description: 'Unlock 50 achievements.',
+		icon: 'trophy',
+		criteria: { type: 'meta', unlocked: 50 },
+	},
+
+	// 🎲 Random/Hidden Achievements
+	{
+		label: 'Word Out of Place',
+		description:
+			'Select a word that doesn’t belong 10 times in a game.',
+		icon: 'question',
+		criteria: {
+			type: 'event',
+			event: 'wrong_word_selected',
+			count: 10,
+			singlePuzzle: true,
 		},
 	},
 	{
 		label: 'Lucky Guess',
-		description:
-			'Solve a group with a first-try guess 10 times',
+		description: 'Accidentally find a correct group.',
 		icon: 'dice',
-		criteria: {
-			type: 'progress',
-			key: 'firstTryGroupSolves',
-			target: 10,
-		},
+		criteria: { type: 'event', event: 'lucky_group_found' },
 	},
 	{
-		label: 'Strategist',
-		description:
-			'Solve a puzzle using only 2 attempts or less',
-		icon: 'chess',
+		label: 'Speed Demon',
+		description: 'Finish a puzzle in under 60 seconds.',
+		icon: 'zap',
 		criteria: {
 			type: 'event',
-			event: 'puzzle_solved_few_attempts',
-			attempts: 2,
+			event: 'puzzle_completed_fast',
+			seconds: 60,
 		},
 	},
 	{
-		label: 'Tenacious',
+		label: 'Slow Burn',
 		description:
-			'Solve a puzzle after all attempts were exhausted on the first try',
-		icon: 'repeat',
+			'Take over 10 minutes to complete a puzzle.',
+		icon: 'clock',
 		criteria: {
 			type: 'event',
-			event: 'puzzle_solved_after_fail',
+			event: 'puzzle_completed_slow',
+			seconds: 600,
 		},
 	},
 	{
-		label: 'Unstoppable',
-		description:
-			'Win 20 matches or puzzles in a row (daily + multiplayer combined)',
-		icon: 'rocket',
-		criteria: {
-			type: 'streak',
-			key: 'winStreak',
-			target: 20,
-		},
-	},
-	{
-		label: 'Collector',
-		description: 'Favorite 100 puzzles total',
-		icon: 'heart',
-		criteria: {
-			type: 'progress',
-			key: 'puzzlesFavorited',
-			target: 100,
-		},
-	},
-	{
-		label: 'Multi-Tasker',
-		description:
-			'Play daily, custom, and VS modes within 24 hours',
-		icon: 'tasks',
+		label: 'Wildcard Waste',
+		description: 'Burn a wildcard with no attempts left.',
+		icon: 'fire',
 		criteria: {
 			type: 'event',
-			event: 'all_modes_played',
-			withinHours: 24,
-		},
-	},
-	{
-		label: 'Explorer',
-		description: 'Play puzzles from 50 unique authors',
-		icon: 'compass',
-		criteria: {
-			type: 'progress',
-			key: 'uniqueAuthorsPlayed',
-			target: 50,
-		},
-	},
-	{
-		label: 'Wildcard Wizard',
-		description: 'Use every wildcard type in 10 puzzles',
-		icon: 'magic',
-		criteria: {
-			type: 'progress',
-			key: 'wildcardsUsedAllTypes',
-			target: 10,
+			event: 'wildcard_burned_no_attempts',
 		},
 	},
 
-	// 6. Technical/Engagement Achievements
+	// 🎨 Themed & Easter Egg Achievements
 	{
-		label: 'Early Bird',
+		label: 'Animal Instinct',
 		description:
-			'Play a daily puzzle within the first hour it’s released',
-		icon: 'sun',
+			'Complete a puzzle with animal-themed groups.',
+		icon: 'paw',
 		criteria: {
 			type: 'event',
-			event: 'daily_puzzle_early',
-			withinMinutes: 60,
+			event: 'animal_theme_completed',
 		},
 	},
 	{
-		label: 'Night Owl',
+		label: 'Food Fight',
+		description: 'Finish a food category puzzle.',
+		icon: 'utensils',
+		criteria: {
+			type: 'event',
+			event: 'food_theme_completed',
+		},
+	},
+	{
+		label: 'Mind Games',
+		description: 'Win a puzzle with a psychology theme.',
+		icon: 'brain',
+		criteria: {
+			type: 'event',
+			event: 'psychology_theme_completed',
+		},
+	},
+	{
+		label: 'Movie Buff',
+		description: 'Complete a film-themed puzzle.',
+		icon: 'film',
+		criteria: {
+			type: 'event',
+			event: 'movie_theme_completed',
+		},
+	},
+	{
+		label: 'Music Maestro',
+		description: 'Solve a music-related puzzle.',
+		icon: 'music',
+		criteria: {
+			type: 'event',
+			event: 'music_theme_completed',
+		},
+	},
+
+	// 🎮 Game Mode Achievements
+	{
+		label: 'Classic Conqueror',
+		description: 'Win 5 Classic Mode games.',
+		icon: 'gamepad',
+		criteria: {
+			type: 'progress',
+			key: 'classicWins',
+			target: 5,
+		},
+	},
+	{
+		label: 'Daily Devotee',
+		description: '10 Daily Puzzle wins.',
+		icon: 'calendar',
+		criteria: {
+			type: 'progress',
+			key: 'dailyWins',
+			target: 10,
+		},
+	},
+	{
+		label: 'Custom King',
+		description: 'Win 10 custom puzzles.',
+		icon: 'crown',
+		criteria: {
+			type: 'progress',
+			key: 'customWins',
+			target: 10,
+		},
+	},
+	{
+		label: 'Endurance Runner',
+		description: 'Complete a puzzle with 10+ groups.',
+		icon: 'running',
+		criteria: {
+			type: 'event',
+			event: 'puzzle_completed_large',
+			groups: 10,
+		},
+	},
+	{
+		label: 'Tiny Triumph',
+		description: 'Win a puzzle with only 2 groups.',
+		icon: 'star',
+		criteria: {
+			type: 'event',
+			event: 'puzzle_completed_small',
+			groups: 2,
+		},
+	},
+
+	// 🔥 Burn Challenge Achievements
+	{
+		label: 'Wildfire',
+		description: 'Burn 3 wildcards back-to-back.',
+		icon: 'fire',
+		criteria: {
+			type: 'event',
+			event: 'wildcard_burned_streak',
+			count: 3,
+		},
+	},
+	{
+		label: 'Unlucky Strike',
+		description: 'Burn 5 non-wildcards in one game.',
+		icon: 'fire',
+		criteria: {
+			type: 'event',
+			event: 'nonwildcard_burned',
+			count: 5,
+			singlePuzzle: true,
+		},
+	},
+	{
+		label: 'Selective Burner',
+		description: 'Burn exactly 1 word in a game.',
+		icon: 'fire',
+		criteria: {
+			type: 'event',
+			event: 'word_burned_exact',
+			count: 1,
+			singlePuzzle: true,
+		},
+	},
+	{
+		label: 'Clean Sweep',
+		description: 'Burn all wildcards in a puzzle.',
+		icon: 'fire',
+		criteria: {
+			type: 'event',
+			event: 'all_wildcards_burned',
+			singlePuzzle: true,
+		},
+	},
+	{
+		label: 'Double or Nothing',
 		description:
-			'Play a puzzle between 12 AM and 4 AM local time',
+			'Burn 2 wildcards with 1 attempt remaining and win.',
+		icon: 'fire',
+		criteria: {
+			type: 'event',
+			event: 'double_wildcard_burned_clutch',
+			attemptsLeft: 1,
+		},
+	},
+
+	// 👑 Leaderboard & Social Achievements
+	{
+		label: 'Bragging Rights',
+		description: 'Share your score via the Share Modal.',
+		icon: 'share',
+		criteria: { type: 'event', event: 'score_shared' },
+	},
+	{
+		label: 'Social Starter',
+		description: 'Add your first friend.',
+		icon: 'user-plus',
+		criteria: {
+			type: 'event',
+			event: 'friend_added',
+			count: 1,
+		},
+	},
+	{
+		label: 'Chatty Player',
+		description:
+			'Send a message through InMatchChatWindow.',
+		icon: 'comment',
+		criteria: {
+			type: 'event',
+			event: 'inmatch_message_sent',
+			count: 1,
+		},
+	},
+	{
+		label: 'Top 10',
+		description: 'Reach top 10 on the daily leaderboard.',
+		icon: 'trophy',
+		criteria: { type: 'event', event: 'leaderboard_top10' },
+	},
+	{
+		label: 'Top of the World',
+		description: 'Get #1 on the leaderboard.',
+		icon: 'crown',
+		criteria: { type: 'event', event: 'leaderboard_1st' },
+	},
+
+	// 🎭 Gameplay Style Achievements
+	{
+		label: 'The Gambler',
+		description: 'Burn more than you group.',
+		icon: 'dice',
+		criteria: { type: 'event', event: 'gambler_playstyle' },
+	},
+	{
+		label: 'The Analyst',
+		description:
+			'Check the RulesModal 5 times in one game.',
+		icon: 'book',
+		criteria: {
+			type: 'event',
+			event: 'rules_modal_checked',
+			count: 5,
+			singlePuzzle: true,
+		},
+	},
+	{
+		label: 'The Minimalist',
+		description:
+			'Solve a puzzle using the fewest possible actions.',
+		icon: 'leaf',
+		criteria: { type: 'event', event: 'minimalist_win' },
+	},
+	{
+		label: 'The Perfectionist',
+		description:
+			'Play a puzzle until you win without mistakes.',
+		icon: 'gem',
+		criteria: { type: 'event', event: 'perfectionist_win' },
+	},
+	{
+		label: 'The Daredevil',
+		description: 'Play without checking the rules.',
+		icon: 'bolt',
+		criteria: { type: 'event', event: 'daredevil_play' },
+	},
+
+	// 📅 Time-Based Achievements
+	{
+		label: 'Night Owl',
+		description: 'Win a game between midnight and 4AM.',
 		icon: 'moon',
 		criteria: {
 			type: 'event',
-			event: 'puzzle_night_owl',
+			event: 'night_owl_win',
 			betweenHours: [0, 4],
 		},
 	},
 	{
-		label: 'Bug Hunter',
-		description: 'Report a verified bug',
-		icon: 'bug',
+		label: 'Morning Glory',
+		description: 'Win a game before 8AM.',
+		icon: 'sun',
 		criteria: {
 			type: 'event',
-			event: 'bug_reported',
-			verified: true,
+			event: 'morning_win',
+			beforeHour: 8,
 		},
 	},
 	{
-		label: 'Beta Tester',
-		description: 'Play a new game mode during beta testing',
-		icon: 'flask',
-		criteria: { type: 'event', event: 'beta_mode_played' },
+		label: 'Weekend Warrior',
+		description: 'Complete a daily puzzle on a Sunday.',
+		icon: 'calendar',
+		criteria: {
+			type: 'event',
+			event: 'weekend_warrior',
+			day: 0,
+		},
 	},
 	{
-		label: 'PWA User',
-		description:
-			'Play the game on mobile via the Progressive Web App',
-		icon: 'mobile',
-		criteria: { type: 'event', event: 'pwa_user' },
+		label: 'Daily Grind',
+		description: 'Play 5 consecutive days.',
+		icon: 'calendar',
+		criteria: {
+			type: 'streak',
+			key: 'dailyStreak',
+			target: 5,
+		},
+	},
+	{
+		label: 'Year of Puzzles',
+		description: 'Complete 365 games.',
+		icon: 'calendar',
+		criteria: {
+			type: 'progress',
+			key: 'gamesPlayed',
+			target: 365,
+		},
 	},
 
-	// 7. Secret/Easter Egg Achievements
+	// ⚡ Speedrun Achievements
 	{
-		label: 'The Collector',
-		description:
-			'Find all hidden “easter egg” words in puzzles',
-		icon: 'egg',
+		label: 'Lightning Fast',
+		description: 'Win in under 30 seconds.',
+		icon: 'zap',
 		criteria: {
 			type: 'event',
-			event: 'easter_egg_found',
-			all: true,
+			event: 'puzzle_completed_fast',
+			seconds: 30,
 		},
-		secret: true,
 	},
 	{
-		label: 'Master of Shadows',
-		description: 'Solve a puzzle with the timer paused',
-		icon: 'ghost',
+		label: 'Quick Thinker',
+		description: 'Win in under 1 minute.',
+		icon: 'zap',
 		criteria: {
 			type: 'event',
-			event: 'puzzle_solved_paused',
+			event: 'puzzle_completed_fast',
+			seconds: 60,
 		},
-		secret: true,
 	},
 	{
-		label: 'Phantom Solver',
+		label: 'Steady Hand',
 		description:
-			'Solve a puzzle without making a single selection visible',
-		icon: 'eye-slash',
-		criteria: {
-			type: 'event',
-			event: 'puzzle_solved_stealth',
-		},
-		secret: true,
+			'Complete a puzzle without rapid clicking.',
+		icon: 'hand',
+		criteria: { type: 'event', event: 'steady_hand_win' },
 	},
 	{
-		label: 'Whisperer',
-		description:
-			'Unlock a hidden in-game message or puzzle',
-		icon: 'comment',
+		label: 'Finger Fury',
+		description: 'Select words rapidly without pause.',
+		icon: 'bolt',
+		criteria: { type: 'event', event: 'finger_fury' },
+	},
+	{
+		label: 'Slow and Steady',
+		description: 'Finish a puzzle taking over 15 minutes.',
+		icon: 'clock',
 		criteria: {
 			type: 'event',
-			event: 'hidden_message_found',
+			event: 'puzzle_completed_slow',
+			seconds: 900,
 		},
-		secret: true,
 	},
 
-	// 8. Achievement Meta-Achievements
+	// 🎖️ Loss & Recovery Achievements
 	{
-		label: 'Achiever',
-		description: 'Unlock 10 achievements',
-		icon: 'medal',
-		criteria: { type: 'meta', unlocked: 10 },
+		label: 'Bitter End',
+		description: 'Lose with 1 word left.',
+		icon: 'skull',
+		criteria: {
+			type: 'event',
+			event: 'lost_with_one_word',
+		},
 	},
 	{
-		label: 'Veteran',
-		description: 'Unlock 25 achievements',
-		icon: 'medal',
-		criteria: { type: 'meta', unlocked: 25 },
+		label: 'Try, Try Again',
+		description: 'Lose 3 games in a row.',
+		icon: 'repeat',
+		criteria: {
+			type: 'streak',
+			key: 'lossStreak',
+			target: 3,
+		},
 	},
 	{
-		label: 'Legend',
-		description: 'Unlock 50 achievements',
-		icon: 'crown',
-		criteria: { type: 'meta', unlocked: 50 },
+		label: 'Bounce Back',
+		description: 'Win after a loss.',
+		icon: 'arrow-up',
+		criteria: { type: 'event', event: 'bounce_back_win' },
 	},
 	{
-		label: 'Completionist',
-		description: 'Unlock all achievements in the game',
+		label: 'Phoenix',
+		description:
+			'Lose your first game, then win the next 5.',
+		icon: 'fire',
+		criteria: {
+			type: 'event',
+			event: 'phoenix_win',
+			afterLoss: 1,
+			winStreak: 5,
+		},
+	},
+	{
+		label: 'Doomed Decision',
+		description: 'Burn the final wildcard, then lose.',
+		icon: 'skull',
+		criteria: { type: 'event', event: 'doomed_decision' },
+	},
+
+	// 📦 Miscellaneous Fun Achievements
+	{
+		label: 'First Blood',
+		description: 'Make your first incorrect guess.',
+		icon: 'droplet',
+		criteria: {
+			type: 'event',
+			event: 'first_incorrect_guess',
+			count: 1,
+		},
+	},
+	{
+		label: 'Pattern Breaker',
+		description:
+			'Solve a puzzle with non-obvious groupings.',
+		icon: 'puzzle-piece',
+		criteria: { type: 'event', event: 'pattern_breaker' },
+	},
+	{
+		label: 'Curiosity Killed the Cat',
+		description: 'Open every modal in one game.',
+		icon: 'cat',
+		criteria: {
+			type: 'event',
+			event: 'all_modals_opened',
+			singlePuzzle: true,
+		},
+	},
+	{
+		label: 'Social Butterfly',
+		description: 'Chat with 5 different players.',
+		icon: 'butterfly',
+		criteria: {
+			type: 'progress',
+			key: 'playersChatted',
+			target: 5,
+		},
+	},
+	{
+		label: 'Silent Type',
+		description: 'Win a multiplayer game without chatting.',
+		icon: 'mute',
+		criteria: { type: 'event', event: 'silent_win' },
+	},
+
+	// 🌟 Lifetime Milestone Achievements
+	{
+		label: 'Wordsmith',
+		description: 'Solve 500 total groups.',
+		icon: 'book',
+		criteria: {
+			type: 'progress',
+			key: 'groupsSolved',
+			target: 500,
+		},
+	},
+	{
+		label: 'Burn Veteran',
+		description: 'Burn 500 words lifetime.',
+		icon: 'fire',
+		criteria: {
+			type: 'progress',
+			key: 'wordsBurned',
+			target: 500,
+		},
+	},
+	{
+		label: 'Puzzle Master',
+		description: 'Complete 1,000 games.',
 		icon: 'trophy',
-		criteria: { type: 'meta', unlocked: 'all' },
+		criteria: {
+			type: 'progress',
+			key: 'gamesPlayed',
+			target: 1000,
+		},
+	},
+	{
+		label: 'Wildcard Slayer',
+		description: 'Burn 1,000 wildcards.',
+		icon: 'fire',
+		criteria: {
+			type: 'progress',
+			key: 'wildcardsBurned',
+			target: 1000,
+		},
+	},
+	{
+		label: 'Legendary Streak',
+		description: '50 consecutive daily wins.',
+		icon: 'crown',
+		criteria: {
+			type: 'streak',
+			key: 'dailyStreak',
+			target: 50,
+		},
+	},
+
+	// 💎 Rare Achievements
+	{
+		label: 'Lucky Streak',
+		description: '10 wins without a single loss.',
+		icon: 'star',
+		criteria: {
+			type: 'streak',
+			key: 'winStreak',
+			target: 10,
+		},
+	},
+	{
+		label: 'Master of Themes',
+		description:
+			'Win a puzzle in every available category.',
+		icon: 'palette',
+		criteria: {
+			type: 'progress',
+			key: 'categoriesWon',
+			target: 'all',
+		},
+	},
+	{
+		label: 'Insomniac',
+		description:
+			'Play between 2AM-4AM for 5 nights straight.',
+		icon: 'moon',
+		criteria: {
+			type: 'streak',
+			key: 'nightOwlStreak',
+			target: 5,
+		},
+	},
+	{
+		label: 'Underdog Victory',
+		description: 'Win a game when behind on leaderboard.',
+		icon: 'arrow-up',
+		criteria: { type: 'event', event: 'underdog_win' },
+	},
+	{
+		label: 'Silent Assassin',
+		description: 'Top score without burning a single word.',
+		icon: 'skull',
+		criteria: { type: 'event', event: 'silent_assassin' },
 	},
 ];

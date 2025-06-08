@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/router';
 import { SubmitButton } from '../components/ui/Buttons';
 import {
@@ -6,75 +6,31 @@ import {
 	notifyAchievement,
 } from '../components/ui/MultiplayerProvider';
 
-// Example achievements data (replace with real data from backend/user context)
-const ACHIEVEMENTS = [
-	{
-		id: 'first_win',
-		label: 'First Win',
-		desc: 'Win your first puzzle!',
-		icon: '🏆',
-	},
-	{
-		id: 'streak_7',
-		label: '7-Day Streak',
-		desc: 'Complete a daily puzzle 7 days in a row.',
-		icon: '🔥',
-	},
-	{
-		id: 'streak_30',
-		label: '30-Day Streak',
-		desc: 'Complete a daily puzzle 30 days in a row.',
-		icon: '🌟',
-	},
-	{
-		id: 'vs_win',
-		label: 'VS Victor',
-		desc: 'Win a VS multiplayer match.',
-		icon: '⚔️',
-	},
-	{
-		id: 'community_creator',
-		label: 'Community Creator',
-		desc: 'Publish your first custom puzzle.',
-		icon: '🧩',
-	},
-	{
-		id: 'friend_5',
-		label: 'Social Butterfly',
-		desc: 'Add 5 friends.',
-		icon: '👥',
-	},
-	{
-		id: 'all_groups',
-		label: 'Grid Master',
-		desc: 'Solve all groups in a puzzle without mistakes.',
-		icon: '💡',
-	},
-	// Add more as needed
-];
-
-// Dummy user progress (replace with real user data)
-const initialUserAchievements: Record<string, boolean> = {
-	first_win: true,
-	streak_7: false,
-	streak_30: false,
-	vs_win: true,
-	community_creator: false,
-	friend_5: true,
-	all_groups: false,
-};
+interface Achievement {
+	id: string;
+	label: string;
+	description: string;
+	icon?: string;
+	unlockedAt?: string;
+}
 
 const AchievementsPage: React.FC = () => {
 	const router = useRouter();
 	const { addNotification, socket } = useMultiplayer();
-	// TODO: Replace with real user achievements from context/provider or backend
-	// Example: const userAchievements = useUser()?.achievements || initialUserAchievements;
 	const [userAchievements, setUserAchievements] = useState<
 		Record<string, boolean>
-	>(initialUserAchievements);
+	>({});
 	const [justUnlocked, setJustUnlocked] = useState<
 		string | null
 	>(null);
+	const [achievements, setAchievements] = useState<
+		Achievement[]
+	>([]);
+	const [unlocked, setUnlocked] = useState<Set<string>>(
+		new Set()
+	);
+	const [loading, setLoading] = useState(true);
+	const [resetting, setResetting] = useState(false);
 
 	// Listen for real-time achievement unlocks
 	useEffect(() => {
@@ -112,6 +68,36 @@ const AchievementsPage: React.FC = () => {
 		}
 	};
 
+	useEffect(() => {
+		async function fetchAchievements() {
+			setLoading(true);
+			const all = await fetch('/api/achievements').then(
+				(r) => r.json()
+			);
+			const mine = await fetch(
+				'/api/users/me/achievements'
+			).then((r) => r.json());
+			setAchievements(all);
+			setUnlocked(new Set(mine.map((a: any) => a.label)));
+			setLoading(false);
+		}
+		fetchAchievements();
+	}, [resetting]);
+
+	const handleReset = async () => {
+		if (
+			!window.confirm(
+				'Are you sure you want to reset all your achievements? This cannot be undone.'
+			)
+		)
+			return;
+		setResetting(true);
+		await fetch('/api/users/me/achievements', {
+			method: 'DELETE',
+		});
+		setResetting(false);
+	};
+
 	return (
 		<div
 			className='vibegrid-container'
@@ -143,88 +129,98 @@ const AchievementsPage: React.FC = () => {
 				Unlock milestones as you play, solve, and connect
 				with the VibeGrid community!
 			</p>
-			<div
+			<button
+				onClick={handleReset}
+				disabled={resetting}
 				style={{
-					display: 'flex',
-					flexDirection: 'column',
-					gap: 18,
+					display: 'block',
+					margin: '0 auto 24px',
+					background: '#fbbf24',
+					color: '#1e293b',
+					border: 'none',
+					borderRadius: 6,
+					padding: '8px 18px',
+					fontWeight: 600,
+					cursor: 'pointer',
 				}}
 			>
-				{ACHIEVEMENTS.map((ach) => (
-					<div
-						key={ach.id}
-						className='achievement-card'
-						style={{
-							display: 'flex',
-							alignItems: 'center',
-							gap: 18,
-							background: userAchievements[ach.id]
-								? 'rgba(34,197,94,0.12)'
-								: 'rgba(203,213,225,0.18)',
-							border: userAchievements[ach.id]
-								? '2px solid #22c55e'
-								: '2px solid #e5e7eb',
-							borderRadius: 14,
-							padding: '16px 18px',
-							boxShadow: '0 2px 8px 0 #e3eaff33',
-							opacity: userAchievements[ach.id] ? 1 : 0.6,
-							transition: 'background 0.18s, border 0.18s',
-							cursor: userAchievements[ach.id]
-								? 'default'
-								: 'pointer',
-						}}
-						onClick={() => handleEarn(ach.id, ach.label)}
-						title={
-							userAchievements[ach.id]
-								? 'Unlocked'
-								: 'Click to unlock (demo)'
-						}
-					>
-						<span
+				{resetting
+					? 'Resetting...'
+					: 'Reset My Achievements'}
+			</button>
+			{loading ? (
+				<div
+					style={{ textAlign: 'center', color: '#64748b' }}
+				>
+					Loading achievements...
+				</div>
+			) : (
+				<div
+					style={{
+						display: 'grid',
+						gridTemplateColumns: '1fr',
+						gap: 18,
+					}}
+				>
+					{achievements.map((ach) => (
+						<div
+							key={ach.label}
 							style={{
-								fontSize: 32,
-								width: 40,
-								textAlign: 'center',
+								background: unlocked.has(ach.label)
+									? '#fbbf24'
+									: '#f1f5f9',
+								color: unlocked.has(ach.label)
+									? '#1e293b'
+									: '#64748b',
+								borderRadius: 10,
+								padding: 18,
+								boxShadow: unlocked.has(ach.label)
+									? '0 2px 12px 0 #fbbf2440'
+									: '0 1px 4px 0 #e0e7ef',
+								opacity: unlocked.has(ach.label) ? 1 : 0.7,
+								border: unlocked.has(ach.label)
+									? '2px solid #fde047'
+									: '1.5px solid #e0e7ef',
+								display: 'flex',
+								alignItems: 'center',
+								gap: 18,
 							}}
 						>
-							{ach.icon}
-						</span>
-						<div style={{ flex: 1 }}>
-							<div
-								style={{
-									fontWeight: 600,
-									fontSize: '1.13rem',
-									color: userAchievements[ach.id]
-										? '#22c55e'
-										: '#64748b',
-								}}
-							>
-								{ach.label}
-							</div>
-							<div
-								style={{
-									fontSize: '1rem',
-									color: '#64748b',
-									marginTop: 2,
-								}}
-							>
-								{ach.desc}
+							<span style={{ fontSize: 28, minWidth: 36 }}>
+								{ach.icon ? (
+									<i className={`fa fa-${ach.icon}`}></i>
+								) : (
+									'🏆'
+								)}
+							</span>
+							<div>
+								<div
+									style={{
+										fontWeight: 700,
+										fontSize: 18,
+									}}
+								>
+									{ach.label}
+								</div>
+								<div style={{ fontSize: 14 }}>
+									{ach.description}
+								</div>
+								{unlocked.has(ach.label) && (
+									<div
+										style={{
+											fontSize: 12,
+											color: '#16a34a',
+											marginTop: 2,
+										}}
+									>
+										Unlocked!
+									</div>
+								)}
 							</div>
 						</div>
-						{userAchievements[ach.id] && (
-							<span
-								style={{
-									color: '#22c55e',
-									fontWeight: 700,
-									fontSize: 18,
-								}}
-							>
-								✓
-							</span>
-						)}
-					</div>
-				))}
-			</div>
+					))}
+				</div>
+			)}
 			<div style={{ marginTop: 36, textAlign: 'center' }}>
 				<SubmitButton onClick={() => router.push('/')}>
 					Back to Home
