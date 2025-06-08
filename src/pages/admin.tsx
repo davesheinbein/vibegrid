@@ -222,25 +222,121 @@ export default function Admin() {
 		setQASidebarAction(action);
 	};
 	const handleRunQATool = async () => {
-		if (qaSidebarAction === 'achieve-test') {
-			// Example: trigger test achievement for a test user
-			await axios.post('/api/admin/test-achievement', {
-				userId: users[0]?.id,
-				achievementId: 'test-achievement-id',
-			});
+		try {
+			switch (qaSidebarAction) {
+				case 'daily-default': {
+					// Simulate starting the daily puzzle (default state)
+					await axios.post('/api/admin/qa/daily', {
+						scenario: 'default',
+						userId: users[0]?.id,
+					});
+					alert(
+						'Daily Puzzle (Default) scenario triggered.'
+					);
+					break;
+				}
+				case 'daily-1group': {
+					await axios.post('/api/admin/qa/daily', {
+						scenario: '1group',
+						userId: users[0]?.id,
+					});
+					alert(
+						'Daily Puzzle (1 Group Solved) scenario triggered.'
+					);
+					break;
+				}
+				case 'daily-2group': {
+					await axios.post('/api/admin/qa/daily', {
+						scenario: '2group',
+						userId: users[0]?.id,
+					});
+					alert(
+						'Daily Puzzle (2 Groups Solved) scenario triggered.'
+					);
+					break;
+				}
+				case 'daily-3group': {
+					await axios.post('/api/admin/qa/daily', {
+						scenario: '3group',
+						userId: users[0]?.id,
+					});
+					alert(
+						'Daily Puzzle (3 Groups Solved) scenario triggered.'
+					);
+					break;
+				}
+				case 'daily-0attempts': {
+					await axios.post('/api/admin/qa/daily', {
+						scenario: '0attempts',
+						userId: users[0]?.id,
+					});
+					alert(
+						'Daily Puzzle (0 Attempts) scenario triggered.'
+					);
+					break;
+				}
+				case 'custom-id': {
+					const customId = prompt(
+						'Enter Custom Puzzle ID:'
+					);
+					if (customId) {
+						await axios.post('/api/admin/qa/custom', {
+							puzzleId: customId,
+							userId: users[0]?.id,
+						});
+						alert(
+							`Custom Puzzle by ID (${customId}) scenario triggered.`
+						);
+					}
+					break;
+				}
+				case 'vs-bot': {
+					await axios.post('/api/admin/qa/vs-bot', {
+						userId: users[0]?.id,
+					});
+					alert('VS Test Room (Bot) scenario triggered.');
+					break;
+				}
+				case 'god-mode': {
+					await axios.post('/api/admin/qa/god-mode', {
+						userId: users[0]?.id,
+					});
+					alert('God Mode toggled for test user.');
+					break;
+				}
+				case 'achieve-test': {
+					await axios.post('/api/admin/test-achievement', {
+						userId: users[0]?.id,
+						achievementId: 'test-achievement-id',
+					});
+					alert('Simulated achievement unlock triggered.');
+					break;
+				}
+				case 'notif-test': {
+					await axios.post('/api/admin/test-notification', {
+						userId: users[0]?.id,
+						message:
+							'This is a test notification from QA Tools.',
+					});
+					alert('Simulated notification sent.');
+					break;
+				}
+				default:
+					alert('Unknown QA scenario.');
+			}
+		} catch (err: any) {
+			alert(
+				'Error running QA scenario: ' +
+					(err?.response?.data?.error || err.message)
+			);
 		}
-		// Add more QA tool actions as needed
 	};
 
 	return (
 		<div className='admin-dashboard-container'>
 			<style jsx>{`
 				.admin-dashboard-container {
-					background: linear-gradient(
-						120deg,
-						#f8fafc 80%,
-						#e0e7ff 100%
-					);
+					background: #f8fafc;
 					min-height: 100vh;
 					padding: 0 0 64px 0;
 				}
@@ -366,36 +462,63 @@ export default function Admin() {
 					padding: 18px 12px 18px 18px;
 					box-shadow: 0 2px 8px 0 #e3eaff11;
 					min-width: 220px;
+					border: 1px solid #e5e7eb;
 				}
 				.admin-qa-sidebar ul {
 					list-style: none;
 					padding: 0;
 					margin: 0;
 				}
+				.admin-qa-sidebar li {
+				}
 				.admin-qa-sidebar button {
 					width: 100%;
 					background: none;
 					border: none;
-					padding: 8px 0;
+					padding: 10px;
 					text-align: left;
 					color: #64748b;
 					font-size: 1em;
 					border-radius: 6px;
 					margin-bottom: 2px;
 					transition: background 0.13s, color 0.13s;
+					font-weight: 500;
 				}
 				.admin-qa-sidebar button.active,
 				.admin-qa-sidebar button:hover {
-					background: #fbbf24;
+					background: #e0e7ff;
 					color: #1e293b;
+					font-weight: 700;
 				}
-				.admin-logs-list {
-					background: #f3f4f6;
+				.admin-qa-main {
+					flex: 1;
+					background: #f9fafb;
+					border-radius: 12px;
+					box-shadow: 0 2px 8px 0 #e3eaff11;
+					padding: 32px;
+					min-height: 320px;
+				}
+				.admin-qa-main h3 {
+					font-size: 20px;
+					font-weight: 700;
+					color: #1e293b;
+					margin-bottom: 18px;
+					letter-spacing: -0.5px;
+				}
+				.admin-qa-main .qa-run-btn {
+					background: #e0e7ff;
+					color: #1e293b;
+					font-weight: 700;
+					border: none;
 					border-radius: 8px;
-					padding: 12px 18px;
-					font-size: 0.98em;
-					max-height: 300px;
-					overflow-y: auto;
+					padding: 10px 32px;
+					font-size: 16px;
+					box-shadow: 0 2px 8px 0 #e3eaff11;
+					cursor: pointer;
+					transition: background 0.13s, color 0.13s;
+				}
+				.admin-qa-main .qa-run-btn:hover {
+					background: #c7d2fe;
 				}
 				@media (max-width: 900px) {
 					.admin-main-content {
@@ -678,44 +801,10 @@ export default function Admin() {
 					</div>
 				)}
 				{activeTab === 'QA Tools' && (
-					<div
-						className='admin-qa-section'
-						style={{
-							display: 'flex',
-							gap: 32,
-							alignItems: 'flex-start',
-							minHeight: 400,
-						}}
-					>
-						<aside
-							className='admin-qa-sidebar'
-							style={{
-								minWidth: 220,
-								background: '#f8fafc',
-								border: '1px solid #e5e7eb',
-								borderRadius: 12,
-								boxShadow: '0 2px 8px 0 #e3eaff22',
-								padding: 20,
-							}}
-						>
-							<h3
-								style={{
-									fontSize: 18,
-									fontWeight: 700,
-									marginBottom: 16,
-									color: '#1e293b',
-									letterSpacing: '-0.5px',
-								}}
-							>
-								QA Scenarios
-							</h3>
-							<ul
-								style={{
-									listStyle: 'none',
-									padding: 0,
-									margin: 0,
-								}}
-							>
+					<div className='admin-qa-section'>
+						<aside className='admin-qa-sidebar'>
+							<h3>QA Scenarios</h3>
+							<ul>
 								{QA_SIDEBAR.map((qa) => (
 									<li
 										key={qa.action}
@@ -730,32 +819,6 @@ export default function Admin() {
 											onClick={() =>
 												handleQASidebarAction(qa.action)
 											}
-											style={{
-												width: '100%',
-												background:
-													qaSidebarAction === qa.action
-														? 'linear-gradient(90deg,#fbbf24 0%,#38bdf8 100%)'
-														: 'none',
-												color:
-													qaSidebarAction === qa.action
-														? '#1e293b'
-														: '#64748b',
-												fontWeight:
-													qaSidebarAction === qa.action
-														? 700
-														: 500,
-												border: 'none',
-												borderRadius: 6,
-												padding: '10px 0',
-												fontSize: 15,
-												transition:
-													'background 0.13s, color 0.13s',
-												boxShadow:
-													qaSidebarAction === qa.action
-														? '0 2px 8px 0 #e3eaff33'
-														: 'none',
-												cursor: 'pointer',
-											}}
 										>
 											{qa.label}
 										</button>
@@ -763,26 +826,8 @@ export default function Admin() {
 								))}
 							</ul>
 						</aside>
-						<section
-							className='admin-qa-main'
-							style={{
-								flex: 1,
-								background: '#f9fafb',
-								borderRadius: 12,
-								boxShadow: '0 2px 8px 0 #e3eaff11',
-								padding: 32,
-								minHeight: 320,
-							}}
-						>
-							<h3
-								style={{
-									fontSize: 20,
-									fontWeight: 700,
-									color: '#1e293b',
-									marginBottom: 18,
-									letterSpacing: '-0.5px',
-								}}
-							>
+						<section className='admin-qa-main'>
+							<h3>
 								Selected QA Tool:{' '}
 								<span style={{ color: '#2563eb' }}>
 									{qaSidebarAction}
@@ -793,21 +838,8 @@ export default function Admin() {
 									Run scenario: <b>{qaSidebarAction}</b>
 								</p>
 								<button
+									className='qa-run-btn'
 									onClick={handleRunQATool}
-									style={{
-										background:
-											'linear-gradient(90deg,#38bdf8 0%,#fbbf24 100%)',
-										color: '#1e293b',
-										fontWeight: 700,
-										border: 'none',
-										borderRadius: 8,
-										padding: '10px 32px',
-										fontSize: 16,
-										boxShadow: '0 2px 8px 0 #e3eaff33',
-										cursor: 'pointer',
-										transition:
-											'background 0.13s, color 0.13s',
-									}}
 								>
 									Run
 								</button>

@@ -16,9 +16,13 @@ model User {
   lastActive        DateTime @updatedAt
   isAdmin           Boolean  @default(false)
   stats             Json?
-  friends           Friend[] @relation("UserFriends")
-  messages          Message[]
-  notifications      Notification[]
+  friendsAsUser     Friend[] @relation("UserAsUser")
+  friendsAsFriend   Friend[] @relation("UserAsFriend")
+  friendRequestsSent FriendRequest[] @relation("FromUser")
+  friendRequestsReceived FriendRequest[] @relation("ToUser")
+  messagesSent      Message[] @relation("Sender")
+  messagesReceived  Message[] @relation("Receiver")
+  notifications     Notification[]
   achievements      UserAchievement[]
   puzzles           Puzzle[] @relation("PuzzleAuthor")
   xp                Int      @default(0)
@@ -27,13 +31,21 @@ model User {
   notificationPrefs Json?
   profileThemes     UserProfileTheme[]
   profileBadges     UserProfileBadge[]
+  groupChatsCreated GroupChat[] @relation("GroupChatCreatedBy")
+  groupMemberships  GroupMember[]
+  matchesAsPlayer1  Match[] @relation("Player1")
+  matchesAsPlayer2  Match[] @relation("Player2")
+  matchesWon        Match[] @relation("MatchWinner")
+  puzzleRatings     PuzzleRating[]
+  puzzleComments    PuzzleComment[]
+  userChallenges    UserChallenge[]
 }
 
 model Friend {
   id        String   @id @default(uuid())
-  user      User     @relation(fields: [userId], references: [id])
+  user      User     @relation("UserAsUser", fields: [userId], references: [id])
   userId    String
-  friend    User     @relation("UserFriends", fields: [friendId], references: [id])
+  friend    User     @relation("UserAsFriend", fields: [friendId], references: [id])
   friendId  String
   status    String
   createdAt DateTime @default(now())
@@ -41,9 +53,9 @@ model Friend {
 
 model FriendRequest {
   id        String   @id @default(uuid())
-  fromUser  User     @relation(fields: [fromUserId], references: [id])
+  fromUser  User     @relation("FromUser", fields: [fromUserId], references: [id])
   fromUserId String
-  toUser    User     @relation(fields: [toUserId], references: [id])
+  toUser    User     @relation("ToUser", fields: [toUserId], references: [id])
   toUserId  String
   status    String
   createdAt DateTime @default(now())
@@ -52,7 +64,7 @@ model FriendRequest {
 model GroupChat {
   id        String   @id @default(uuid())
   name      String
-  createdBy User     @relation(fields: [createdById], references: [id])
+  createdBy User     @relation("GroupChatCreatedBy", fields: [createdById], references: [id])
   createdById String
   createdAt  DateTime @default(now())
   members    GroupMember[]
@@ -70,9 +82,9 @@ model GroupMember {
 
 model Message {
   id        String   @id @default(uuid())
-  sender    User     @relation(fields: [senderId], references: [id])
+  sender    User     @relation("Sender", fields: [senderId], references: [id])
   senderId  String
-  receiver  User?    @relation(fields: [receiverId], references: [id])
+  receiver  User?    @relation("Receiver", fields: [receiverId], references: [id])
   receiverId String?
   group     GroupChat? @relation(fields: [groupId], references: [id])
   groupId   String?
@@ -108,11 +120,15 @@ model Match {
   puzzle    Puzzle   @relation(fields: [puzzleId], references: [id])
   puzzleId  String
   state     String
-  winner    User?    @relation(fields: [winnerId], references: [id])
+  winner    User?    @relation("MatchWinner", fields: [winnerId], references: [id])
   winnerId  String?
   startedAt DateTime @default(now())
   endedAt   DateTime?
   type      String   @default("standard") // e.g. standard, timed, endless, coop
+  // --- Bot Challenge fields ---
+  botName      String?
+  botDifficulty String?
+  botAvatar    String?
 }
 
 model Achievement {
