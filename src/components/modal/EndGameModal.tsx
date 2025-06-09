@@ -1,11 +1,11 @@
 import React from 'react';
 import { useRouter } from 'next/router';
 import { Modal } from '../ui/Modal';
-import { SubmitButton, ShareButton } from '../ui/Buttons';
+import { ShareButton } from '../ui/Buttons';
 
 interface EndGameModalProps {
 	message: string;
-	onRestart: () => void;
+	// onRestart: () => void;
 	score: number;
 	attemptsLeft: number;
 	burnBonus: number;
@@ -16,7 +16,7 @@ interface EndGameModalProps {
 
 const EndGameModal: React.FC<EndGameModalProps> = ({
 	message,
-	onRestart,
+	// onRestart,
 	score,
 	attemptsLeft,
 	burnBonus,
@@ -33,89 +33,40 @@ const EndGameModal: React.FC<EndGameModalProps> = ({
 			contentClassName='endgame-modal-content-hide-close'
 		>
 			<div className='modal-content endgame-modal-content'>
-				<h2>{message}</h2>
-				<div
-					style={{
-						margin: '18px 0 10px',
-						fontWeight: 600,
-						fontSize: '1.2em',
-					}}
-				>
-					{win ? '🎉 You Win!' : '😢 Game Over'}
+				<h2>{win ? 'Congratulations!' : 'Game Over'}</h2>
+				<p>{message}</p>
+				<div className='endgame-modal-score'>
+					Score: <b>{score}</b>
 				</div>
-				<div
-					style={{
-						margin: '10px 0 18px',
-						fontSize: '1.1em',
-					}}
-				>
-					<div>
-						Final Score: <b>{score}</b>
+				<div className='endgame-modal-attempts'>
+					Attempts Left: <b>{attemptsLeft}</b>
+				</div>
+				<div className='endgame-modal-burn-bonus'>
+					Burn Bonus: <b>{burnBonus}</b>
+				</div>
+				{finishTime && (
+					<div className='endgame-modal-finish-time'>
+						Time: {finishTime}
 					</div>
-					<div
-						style={{
-							fontSize: '0.98em',
-							color: '#64748b',
-							marginTop: 6,
-						}}
+				)}
+				<div className='endgame-modal-actions'>
+					{/* Disabled */}
+					{/* <button
+						onClick={onRestart}
+						className='endgame-modal-home-btn'
 					>
-						{win && (
-							<>
-								<div>Base Win: 100</div>
-								<div>Burn Bonus: {burnBonus}</div>
-								<div>
-									Attempts Left Bonus: {attemptsLeft} × 10 ={' '}
-									{attemptsLeft * 10}
-								</div>
-							</>
-						)}
-						{!win && <div>Burn Bonus: {burnBonus}</div>}
-					</div>
-					{finishTime && (
-						<div
-							style={{
-								marginTop: 10,
-								color: '#2563eb',
-								fontSize: '1em',
-							}}
-						>
-							Finished in: <b>{finishTime}</b>
-						</div>
-					)}
+						Restart
+					</button> */}
+					<ShareButton
+						onClick={onShare}
+						className='endgame-modal-share-btn'
+						label='Share'
+					/>
 				</div>
-				<p className='endgame-modal-desc'>
-					Come back tomorrow for the next daily challenge!
-					<br />
-					Or{' '}
-					<a
-						href='#'
-						className='endgame-modal-link'
-						onClick={(e) => {
-							e.preventDefault();
-							router.push('/browse');
-						}}
-					>
-						{'browse our community made puzzles'}
-					</a>
-					.
-				</p>
-				<div className='endgame-modal-share'>
-					<div className='endgame-modal-share-btns'>
-						<ShareButton
-							onClick={onShare}
-							label={'Share'}
-						/>
-					</div>
-				</div>
-				<SubmitButton
-					onClick={() => router.push('/')}
-					className='endgame-modal-home-btn'
-				>
-					Home
-				</SubmitButton>
 			</div>
 		</Modal>
 	);
 };
 
+// Modular, props-driven, and ready for extension (e.g., stats, animations, etc.)
 export default EndGameModal;

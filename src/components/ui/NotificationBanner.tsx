@@ -1,7 +1,8 @@
-import React from 'react';
-import { useSelector, useDispatch } from 'react-redux';
-import { RootState } from '../../store';
+import React, { useContext } from 'react';
+import { useDispatch } from 'react-redux';
 import { removeNotification } from '../../store/notificationsSlice';
+import { UserSettingsContext } from './UserSettingsProvider';
+import classNames from 'classnames';
 
 const typeColors: Record<NotificationType, string> = {
 	burn: '#ff7043', // orange/red
@@ -26,9 +27,7 @@ interface NotificationBannerProps {
 const NotificationBanner: React.FC<
 	NotificationBannerProps
 > = ({ type, message, onClose, index }) => {
-	const settings = useSelector(
-		(state: RootState) => state.customization.settings
-	); // Or wherever notification settings live
+	const { settings } = useContext(UserSettingsContext);
 	const dispatch = useDispatch();
 
 	React.useEffect(() => {
@@ -46,7 +45,10 @@ const NotificationBanner: React.FC<
 
 	return (
 		<div
-			className={`notification-banner notification-banner--${type}`}
+			className={classNames(
+				'notification-banner',
+				`notification-banner--${type}`
+			)}
 			style={{
 				background: typeColors[type],
 				top: `${16 + index * 56}px`,
@@ -77,4 +79,5 @@ const NotificationBanner: React.FC<
 	);
 };
 
+// Architectural note: Timer/settings logic is inline for now; extract to helpers if reused elsewhere.
 export default NotificationBanner;

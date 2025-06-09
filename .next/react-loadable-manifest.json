@@ -1,1 +1,12 @@
-{}
+{
+  "pages/admin.tsx -> ../components/ui/SettingsPanel": {
+    "id": "pages/admin.tsx -> ../components/ui/SettingsPanel",
+    "files": [
+      "static/chunks/_pages-dir-browser_src_components_ui_SettingsPanel_tsx.js"
+    ]
+  },
+  "pages/admin.tsx -> react-dom/client": {
+    "id": "pages/admin.tsx -> react-dom/client",
+    "files": []
+  }
+}

@@ -111,4 +111,5 @@ const Footer: React.FC = () => {
 	);
 };
 
+// Modular, presentational, and ready for extension (e.g., more links, icons, etc.)
 export default Footer;

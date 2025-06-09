@@ -2,7 +2,6 @@ import React from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { RootState } from '../../store';
 import {
-	setSidebarOpen,
 	setFriends,
 	setRequests,
 	addMessage,
@@ -23,8 +22,22 @@ import {
 } from 'next-auth/react';
 import SignInModal from '../modal/SignInModal';
 import { useCallback } from 'react';
+import styles from '../../styles/FriendsSidebar.module.scss';
+import {
+	toggleSectionState,
+	makeChallengeHandler,
+	makeRemoveHandler,
+} from '../../utils/helpers';
 
-const FriendsSidebar: React.FC = () => {
+interface FriendsSidebarProps {
+	isOpen: boolean;
+	onClose: () => void;
+}
+
+const FriendsSidebar: React.FC<FriendsSidebarProps> = ({
+	isOpen,
+	onClose,
+}) => {
 	const dispatch = useDispatch();
 	const friends = useSelector(
 		(state: RootState) => state.friends.friends
@@ -32,13 +45,9 @@ const FriendsSidebar: React.FC = () => {
 	const unreadMessages = useSelector(
 		(state: RootState) => state.friends.unreadMessages
 	);
-	const isSidebarOpen = useSelector(
-		(state: RootState) => state.friends.isSidebarOpen
-	);
 	const router = useRouter();
 	const { data: session, status } = useSession();
 	const [showSignIn, setShowSignIn] = React.useState(false);
-	console.log('🚀 ~ session:', session);
 	const [show, setShow] = React.useState(false);
 	const [search, setSearch] = React.useState('');
 	const [addUsername, setAddUsername] = React.useState('');
@@ -72,87 +81,43 @@ const FriendsSidebar: React.FC = () => {
 		}
 	};
 
-	const toggleSection = (key: keyof typeof expanded) => {
-		setExpanded((prev) => ({ ...prev, [key]: !prev[key] }));
+	const handleToggleSection = (
+		key: keyof typeof expanded
+	) => {
+		setExpanded((prev) => toggleSectionState(prev, key));
 	};
 
 	const isAuthenticated =
 		status === 'authenticated' && session?.user;
 
-	const toggleSidebar = () =>
-		dispatch(setSidebarOpen(!isSidebarOpen));
-	const handleChallengeRedux = useCallback(
-		(id: string) => {
-			(dispatch as any)(sendChallenge(id));
-		},
-		[dispatch]
+	const handleChallengeRedux = makeChallengeHandler(
+		dispatch,
+		sendChallenge
 	);
-	const handleRemoveRedux = useCallback(
-		(id: string) => {
-			(dispatch as any)(removeFriend(id));
-		},
-		[dispatch]
+	const handleRemoveRedux = makeRemoveHandler(
+		dispatch,
+		removeFriend
 	);
+
+	if (!isOpen) return null;
 
 	return (
 		<>
-			{isSidebarOpen && (
+			{isOpen && (
 				<div
-					className='friends-sidebar-overlay'
-					style={{
-						position: 'fixed',
-						inset: 0,
-						zIndex: 9998,
-						background: 'transparent',
-					}}
-					onClick={toggleSidebar}
+					className={styles.friendsSidebarOverlay}
+					onClick={onClose}
 				/>
 			)}
 			<aside
-				className={`friends-sidebar glassy-sidebar${
-					isSidebarOpen ? ' open' : ''
-				}`}
-				style={{
-					transition: 'all 0.25s cubic-bezier(.4,0,.2,1)',
-					boxShadow: '0 8px 32px 0 rgba(31, 38, 135, 0.37)',
-					backdropFilter: 'blur(16px) saturate(180%)',
-					WebkitBackdropFilter: 'blur(16px) saturate(180%)',
-					background: 'rgba(255,255,255,0.18)',
-					borderRadius: '1.5rem',
-					border: '1px solid rgba(255,255,255,0.24)',
-					right: isSidebarOpen ? 0 : '-420px',
-					opacity: isSidebarOpen ? 1 : 0,
-					pointerEvents: isSidebarOpen ? 'auto' : 'none',
-					position: 'fixed',
-					top: 0,
-					width: 380,
-					height: '100vh',
-					zIndex: 9999,
-					display: 'flex',
-					flexDirection: 'column',
-					padding: '1.5rem 0.5rem 1.5rem 1.5rem',
-				}}
+				className={`${
+					styles.friendsSidebar
+				} glassy-sidebar${isOpen ? ' open' : ''}`}
 			>
-				{isSidebarOpen && (
+				{isOpen && (
 					<button
-						className='friends-sidebar-close-btn'
-						onClick={() => dispatch(setSidebarOpen(false))}
-						style={{
-							position: 'absolute',
-							left: '-48px',
-							top: 24,
-							zIndex: 201,
-							width: 36,
-							height: 36,
-							borderRadius: '50%',
-							background: 'rgba(255,255,255,0.7)',
-							boxShadow: '0 2px 8px 0 #e3eaff33',
-							border: 'none',
-							cursor: 'pointer',
-							display: 'flex',
-							alignItems: 'center',
-							justifyContent: 'center',
-						}}
+						className={styles.friendsSidebarCloseBtn}
+						onClick={onClose}
 						aria-label='Close friends sidebar'
 					>
 						<span
@@ -162,10 +127,10 @@ const FriendsSidebar: React.FC = () => {
 						</span>
 					</button>
 				)}
-				{isSidebarOpen && (
-					<div className='friends-sidebar-content'>
+				{isOpen && (
+					<div className={styles.friendsSidebarContent}>
 						{!isAuthenticated ? (
-							<div className='friends-signin-teaser'>
+							<div className={styles.friendsSigninTeaser}>
 								<div
 									style={{
 										textAlign: 'center',
@@ -439,17 +404,6 @@ const FriendsSidebar: React.FC = () => {
 										Sign Out
 									</button>
 								</div>
-								<div style={{ padding: '0 16px 8px 16px' }}>
-									<h3
-										style={{
-											margin: '18px 0 8px 0',
-											fontWeight: 700,
-											fontSize: '1.2em',
-										}}
-									>
-										Friends
-									</h3>
-								</div>
 								<div className='friends-sidebar-header'>
 									<h2
 										className='sidebar-title'
@@ -506,11 +460,24 @@ const FriendsSidebar: React.FC = () => {
 												expanded.online ? ' expanded' : ''
 											}`}
 											onClick={() =>
-												toggleSection('online')
+												handleToggleSection('online')
 											}
 											style={{
 												transition: 'all 0.25s',
-												fontWeight: 600,
+												fontWeight: 700,
+												color: '#2563eb',
+												background: '#f8fafc',
+												border: '1.5px solid #2563eb22',
+												borderRadius: 12,
+												padding: '8px 18px',
+												marginBottom: 6,
+												fontSize: 16,
+												letterSpacing: 0.2,
+												boxShadow: expanded.online
+													? '0 2px 8px #2563eb11'
+													: 'none',
+												outline: 'none',
+												cursor: 'pointer',
 											}}
 										>
 											Online ({online.length})
@@ -553,11 +520,24 @@ const FriendsSidebar: React.FC = () => {
 												expanded.offline ? ' expanded' : ''
 											}`}
 											onClick={() =>
-												toggleSection('offline')
+												handleToggleSection('offline')
 											}
 											style={{
 												transition: 'all 0.25s',
-												fontWeight: 600,
+												fontWeight: 700,
+												color: '#64748b',
+												background: '#f8fafc',
+												border: '1.5px solid #64748b22',
+												borderRadius: 12,
+												padding: '8px 18px',
+												marginBottom: 6,
+												fontSize: 16,
+												letterSpacing: 0.2,
+												boxShadow: expanded.offline
+													? '0 2px 8px #64748b11'
+													: 'none',
+												outline: 'none',
+												cursor: 'pointer',
 											}}
 										>
 											Offline ({offline.length})
@@ -603,6 +583,73 @@ const FriendsSidebar: React.FC = () => {
 										}
 									/>
 								)}
+								<div
+									style={{
+										width: '100%',
+										height: '100%',
+										display: 'flex',
+										flexDirection: 'column',
+										justifyContent: 'flex-end',
+										alignItems: 'center',
+										gap: 12,
+										marginTop: 32,
+										marginBottom: 8,
+									}}
+								>
+									<button
+										className='friends-achievements-btn'
+										style={{
+											background: '#2563eb',
+											color: '#fbbf24',
+											fontWeight: 700,
+											fontSize: 16,
+											borderRadius: 16,
+											padding: '10px 32px',
+											boxShadow:
+												'0 2px 12px 0 #2563eb22, 0 1.5px 8px 0 #fbbf2422',
+											border: 'none',
+											cursor: 'pointer',
+											width: '90%',
+											maxWidth: 320,
+											letterSpacing: 0.5,
+											transition:
+												'background 0.18s, color 0.18s, box-shadow 0.18s',
+											outline: 'none',
+											display: 'flex',
+											alignItems: 'center',
+											justifyContent: 'center',
+											gap: 8,
+										}}
+										onMouseOver={(e) => {
+											e.currentTarget.style.background =
+												'#1e293b';
+											e.currentTarget.style.color =
+												'#ffe066';
+										}}
+										onMouseOut={(e) => {
+											e.currentTarget.style.background =
+												'#2563eb';
+											e.currentTarget.style.color =
+												'#fbbf24';
+										}}
+										onClick={() =>
+											router.push('/achievements')
+										}
+									>
+										<span
+											role='img'
+											aria-label='Achievements'
+											style={{
+												fontSize: 20,
+												filter:
+													'drop-shadow(0 1px 2px #fffbe6)',
+											}}
+										>
+											🏆
+										</span>
+										Achievements
+									</button>
+								</div>
 							</>
 						)}
 					</div>

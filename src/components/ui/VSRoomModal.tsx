@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Modal } from './Modal';
 import { SubmitButton } from './Buttons';
 import { useMultiplayer } from './MultiplayerProvider';
+import { generateRoomCode } from '../../utils/helpers';
 
 interface VSRoomModalProps {
 	open: boolean;
@@ -9,14 +10,6 @@ interface VSRoomModalProps {
 	onCreateRoom: (roomCode: string) => void;
 	onJoinRoom: (roomCode: string) => void;
 	isJoining?: boolean;
-}
-
-function generateRoomCode() {
-	// 6-char alphanumeric
-	return Math.random()
-		.toString(36)
-		.substring(2, 8)
-		.toUpperCase();
 }
 
 const VSRoomModal: React.FC<VSRoomModalProps> = ({

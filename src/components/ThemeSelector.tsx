@@ -102,7 +102,8 @@ export const ThemeSelector: React.FC<{
 				display: 'flex',
 				gap: 18,
 				justifyContent: 'center',
-				margin: '18px 0',
+				margin: '0',
+				padding: '0',
 			}}
 		>
 			{themes.map(({ name, label, color, bg, font }) => (

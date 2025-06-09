@@ -1,24 +1,23 @@
 import React, { useContext } from 'react';
 import { UserSettingsContext } from './UserSettingsProvider';
+import styles from '../../styles/SettingsPanel.module.scss';
 
+/**
+ * SettingsPanel - Modular user settings panel for toggling chat, profanity filter, and notifications.
+ * Uses UserSettingsContext for state. Styles are extracted to SCSS module for maintainability.
+ *
+ * Architectural note: Add new settings here as features grow. Keep UI presentational and logic in context/helpers.
+ */
 const SettingsPanel: React.FC = () => {
 	const { settings, setSettings } = useContext(
 		UserSettingsContext
 	);
 
 	return (
-		<div
-			style={{
-				padding: 24,
-				maxWidth: 400,
-				margin: '0 auto',
-			}}
-		>
+		<div className={styles.settingsPanelContainer}>
 			<h2>User Settings</h2>
-			<div style={{ margin: '18px 0' }}>
-				<label
-					style={{ display: 'block', marginBottom: 12 }}
-				>
+			<div className={styles.settingsPanelOptions}>
+				<label className={styles.settingsPanelLabel}>
 					<input
 						type='checkbox'
 						checked={settings.chatEnabled}
@@ -28,12 +27,10 @@ const SettingsPanel: React.FC = () => {
 								chatEnabled: e.target.checked,
 							})
 						}
-					/>{' '}
+					/>
 					Enable In-Game Chat
 				</label>
-				<label
-					style={{ display: 'block', marginBottom: 12 }}
-				>
+				<label className={styles.settingsPanelLabel}>
 					<input
 						type='checkbox'
 						checked={settings.profanityFilter}
@@ -43,12 +40,10 @@ const SettingsPanel: React.FC = () => {
 								profanityFilter: e.target.checked,
 							})
 						}
-					/>{' '}
+					/>
 					Profanity Filter
 				</label>
-				<label
-					style={{ display: 'block', marginBottom: 12 }}
-				>
+				<label className={styles.settingsPanelLabel}>
 					<input
 						type='checkbox'
 						checked={settings.notificationsEnabled}
@@ -58,7 +53,7 @@ const SettingsPanel: React.FC = () => {
 								notificationsEnabled: e.target.checked,
 							})
 						}
-					/>{' '}
+					/>
 					Enable Notification Banners
 				</label>
 			</div>

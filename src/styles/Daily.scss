@@ -271,11 +271,7 @@
 	}
 
 	&.selected {
-		background: linear-gradient(
-			90deg,
-			#fbbf24 0%,
-			#38bdf8 100%
-		);
+		background: lighten(#fde047, 12%);
 		color: #1e293b;
 		border-color: #fde047;
 		box-shadow: 0 0 0 3px #fde04755;
@@ -370,11 +366,7 @@ body.dark-mode .word-btn.selected {
 	transition: background 0.2s, box-shadow 0.18s;
 	text-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
 	&:hover {
-		background: linear-gradient(
-			90deg,
-			#fbbf24 0%,
-			#38bdf8 100%
-		);
+		background: lighten(#fde047, 12%);
 	}
 }
 

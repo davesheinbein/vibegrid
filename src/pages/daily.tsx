@@ -21,6 +21,7 @@ import {
 import {
 	WordButton,
 	GoBackButton,
+	CopyLinkButton,
 } from '../components/ui/Buttons';
 import FeedbackBanner from '../components/ui/FeedbackBanner';
 import EndGameModal from '../components/modal/EndGameModal';
@@ -54,6 +55,29 @@ import {
 	setCurrentGroup,
 	setIsSolved,
 } from '../store/gameSlice';
+import {
+	addToArray,
+	removeFromArray,
+	setFeedbackMsg,
+	addLockedWords,
+	addSolvedGroup,
+	addSelectedWord,
+	removeSelectedWord,
+	clearSelectedWords,
+	setAttemptsValue,
+} from '../utils/helpers';
+import PreGameModal from '../components/modal/PreGameModal';
+import {
+	getDailyCompletion,
+	setDailyCompletion,
+	getDailyPuzzleProgress,
+	saveDailyPuzzleProgress,
+	clearDailyPuzzleProgress,
+} from '../utils/dailyCompletion';
+import { getShareLinks } from '../utils/shareLinks';
+
+// --- Helper functions for updating arrays in Redux state ---
+// (Now imported from src/utils/helpers.ts)
 
 interface DailyPageProps {
 	onBack?: () => void;
@@ -76,8 +100,6 @@ export default function Daily(props: DailyPageProps) {
 	const solvedGroups = useSelector(
 		(state: RootState) => state.game.solvedGroups
 	);
-	const gameOver =
-		attemptsLeft === 0 || solvedGroups.length > 0;
 	const [showRules, setShowRules] = useState(false);
 	const [showStats, setShowStats] = useState(false);
 	const [shake, setShake] = useState(false);
@@ -103,6 +125,11 @@ export default function Daily(props: DailyPageProps) {
 	const [finishTime, setFinishTime] = useState<
 		number | null
 	>(null);
+	const [gameOver, setGameOver] = useState(false);
+	const [alreadyCompleted, setAlreadyCompleted] =
+		useState<null | ReturnType<typeof getDailyCompletion>>(
+			null
+		);
 
 	const { settings } = useContext(UserSettingsContext);
 	const router = useRouter();
@@ -142,15 +169,16 @@ export default function Daily(props: DailyPageProps) {
 				)
 			)
 		);
-		dispatch(setSelectedWords([]));
-		dispatch(setLockedWords([]));
-		dispatch(setFeedback(''));
-		dispatch(setAttempts(4));
-		dispatch(setSolvedGroups([]));
+		clearSelectedWords(dispatch);
+		addLockedWords(dispatch, [], []); // reset lockedWords to []
+		setFeedbackMsg(dispatch, '');
+		setAttemptsValue(dispatch, 4);
+		addSolvedGroup(dispatch, [], []); // reset solvedGroups to []
 		setBurnSuspect(null);
 		setBurnedWildcards([]);
 		setBurnBonus(0);
 		setEndTime(null);
+		setPendingSolvedGroups([]); // <-- always reset solved groups for share modal
 	}, [activePuzzle]);
 
 	const [animatingGroup, setAnimatingGroup] = useState<
@@ -192,16 +220,15 @@ export default function Daily(props: DailyPageProps) {
 		if (isWildcard(burnSuspect)) {
 			const newBurned = [...burnedWildcards, burnSuspect];
 			setBurnedWildcards(newBurned);
-			dispatch(
-				setLockedWords((prev) => [...prev, burnSuspect])
-			);
+			addLockedWords(dispatch, lockedWords, burnSuspect);
 			setBurnBonus(
 				(prev) => prev + (attemptsLeft >= 2 ? 10 : 5)
 			);
-			dispatch(setAttempts((prev) => prev + 1)); // Always increment by 1 for each wildcard burn
-			setFeedback('🔥 Correct burn! Bonus awarded!');
-			// Optionally: emit chat/taunt here
-			// socket.emit('match:chat', { matchId, message: '🔥 Burned a wildcard!', type: 'emoji' });
+			setAttemptsValue(dispatch, attemptsLeft + 1); // Always increment by 1 for each wildcard burn
+			setFeedbackMsg(
+				dispatch,
+				'🔥 Correct burn! Bonus awarded!'
+			);
 			if (
 				activePuzzle.wildcards &&
 				activePuzzle.wildcards.length > 0 &&
@@ -209,37 +236,35 @@ export default function Daily(props: DailyPageProps) {
 					newBurned.includes(w)
 				)
 			) {
-				setFeedback(
+				setFeedbackMsg(
+					dispatch,
 					'🔥 All wildcards burned! Extra attempt awarded!'
 				);
 			}
 		} else {
-			dispatch(setAttempts((prev) => prev - 1));
-			setFeedback(
+			setAttemptsValue(dispatch, attemptsLeft - 1);
+			setFeedbackMsg(
+				dispatch,
 				'❌ That word belongs to a group! Penalty.'
 			);
 		}
 		setBurnSuspect(null);
-		dispatch(setSelectedWords([]));
+		clearSelectedWords(dispatch);
 	};
 
 	const handleWordTap = (word: string) => {
-		if (lockedWords.includes(word) || gameOver) return;
-		if (burnSuspect === word) {
-			setBurnSuspect(null);
-			return;
-		}
+		if (alreadyCompleted) return; // Prevent interaction if already completed
 		if (selectedWords.includes(word)) {
-			dispatch(
-				setSelectedWords((prev) =>
-					prev.filter((w) => w !== word)
-				)
-			);
-			setBurnSuspect(word);
-		} else if (burnSuspect) {
-			setBurnSuspect(word);
-		} else if (selectedWords.length < groupSize) {
-			dispatch(setSelectedWords((prev) => [...prev, word]));
+			removeSelectedWord(dispatch, selectedWords, word);
+		} else {
+			if (selectedWords.length >= groupSize) {
+				setFeedbackMsg(
+					dispatch,
+					`You can only select up to ${groupSize} words.`
+				);
+				return;
+			}
+			addSelectedWord(dispatch, selectedWords, word);
 		}
 	};
 
@@ -253,9 +278,13 @@ export default function Daily(props: DailyPageProps) {
 	};
 
 	const handleSubmit = () => {
+		if (alreadyCompleted) return; // Prevent interaction if already completed
 		if (gameOver) return;
 		if (selectedWords.length !== groupSize) {
-			setFeedback(`Select exactly ${groupSize} words.`);
+			setFeedbackMsg(
+				dispatch,
+				`Select exactly ${groupSize} words.`
+			);
 			return;
 		}
 		const groupMatch = activePuzzle.groups.find(
@@ -268,23 +297,20 @@ export default function Daily(props: DailyPageProps) {
 				g.every((word) => groupMatch.includes(word))
 			)
 		) {
-			dispatch(
-				setLockedWords((prev) => [
-					...prev,
-					...selectedWords,
-				])
-			);
-			dispatch(
-				setSolvedGroups((prev) => [...prev, groupMatch])
-			);
-			setFeedback('Group locked in!');
-			dispatch(setSelectedWords([]));
+			addLockedWords(dispatch, lockedWords, selectedWords);
+			addSolvedGroup(dispatch, solvedGroups, groupMatch);
+			setFeedbackMsg(dispatch, 'Group locked in!');
+			clearSelectedWords(dispatch);
 		} else if (groupMatch) {
-			setFeedback('This group is already solved.');
-			dispatch(setSelectedWords([]));
+			setFeedbackMsg(
+				dispatch,
+				'This group is already solved.'
+			);
+			clearSelectedWords(dispatch);
 		} else {
-			dispatch(setAttempts((prev) => prev - 1));
-			setFeedback(
+			setAttemptsValue(dispatch, attemptsLeft - 1);
+			setFeedbackMsg(
+				dispatch,
 				partialMatchFeedback(
 					selectedWords,
 					Object.fromEntries(
@@ -296,16 +322,17 @@ export default function Daily(props: DailyPageProps) {
 			);
 			setShake(true);
 			setTimeout(() => setShake(false), 500);
-			dispatch(setSelectedWords([]));
+			clearSelectedWords(dispatch);
 		}
 	};
 
 	const handleRestart = () => {
-		dispatch(setSelectedWords([]));
-		dispatch(setLockedWords([]));
-		dispatch(setFeedback(''));
-		dispatch(setAttempts(4));
-		dispatch(setSolvedGroups([]));
+		clearSelectedWords(dispatch);
+		addLockedWords(dispatch, [], []); // reset lockedWords to []
+		setFeedbackMsg(dispatch, '');
+		setAttemptsValue(dispatch, 4);
+		addSolvedGroup(dispatch, [], []); // reset solvedGroups to []
+		setPendingSolvedGroups([]); // <-- always reset solved groups for share modal
 	};
 
 	const handleRandomize = () => {
@@ -355,7 +382,7 @@ export default function Daily(props: DailyPageProps) {
 	};
 
 	const getShareText = () => {
-		const solved = solvedGroups.length;
+		const solved = pendingSolvedGroups.length; // Use actual solved groups
 		const attempts = 4 - attemptsLeft;
 		const words = lockedWords.length;
 		const total = gridWordCount;
@@ -370,52 +397,19 @@ export default function Daily(props: DailyPageProps) {
 	const getShareUrl = () => 'https://gridRoyale.app';
 	const getShareTitle = () =>
 		"Grid Royale: Can you solve today's grid?";
-	const shareLinks = [
-		{
-			name: 'X',
-			url: `https://twitter.com/intent/tweet?text=${encodeURIComponent(
-				getShareText()
-			)}`,
-			icon: <FontAwesomeIcon icon={faXTwitter} />,
-		},
-		{
-			name: 'Meta',
-			url: `https://www.meta.com/share?u=${encodeURIComponent(
-				getShareUrl()
-			)}&quote=${encodeURIComponent(getShareText())}`,
-			icon: <FontAwesomeIcon icon={faMeta} />,
-		},
-		{
-			name: 'Reddit',
-			url: `https://www.reddit.com/submit?title=${encodeURIComponent(
-				getShareTitle()
-			)}&text=${encodeURIComponent(getShareText())}`,
-			icon: <FontAwesomeIcon icon={faReddit} />,
-		},
-		{
-			name: 'LinkedIn',
-			url: `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(
-				getShareUrl()
-			)}&title=${encodeURIComponent(
-				getShareTitle()
-			)}&summary=${encodeURIComponent(getShareText())}`,
-			icon: <FontAwesomeIcon icon={faLinkedin} />,
-		},
-		{
-			name: 'TikTok',
-			url: `https://www.tiktok.com/share?url=${encodeURIComponent(
-				getShareUrl()
-			)}&text=${encodeURIComponent(getShareText())}`,
-			icon: <FontAwesomeIcon icon={faTiktok} />,
-		},
-		{
-			name: 'Instagram',
-			url: `https://www.instagram.com/?url=${encodeURIComponent(
-				getShareUrl()
-			)}`,
-			icon: <FontAwesomeIcon icon={faInstagram} />,
-		},
-	];
+	const shareText = `I scored ${getFinalScore()} in ${
+		pendingSolvedGroups.length
+	}/${groupCount} groups solved in ${attemptsLeft} attempts${
+		finishTime ? ` in ${formatTimer(finishTime)}` : ''
+	}! on Grid Royale!\nCan you beat my score? Try the daily puzzle:`;
+	const shareUrl = getShareUrl();
+	const shareTitle = getShareTitle();
+	const shareLinks = getShareLinks(
+		'result',
+		shareText,
+		shareUrl,
+		shareTitle
+	);
 
 	useEffect(() => {
 		if (!gameOver) {
@@ -423,24 +417,15 @@ export default function Daily(props: DailyPageProps) {
 				dispatch(setIsSolved(true));
 				setShowGameOverBanner(false);
 				setEndTime(Date.now());
+				setGameOver(true);
 			} else if (attemptsLeft === 0) {
 				dispatch(setIsSolved(false));
 				setShowGameOverBanner(true);
 				setEndTime(Date.now());
+				setGameOver(true);
 			}
 		}
 	}, [attemptsLeft, pendingSolvedGroups, gameOver]);
-
-	useEffect(() => {
-		if (attemptsLeft === 0 && !gameOver) {
-			setGameOver(true);
-			setShowGameOverBanner(true);
-			// Optionally, save stats if user is signed in
-			if (user) {
-				// saveUserStats(user, ...); // implement as needed
-			}
-		}
-	}, [attemptsLeft, gameOver, user]);
 
 	// Pre-game modal and timer state
 	const [showPreGameModal, setShowPreGameModal] =
@@ -500,88 +485,125 @@ export default function Daily(props: DailyPageProps) {
 		}
 	}, [gameOver, timer, finishTime]);
 
-	// --- Helper functions for updating arrays in Redux state ---
-	function addToArray<T>(arr: T[], items: T | T[]): T[] {
-		return Array.isArray(items)
-			? [...arr, ...items]
-			: [...arr, items];
-	}
-	function removeFromArray<T>(arr: T[], item: T): T[] {
-		return arr.filter((x) => x !== item);
-	}
+	// On mount, check if daily puzzle is already completed for today
+	useEffect(() => {
+		const completion = getDailyCompletion();
+		const today = new Date();
+		const todayStr = today.toISOString().slice(0, 10); // YYYY-MM-DD
+		let completedToday = false;
+		if (
+			completion &&
+			completion.result &&
+			completion.result.finishTime > 0 &&
+			completion.result.timestamp
+		) {
+			const completedDate = new Date(
+				completion.result.timestamp
+			);
+			const completedStr = completedDate
+				.toISOString()
+				.slice(0, 10);
+			completedToday = completedStr === todayStr;
+		}
+		if (completedToday && completion) {
+			setAlreadyCompleted(completion);
+			setGameOver(true);
+			setFinishTime(completion.result.finishTime);
+		} else {
+			setAlreadyCompleted(null); // Not completed for today
+			setGameOver(false); // Allow play/resume
+		}
+	}, []);
 
-	// Helper: set feedback as array
-	function setFeedbackMsg(msg: string) {
-		dispatch(setFeedback([msg]));
-	}
+	// When game is over and not already saved, save completion with timestamp only
+	useEffect(() => {
+		if (
+			gameOver &&
+			!alreadyCompleted &&
+			finishTime !== null &&
+			finishTime > 0 // Only save if the user actually played
+		) {
+			setDailyCompletion({
+				win: allGroupsSolved(),
+				score: getFinalScore(),
+				attemptsLeft,
+				burnBonus,
+				finishTime,
+				timestamp: Date.now(),
+			});
+		}
+	}, [gameOver, alreadyCompleted, finishTime]);
 
-	// Helper: add to lockedWords
-	function addLockedWords(words: string | string[]) {
-		dispatch(
-			setLockedWords(addToArray(lockedWords, words))
-		);
-	}
+	const todayStr = new Date().toISOString().slice(0, 10);
 
-	// Helper: add to solvedGroups
-	function addSolvedGroup(group: string[]) {
-		dispatch(setSolvedGroups([...solvedGroups, group]));
-	}
+	// Restore progress on mount
+	useEffect(() => {
+		const progress = getDailyPuzzleProgress();
+		if (
+			progress &&
+			progress.puzzleDate === todayStr &&
+			!progress.completed
+		) {
+			setPendingSolvedGroups(progress.matchedGroups || []);
+			setAttemptsValue(
+				dispatch,
+				progress.remainingAttempts ?? 4
+			);
+			setBurnedWildcards(progress.burnedWords || []);
+			setTimer(progress.elapsedTime || 0);
+			setBurnBonus(progress.burnBonus || 0);
+			// Optionally restore more state (selectedWords, etc)
+		} else {
+			clearDailyPuzzleProgress();
+			// Start fresh for today
+		}
+	}, []);
 
-	// Helper: add to selectedWords
-	function addSelectedWord(word: string) {
-		dispatch(setSelectedWords([...selectedWords, word]));
-	}
+	// Persist progress on every move (pendingSolvedGroups, attemptsLeft, burnedWildcards, timer, burnBonus)
+	useEffect(() => {
+		if (!gameOver && !alreadyCompleted) {
+			saveDailyPuzzleProgress({
+				puzzleDate: todayStr,
+				createdAt: new Date().toISOString(),
+				matchedGroups: pendingSolvedGroups,
+				remainingAttempts: attemptsLeft,
+				burnedWords: burnedWildcards,
+				elapsedTime: timer,
+				completed: false,
+				burnBonus,
+			});
+		}
+	}, [
+		pendingSolvedGroups,
+		attemptsLeft,
+		burnedWildcards,
+		timer,
+		burnBonus,
+		gameOver,
+		alreadyCompleted,
+	]);
 
-	// Helper: remove from selectedWords
-	function removeSelectedWord(word: string) {
-		dispatch(
-			setSelectedWords(removeFromArray(selectedWords, word))
-		);
-	}
-
-	// Helper: clear selectedWords
-	function clearSelectedWords() {
-		dispatch(setSelectedWords([]));
-	}
-
-	// Helper: set attempts
-	function setAttemptsValue(val: number) {
-		dispatch(setAttempts(val));
-	}
+	// Clear progress on completion
+	useEffect(() => {
+		if (gameOver || alreadyCompleted) {
+			clearDailyPuzzleProgress();
+		}
+	}, [gameOver, alreadyCompleted]);
 
 	return (
 		<div className='fullscreen-bg'>
 			<div className='gridRoyale-container'>
 				{/* Pre-game Modal Overlay */}
 				{showPreGameModal && (
-					<div className='pregame-modal-overlay'>
-						<div className='pregame-modal'>
-							<h2 className='pregame-modal-title'>
-								Ready to Begin?
-							</h2>
-							<p className='pregame-modal-subtext'>
-								Your time will start as soon as you click
-								'Ready'. Focus up — this one counts.
-							</p>
-							<button
-								className='pregame-modal-ready-btn pulse'
-								onClick={() => {
-									setShowPreGameModal(false);
-									setShowCountdown(true);
-									setCountdownValue(3);
-								}}
-							>
-								Ready
-							</button>
-							<button
-								className='pregame-modal-go-home-btn'
-								onClick={() => router.push('/')}
-								type='button'
-							>
-								Go Home
-							</button>
-						</div>
-					</div>
+					<PreGameModal
+						open={showPreGameModal}
+						onReady={() => {
+							setShowPreGameModal(false);
+							setShowCountdown(true);
+							setCountdownValue(3);
+						}}
+						onGoHome={() => router.push('/')}
+					/>
 				)}
 				{/* Countdown Animation */}
 				{showCountdown && (
@@ -718,6 +740,50 @@ export default function Daily(props: DailyPageProps) {
 						)}
 					</div>
 				)}
+				{/* --- Pregame Modal Grid Lockout --- */}
+				{(showPreGameModal || !showGrid) && (
+					<div className='daily-center-flex-row pregame-grid-lockout'>
+						<div
+							className='gridRoyale-grid daily-grid pregame-grid-blur'
+							data-cols={gridCols}
+							data-rows={gridRows}
+							style={{
+								gridTemplateColumns: `repeat(${gridCols}, 1fr)`,
+							}}
+						>
+							{gridWords.map((_, idx) => (
+								<div
+									key={idx}
+									className='word-btn pregame-grid-cell-lockout'
+									style={{
+										pointerEvents: 'none',
+										userSelect: 'none',
+										cursor: 'not-allowed',
+										display: 'flex',
+										alignItems: 'center',
+										justifyContent: 'center',
+										fontSize: 28,
+										fontWeight: 700,
+										color: '#64748b',
+										background: '#f1f5f9',
+										border: '1px solid #e5e7eb',
+										borderRadius: 8,
+										minHeight: 44,
+									}}
+								>
+									<span
+										style={{
+											fontSize: 32,
+											fontWeight: 800,
+										}}
+									>
+										×
+									</span>
+								</div>
+							))}
+						</div>
+					</div>
+				)}
 				<div className='gridRoyale-controls'>
 					{!burnSuspect && (
 						<div
@@ -793,26 +859,52 @@ export default function Daily(props: DailyPageProps) {
 						Share
 					</button>
 				</div>
-				{gameOver && (
-					<EndGameModal
-						message={
-							allGroupsSolved()
-								? 'You nailed it!'
-								: 'Vibe check failed.'
-						}
-						onRestart={handleRestart}
-						score={getFinalScore()}
-						attemptsLeft={attemptsLeft}
-						burnBonus={burnBonus}
-						win={allGroupsSolved()}
-						onShare={() => setShowShare(true)}
-						finishTime={
-							finishTime !== null
-								? formatTimer(finishTime)
-								: ''
-						}
-					/>
-				)}
+				{!showPreGameModal &&
+					!showCountdown &&
+					(alreadyCompleted || gameOver) && (
+						<EndGameModal
+							message={
+								(alreadyCompleted &&
+									alreadyCompleted.result.win) ||
+								allGroupsSolved()
+									? 'You nailed it!'
+									: 'Vibe check failed.'
+							}
+							score={
+								alreadyCompleted
+									? alreadyCompleted.result.score
+									: getFinalScore()
+							}
+							attemptsLeft={
+								alreadyCompleted
+									? alreadyCompleted.result.attemptsLeft
+									: attemptsLeft
+							}
+							burnBonus={
+								alreadyCompleted
+									? alreadyCompleted.result.burnBonus
+									: burnBonus
+							}
+							win={
+								alreadyCompleted
+									? alreadyCompleted.result.win
+									: allGroupsSolved()
+							}
+							onShare={() => setShowShare(true)}
+							finishTime={
+								alreadyCompleted
+									? typeof alreadyCompleted.result
+											.finishTime === 'number'
+										? formatTimer(
+												alreadyCompleted.result.finishTime
+										  )
+										: ''
+									: finishTime !== null
+									? formatTimer(finishTime)
+									: ''
+							}
+						/>
+					)}
 				<Modal
 					open={showShare}
 					onClose={() => setShowShare(false)}
@@ -899,53 +991,34 @@ export default function Daily(props: DailyPageProps) {
 										>
 											{shareLinks
 												.slice(i, i + 3)
-												.map((link) => {
-													let brandColor = '#64748b';
-													switch (link.name) {
-														case 'X':
-															brandColor = '#222';
-															break;
-														case 'Meta':
-															brandColor = '#1877F3';
-															break;
-														case 'Reddit':
-															brandColor = '#FF4500';
-															break;
-														case 'LinkedIn':
-															brandColor = '#0077B5';
-															break;
-														case 'TikTok':
-															brandColor = '#000';
-															break;
-														case 'Instagram':
-															brandColor = '#E1306C';
-															break;
-														default:
-															break;
-													}
-													return (
-														<a
-															href={link.url}
-															target='_blank'
-															rel='noopener noreferrer'
-															className={`share-link share-link--${link.name.toLowerCase()}`}
-															data-platform={link.name}
-															key={link.name}
-															style={{ color: brandColor }}
-														>
-															<span className='share-link-icon'>
-																{link.icon}
-															</span>
-															<span className='share-link-text'>
-																{link.name}
-															</span>
-														</a>
-													);
-												})}
+												.map((link) => (
+													<a
+														href={link.url}
+														target='_blank'
+														rel='noopener noreferrer'
+														className={`share-link share-link--${link.name.toLowerCase()}`}
+														data-platform={link.name}
+														key={link.name}
+														style={{ color: link.color }}
+													>
+														<span className='share-link-icon'>
+															<FontAwesomeIcon
+																icon={link.icon}
+															/>
+														</span>
+														<span className='share-link-text'>
+															{link.name}
+														</span>
+													</a>
+												))}
 										</div>
 									);
 								}
-								return rows;
+								// Always include CopyLinkButton at the end
+								return [
+									...rows,
+									<CopyLinkButton key='copy-link' />,
+								];
 							})()}
 						</div>
 					</div>

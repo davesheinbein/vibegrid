@@ -23,25 +23,17 @@ const RulesModal: React.FC<RulesModalProps> = ({
 			modeRules = (
 				<ul>
 					<li>
-						Select {columnCount} words that you think belong
-						together.
+						Group {columnCount * 1} words into {columnCount}{' '}
+						correct groups.
+					</li>
+					<li>Each group shares a hidden connection.</li>
+					<li>
+						Use as few attempts as possible for a higher
+						score.
 					</li>
 					<li>
-						Each group of {columnCount} shares a common
-						theme.
-					</li>
-					<li>
-						You have {columnCount} attempts to find all
-						groups.
-					</li>
-					<li>Locked words can't be selected again.</li>
-					<li>
-						Try to solve all groups before you run out of
-						attempts!
-					</li>
-					<li>
-						One new puzzle every day. Track your streaks and
-						stats!
+						Burn words to remove them if you think they
+						don't fit.
 					</li>
 				</ul>
 			);
@@ -50,83 +42,32 @@ const RulesModal: React.FC<RulesModalProps> = ({
 			modeTitle = 'How to Play: Custom Puzzle';
 			modeRules = (
 				<ul>
+					<li>Play or create your own custom puzzles.</li>
 					<li>
-						Select {columnCount} words that you think belong
-						together.
-					</li>
-					<li>
-						Each group of {columnCount} shares a common
-						theme.
-					</li>
-					<li>
-						You have {columnCount} attempts to find all
-						groups.
-					</li>
-					<li>Locked words can't be selected again.</li>
-					<li>
-						Try to solve all groups before you run out of
-						attempts!
-					</li>
-					<li>
-						Play, create, and share puzzles with the
-						community. No streaks, but your stats and
-						favorites are saved.
+						Rules are similar to Daily, but with custom
+						words and groups.
 					</li>
 				</ul>
 			);
 			break;
 		case 'multiplayer':
-			modeTitle = 'How to Play: VS Multiplayer';
+			modeTitle = 'How to Play: Multiplayer';
 			modeRules = (
 				<ul>
 					<li>
-						Compete in real-time to solve all groups first!
+						Compete against friends or random players in
+						real time.
 					</li>
+					<li>First to solve all groups wins.</li>
 					<li>
-						Select {columnCount} words that you think belong
-						together.
-					</li>
-					<li>
-						Each group of {columnCount} shares a common
-						theme.
-					</li>
-					<li>
-						You have {columnCount} attempts to find all
-						groups.
-					</li>
-					<li>Locked words can't be selected again.</li>
-					<li>
-						First to solve all groups, or the most groups
-						when attempts run out, wins.
-					</li>
-					<li>
-						Track your multiplayer stats and challenge
-						friends!
+						Use chat and taunts to outsmart your opponent.
 					</li>
 				</ul>
 			);
 			break;
 		default:
 			modeRules = (
-				<ul>
-					<li>
-						Select {columnCount} words that you think belong
-						together.
-					</li>
-					<li>
-						Each group of {columnCount} shares a common
-						theme.
-					</li>
-					<li>
-						You have {columnCount} attempts to find all
-						groups.
-					</li>
-					<li>Locked words can't be selected again.</li>
-					<li>
-						Try to solve all groups before you run out of
-						attempts!
-					</li>
-				</ul>
+				<div>See game instructions for details.</div>
 			);
 	}
 
@@ -140,4 +81,5 @@ const RulesModal: React.FC<RulesModalProps> = ({
 	);
 };
 
+// Modular, props-driven, and ready for extension (e.g., more modes, visuals, etc.)
 export default RulesModal;

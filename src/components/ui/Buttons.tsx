@@ -8,29 +8,50 @@ import { RootState } from '../../store';
 import { setSidebarOpen } from '../../store/friendsSlice';
 import { useSession } from 'next-auth/react';
 
+/**
+ * GoBackButton - A simple back button for navigation.
+ * Props:
+ * - onClick: function to call on click
+ * - className: additional class names
+ * - label: button label (default: 'Back')
+ * - style: optional inline styles
+ */
 export const GoBackButton: React.FC<{
 	onClick: () => void;
 	className?: string;
 	label?: string;
 	style?: React.CSSProperties;
-}> = ({
-	onClick,
-	className = '',
-	label = 'Back',
-	style,
-}) => (
+}> = ({ onClick, className = '', style }) => (
 	<button
-		className={`back-icon-btn ${className}`.trim()}
+		type='button'
+		className={`go-back-btn ${className}`.trim()}
 		onClick={onClick}
-		aria-label={label}
 		style={style}
+		aria-label='Back'
 	>
-		<span className='back-arrow' aria-hidden='true'>
-			&#8592;
-		</span>
+		<svg
+			width='22'
+			height='22'
+			viewBox='0 0 24 24'
+			fill='none'
+			stroke='currentColor'
+			strokeWidth='2.2'
+			strokeLinecap='round'
+			strokeLinejoin='round'
+		>
+			<polyline points='15 18 9 12 15 6' />
+		</svg>
 	</button>
 );
 
+/**
+ * CloseButton - A simple close (X) button for modals, banners, etc.
+ * Props:
+ * - onClick: function to call on click
+ * - className: additional class names
+ * - label: button label (default: 'Close')
+ * - style: optional inline styles
+ */
 export const CloseButton: React.FC<{
 	onClick: () => void;
 	className?: string;
@@ -43,64 +64,81 @@ export const CloseButton: React.FC<{
 	style,
 }) => (
 	<button
+		type='button'
+		className={`close-btn ${className}`.trim()}
 		onClick={onClick}
-		className={`share-modal-close ${className}`.trim()}
 		aria-label={label}
 		style={style}
 	>
-		<span className='close-x'>&#215;</span>
+		&#10005;
 	</button>
 );
 
+/**
+ * WordButton - Button for selecting words in the grid. Handles burn, lock, and selection states.
+ * Props:
+ * - word: the word to display
+ * - isSelected: is the word currently selected
+ * - isLocked: is the word locked (already solved)
+ * - onClick: click handler
+ * - onKeyDown: keydown handler (optional)
+ * - burnSuspect: highlight as burnable (optional)
+ * - isBurned: is the word burned (optional)
+ * - ...rest: any other props
+ */
 interface WordButtonProps {
 	word: string;
 	isSelected: boolean;
 	isLocked: boolean;
 	onClick: () => void;
-	isBurned?: boolean; // NEW: for burned wildcards
-
 	onKeyDown?: (
-		e: React.KeyboardEvent<HTMLDivElement>
+		e: React.KeyboardEvent<HTMLButtonElement>
 	) => void;
-
+	burnSuspect?: boolean;
+	isBurned?: boolean;
 	[key: string]: any;
 }
 
-export const WordButton: React.FC<
-	WordButtonProps & {
-		burnSuspect?: boolean;
-	}
-> = ({
+export const WordButton: React.FC<WordButtonProps> = ({
 	word,
 	isSelected,
 	isLocked,
 	onClick,
 	onKeyDown,
-	burnSuspect,
-	isBurned,
+	burnSuspect = false,
+	isBurned = false,
 	...rest
 }) => {
+	// Compose className based on state
 	let className = 'word-btn';
-	if (isBurned) className += ' burned';
-	else if (isLocked) className += ' locked';
-	else if (isSelected) className += ' selected';
+	if (isSelected) className += ' selected';
+	if (isLocked) className += ' locked';
 	if (burnSuspect) className += ' burn-suspect';
+	if (isBurned) className += ' burned';
 
 	return (
-		<div
+		<button
+			type='button'
 			className={className}
-			onClick={isBurned || isLocked ? undefined : onClick}
-			tabIndex={isBurned || isLocked ? -1 : 0}
-			aria-disabled={isBurned || isLocked}
-			role='button'
+			disabled={isLocked}
+			onClick={onClick}
 			onKeyDown={onKeyDown}
 			{...rest}
 		>
 			{word}
-		</div>
+		</button>
 	);
 };
 
+/**
+ * SubmitButton - A button for submitting forms or actions.
+ * Props:
+ * - children: button content
+ * - onClick: click handler
+ * - className: additional class names
+ * - disabled: is the button disabled
+ * - style: optional inline styles
+ */
 export const SubmitButton: React.FC<{
 	children: React.ReactNode;
 	onClick: () => void;
@@ -124,6 +162,13 @@ export const SubmitButton: React.FC<{
 	</button>
 );
 
+/**
+ * ShareButton - A button for sharing content via social media or other platforms.
+ * Props:
+ * - onClick: click handler
+ * - className: additional class names
+ * - label: button label (default: 'Share')
+ */
 export const ShareButton: React.FC<{
 	onClick: () => void;
 	className?: string;
@@ -179,6 +224,9 @@ export const DarkModeToggle: React.FC<{
 	);
 };
 
+/**
+ * CopyLinkButton - A button for copying the shareable link to clipboard.
+ */
 export const CopyLinkButton: React.FC = () => {
 	const [copied, setCopied] = React.useState(false);
 
@@ -255,6 +303,13 @@ export const CopyLinkButton: React.FC = () => {
 	);
 };
 
+/**
+ * FriendsToggleButton - A button for toggling the friends sidebar.
+ * Props:
+ * - onClick: optional click handler
+ * - className: additional class names
+ * - style: optional inline styles
+ */
 export const FriendsToggleButton: React.FC<{
 	onClick?: () => void;
 	className?: string;
@@ -264,15 +319,9 @@ export const FriendsToggleButton: React.FC<{
 	const isAuthenticated =
 		status === 'authenticated' && session?.user;
 
-	const dispatch = useDispatch();
-	const isSidebarOpen = useSelector(
-		(state: RootState) => state.friends.isSidebarOpen
-	);
-	const toggleSidebar = () =>
-		dispatch(setSidebarOpen(!isSidebarOpen));
 	return (
 		<button
-			onClick={toggleSidebar}
+			onClick={onClick}
 			className={`friends-toggle-btn ${className}`}
 			style={{
 				border: 'none',
@@ -285,11 +334,7 @@ export const FriendsToggleButton: React.FC<{
 				cursor: 'pointer',
 				...style,
 			}}
-			aria-label={
-				isSidebarOpen
-					? 'Close friends sidebar'
-					: 'Open friends sidebar'
-			}
+			aria-label={'Open friends sidebar'}
 		>
 			{isAuthenticated && session.user?.image ? (
 				<img
@@ -328,3 +373,5 @@ export const FriendsToggleButton: React.FC<{
 		</button>
 	);
 };
+
+// All buttons are modular, props-driven, and ready for extension. Add more as needed.

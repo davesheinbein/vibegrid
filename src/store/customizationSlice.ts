@@ -37,7 +37,7 @@ const initialState = {
 			equipped: false,
 		},
 	],
-	emoji: [
+	emote: [
 		{
 			id: 'emoji1',
 			type: 'emoji',

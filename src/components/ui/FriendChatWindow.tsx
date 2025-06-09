@@ -5,6 +5,12 @@ import {
 	addMessage,
 	clearUnread,
 } from '../../store/friendsSlice';
+import {
+	scrollToBottom,
+	createChatMessage,
+	filterProfanityStub,
+} from '../../utils/helpers';
+import styles from '../../styles/FriendChatWindow.module.scss';
 
 interface FriendChatWindowProps {
 	chatId: string; // can be userId (DM) or groupId (group chat)
@@ -39,23 +45,21 @@ const FriendChatWindow: React.FC<FriendChatWindowProps> = ({
 	}, [chatId, dispatch]);
 
 	useEffect(() => {
-		messagesEndRef.current?.scrollIntoView({
-			behavior: 'smooth',
-		});
+		scrollToBottom(messagesEndRef);
 	}, [chatHistory[chatId]]);
 
+	// TODO: Replace 'me' with actual userId from auth/session
 	const handleSend = (e: React.FormEvent) => {
 		e.preventDefault();
 		if (message.trim()) {
-			const msg = {
-				id: Math.random().toString(36).slice(2),
-				senderId: 'me', // Replace with actual userId if available
-				message: message.trim(),
-				sentAt: new Date().toISOString(),
-				expiresAt: '',
-				groupId: isGroup ? chatId : undefined,
-				receiverId: isGroup ? undefined : chatId,
-			};
+			const msg = createChatMessage({
+				senderId: 'me', // Replace with actual userId
+				content: message.trim(),
+				extra: {
+					groupId: isGroup ? chatId : undefined,
+					receiverId: isGroup ? undefined : chatId,
+				},
+			});
 			dispatch(addMessage({ chatId, message: msg }));
 			setMessage('');
 		}
@@ -64,14 +68,14 @@ const FriendChatWindow: React.FC<FriendChatWindowProps> = ({
 	const messages = chatHistory[chatId] || [];
 
 	return (
-		<div className='friend-chat-window floating-chat-dock'>
-			<div className='friend-chat-header'>
+		<div className={styles.friendChatWindow}>
+			<div className={styles.friendChatHeader}>
 				{isGroup ? (
-					<div className='friend-chat-group-header'>
-						<span className='friend-chat-group-name'>
+					<div>
+						<span className={styles.friendChatTitle}>
 							{group?.name}
 						</span>
-						<span className='friend-chat-group-members'>
+						<span>
 							{group?.memberIds
 								.map(
 									(id) =>
@@ -82,40 +86,41 @@ const FriendChatWindow: React.FC<FriendChatWindowProps> = ({
 						</span>
 					</div>
 				) : (
-					<div className='friend-chat-avatar'>
+					<div className={styles.friendChatAvatar}>
 						{friend?.username}
 					</div>
 				)}
 				<button
-					className='friend-chat-close-btn'
+					className={styles.friendChatCloseBtn}
 					onClick={onClose}
 				>
 					×
 				</button>
 			</div>
-			<div className='friend-chat-messages'>
+			<div className={styles.friendChatMessages}>
 				{messages.map((msg: any) => (
 					<div
 						key={msg.id}
-						className={`friend-chat-message${
-							msg.senderId === 'me' ? ' self' : ''
-						}`}
+						className={
+							styles.friendChatMessage +
+							(msg.senderId === 'me'
+								? ' ' + styles.friendChatMessageOutbound
+								: ' ' + styles.friendChatMessageInbound)
+						}
 					>
-						<span className='friend-chat-message-sender'>
+						<span>
 							{msg.senderId === 'me'
 								? 'You'
 								: friends.find((f) => f.id === msg.senderId)
 										?.username || msg.senderId}
 						</span>
-						<span className='friend-chat-message-text'>
-							{msg.message}
-						</span>
+						<span>{msg.message}</span>
 					</div>
 				))}
 				<div ref={messagesEndRef} />
 			</div>
 			<form
-				className='friend-chat-input-row'
+				className={styles.friendChatInputRow}
 				onSubmit={handleSend}
 			>
 				<input
@@ -127,11 +132,11 @@ const FriendChatWindow: React.FC<FriendChatWindowProps> = ({
 							? 'Message group...'
 							: `Message ${friend?.username || ''}...`
 					}
-					className='friend-chat-input'
+					className={styles.friendChatInput}
 				/>
 				<button
 					type='submit'
-					className='friend-chat-send-btn'
+					className={styles.friendChatSendBtn}
 				>
 					Send
 				</button>
@@ -140,4 +145,5 @@ const FriendChatWindow: React.FC<FriendChatWindowProps> = ({
 	);
 };
 
+// Architectural note: This component is modular, uses shared helpers, and is ready for extension (e.g., emoji, file sharing, etc.)
 export default FriendChatWindow;

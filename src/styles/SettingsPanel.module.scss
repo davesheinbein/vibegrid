@@ -1,0 +1,27 @@
+/* SettingsPanel.module.scss - Styles for the modular user settings panel */
+
+.settingsPanelContainer {
+	padding: 24px;
+	max-width: 400px;
+	margin: 0 auto;
+	background: #fff;
+	border-radius: 16px;
+	box-shadow: 0 2px 8px 0 #e3eaff22;
+}
+
+.settingsPanelOptions {
+	margin: 18px 0;
+}
+
+.settingsPanelLabel {
+	display: block;
+	margin-bottom: 12px;
+	font-size: 1rem;
+	font-weight: 500;
+	color: #1e293b;
+	cursor: pointer;
+}
+
+.settingsPanelLabel input[type='checkbox'] {
+	margin-right: 8px;
+}

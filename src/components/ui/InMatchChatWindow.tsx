@@ -14,6 +14,12 @@ import {
 	UserSettingsContext,
 	filterProfanity,
 } from './UserSettingsProvider';
+import {
+	scrollToBottom,
+	createChatMessage,
+	filterProfanityStub,
+} from '../../utils/helpers';
+import styles from '../../styles/InMatchChatWindow.module.scss';
 
 interface InMatchChatWindowProps {
 	matchId: string;
@@ -38,27 +44,25 @@ const InMatchChatWindow: React.FC<
 	}, [chatKey, dispatch]);
 
 	useEffect(() => {
-		messagesEndRef.current?.scrollIntoView({
-			behavior: 'smooth',
-		});
+		scrollToBottom(messagesEndRef);
 	}, [chatHistory[chatKey]]);
 
+	// TODO: Replace 'me' with actual userId from auth/session
 	const handleSend = (e: React.FormEvent) => {
 		e.preventDefault();
 		if (message.trim()) {
-			const filteredContent = settings.profanityFilter
-				? filterProfanity(message.trim())
-				: message.trim();
-			const msg = {
-				id: Math.random().toString(36).slice(2),
-				senderId: 'me', // Replace with actual userId if available
-				message: filteredContent,
-				sentAt: new Date().toISOString(),
-				expiresAt: '',
-				groupId: undefined,
-				receiverId: friendId,
-				system: false,
-			};
+			const filter = settings?.profanityFilter
+				? filterProfanity
+				: filterProfanityStub;
+			const filteredContent = filter(message.trim());
+			const msg = createChatMessage({
+				senderId: 'me', // Replace with actual userId
+				content: filteredContent,
+				extra: {
+					receiverId: friendId,
+					groupId: undefined,
+				},
+			});
 			dispatch(
 				addMessage({ chatId: chatKey, message: msg })
 			);
@@ -66,37 +70,39 @@ const InMatchChatWindow: React.FC<
 		}
 	};
 
-	const filteredMessages = settings.profanityFilter
-		? (chatHistory[chatKey] || []).map((msg) => ({
-				...msg,
-				message: filterProfanity(msg.message),
-		  }))
-		: chatHistory[chatKey] || [];
+	const filteredMessages =
+		(settings?.profanityFilter
+			? (chatHistory[chatKey] || []).map((msg) => ({
+					...msg,
+					message: filterProfanity(msg.message),
+			  }))
+			: chatHistory[chatKey]) || [];
 
-	if (!settings.chatEnabled) return null;
+	if (!settings?.chatEnabled) return null;
 
 	return (
-		<div className='inmatch-chat-window'>
-			<div className='inmatch-chat-header'>
+		<div className={styles.inMatchChatWindow}>
+			<div className={styles.inMatchChatHeader}>
 				<span>Match Chat</span>
 				<button onClick={onClose}>×</button>
 			</div>
-			<div className='inmatch-chat-messages'>
+			<div className={styles.inMatchChatMessages}>
 				{filteredMessages.map((msg: any) => (
 					<div
 						key={msg.id}
-						className={`chat-message${
-							msg.system
-								? ' system'
+						className={
+							styles.chatMessage +
+							(msg.system
+								? ' ' + styles.chatMessageSystem
 								: msg.senderId === friendId
-								? ' friend'
-								: ' self'
-						}`}
+								? ' ' + styles.chatMessageFriend
+								: ' ' + styles.chatMessageSelf)
+						}
 					>
-						<span className='chat-message-text'>
+						<span className={styles.chatMessageText}>
 							{msg.message}
 						</span>
-						<span className='chat-message-time'>
+						<span className={styles.chatMessageTime}>
 							{new Date(msg.sentAt).toLocaleTimeString()}
 						</span>
 					</div>
@@ -104,7 +110,7 @@ const InMatchChatWindow: React.FC<
 				<div ref={messagesEndRef} />
 			</div>
 			<form
-				className='inmatch-chat-input-row'
+				className={styles.inMatchChatInputRow}
 				onSubmit={handleSend}
 			>
 				<input
@@ -112,20 +118,21 @@ const InMatchChatWindow: React.FC<
 					value={message}
 					onChange={(e) => setMessage(e.target.value)}
 					placeholder='Type a message...'
-					className='inmatch-chat-input'
+					className={styles.inMatchChatInput}
 				/>
 				<button
 					type='submit'
-					className='inmatch-chat-send-btn'
+					className={styles.inMatchChatSendBtn}
 				>
 					Send
 				</button>
 			</form>
-			<div className='inmatch-chat-expiry-note'>
+			<div className={styles.inMatchChatExpiryNote}>
 				Messages expire after match ends.
 			</div>
 		</div>
 	);
 };
 
+// Architectural note: This component is modular, uses shared helpers, and is ready for extension (e.g., emoji, file sharing, etc.)
 export default InMatchChatWindow;

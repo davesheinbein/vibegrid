@@ -13,44 +13,15 @@ const SignInModal: React.FC<SignInModalProps> = ({
 	onSignIn,
 }) => (
 	<Modal open={open} onClose={onClose}>
-		<div
-			className='signin-modal-content'
-			style={{
-				padding: 40,
-				display: 'flex',
-				flexDirection: 'column',
-				alignItems: 'center',
-			}}
-		>
-			<h2 style={{ marginBottom: 10, textAlign: 'center' }}>
+		<div className='signin-modal-content'>
+			<h2 className='signin-modal-title'>
 				Sign in to Track Your Score
 			</h2>
-			<p
-				className='signin-modal-desc'
-				style={{ marginBottom: 18, textAlign: 'center' }}
-			>
-				Sign in with Google to save your stats and see your
-				leaderboard placement.
-				<br />
-				You can continue as a guest, but your stats won't be
-				tracked.
-			</p>
 			<button
 				onClick={onSignIn}
-				style={{
-					display: 'block',
-					margin: '0 auto',
-					padding: '10px 24px',
-					borderRadius: 8,
-					background: '#fff',
-					color: '#222',
-					fontWeight: 600,
-					boxShadow: '0 2px 8px #e3eaff33',
-					border: '1.5px solid #e0e7ef',
-					cursor: 'pointer',
-				}}
+				className='signin-modal-btn'
 			>
-				Sign in with Google
+				Sign In
 			</button>
 		</div>
 	</Modal>

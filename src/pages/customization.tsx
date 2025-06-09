@@ -6,6 +6,89 @@ import { equipItem } from '../store/customizationSlice';
 import { ThemeSelector } from '../components/ThemeSelector';
 import { GoBackButton } from '../components/ui/Buttons';
 
+// DRY component for rendering a customization category
+const CustomizationCategory: React.FC<{
+	title: string;
+	items: any[];
+	onEquip: (id: string) => void;
+	ariaLabelPrefix: string;
+}> = ({ title, items, onEquip, ariaLabelPrefix }) => (
+	<div style={{ textAlign: 'center' }}>
+		<h2
+			style={{
+				marginBottom: 12,
+				fontWeight: 700,
+				color: '#2563eb',
+			}}
+		>
+			{title}
+		</h2>
+		{items.length === 0 ? (
+			<div
+				style={{
+					color: '#64748b',
+					fontWeight: 500,
+					fontSize: '1.1rem',
+					marginTop: 32,
+				}}
+			>
+				No {title.toLowerCase()} unlocked yet.
+			</div>
+		) : (
+			<div
+				style={{
+					display: 'flex',
+					gap: 18,
+					justifyContent: 'center',
+					flexWrap: 'wrap',
+					marginTop: 16,
+				}}
+			>
+				{items.map((item: any) => (
+					<button
+						key={item.id}
+						onClick={() => onEquip(item.id)}
+						style={{
+							padding: '14px 28px',
+							borderRadius: 14,
+							border: item.equipped
+								? '2.5px solid #38bdf8'
+								: '2px solid #e0e7ef',
+							background: item.equipped
+								? 'linear-gradient(90deg, #e0f2fe 0%, #bae6fd 100%)'
+								: '#fff',
+							fontWeight: 700,
+							color: item.equipped ? '#2563eb' : '#222',
+							boxShadow: item.equipped
+								? '0 0 12px 2px #38bdf855'
+								: '0 1px 4px 0 #e3eaff33',
+							fontSize: '1.1rem',
+							fontFamily:
+								title === 'Fonts' ? item.name : undefined,
+							cursor: 'pointer',
+							transition: 'all 0.18s',
+						}}
+						aria-label={`Equip ${item.name} ${ariaLabelPrefix}`}
+					>
+						{item.name}
+						{item.equipped && (
+							<span
+								style={{
+									marginLeft: 8,
+									color: '#38bdf8',
+									fontWeight: 900,
+								}}
+							>
+								✓
+							</span>
+						)}
+					</button>
+				))}
+			</div>
+		)}
+	</div>
+);
+
 const CustomizationPage: React.FC = () => {
 	const router = useRouter();
 	const inventory = useSelector(
@@ -14,7 +97,7 @@ const CustomizationPage: React.FC = () => {
 	const dispatch = useDispatch();
 
 	const [tab, setTab] = useState<
-		'themes' | 'emoji' | 'font' | 'borders' | 'background'
+		'themes' | 'emote' | 'font' | 'borders' | 'background'
 	>('themes');
 
 	const handleEquip = (itemId: string) => {
@@ -31,9 +114,9 @@ const CustomizationPage: React.FC = () => {
 				maxWidth: 700,
 				margin: '0 auto',
 				position: 'relative',
-				background: 'linear-gradient(135deg, #fafdff 0%, #e0e7ef 100%)',
+				background:
+					'linear-gradient(135deg, #fafdff 0%, #e0e7ef 100%)',
 				borderRadius: 24,
-				boxShadow: '0 4px 32px 0 #e3eaff33',
 				display: 'flex',
 				flexDirection: 'column',
 				alignItems: 'stretch',
@@ -52,7 +135,12 @@ const CustomizationPage: React.FC = () => {
 				}}
 				label=''
 			/>
-			<div style={{ padding: '48px 32px 32px 32px', width: '100%' }}>
+			<div
+				style={{
+					padding: '48px 0',
+					width: '100%',
+				}}
+			>
 				<h1
 					style={{
 						fontSize: '2.4rem',
@@ -74,169 +162,88 @@ const CustomizationPage: React.FC = () => {
 						fontWeight: 500,
 					}}
 				>
-					Personalize your Vibe Grid experience! Unlock and equip themes, emoji packs, fonts, and more.
+					Personalize your Vibe Grid experience! Unlock and
+					equip themes, emote packs, fonts, and more.
 				</p>
-				<div style={{
-					display: 'flex',
-					gap: 8,
-					justifyContent: 'center',
-					marginBottom: 32,
-					background: '#f3f6fa',
-					borderRadius: 12,
-					padding: 6,
-					boxShadow: '0 1px 4px 0 #e3eaff22',
-				}}>
-					{['themes', 'emoji', 'font', 'borders', 'background'].map((tabName) => (
+				<div
+					style={{
+						display: 'flex',
+						gap: 8,
+						justifyContent: 'center',
+						marginBottom: 32,
+						background: '#f3f6fa',
+						borderRadius: 12,
+						padding: 6,
+						boxShadow: '0 1px 4px 0 #e3eaff22',
+					}}
+				>
+					{[
+						'themes',
+						'emote',
+						'font',
+						'borders',
+						'background',
+					].map((tabName) => (
 						<button
 							key={tabName}
 							onClick={() => setTab(tabName as typeof tab)}
 							style={{
 								fontWeight: tab === tabName ? 700 : 500,
 								fontSize: '1.08rem',
-								background: tab === tabName ? 'linear-gradient(90deg, #38bdf8 0%, #2563eb 100%)' : 'none',
+								background:
+									tab === tabName
+										? 'linear-gradient(90deg, #38bdf8 0%, #2563eb 100%)'
+										: 'none',
 								color: tab === tabName ? '#fff' : '#2563eb',
 								border: 'none',
 								borderRadius: 8,
 								padding: '8px 22px',
 								transition: 'background 0.18s, color 0.18s',
-								boxShadow: tab === tabName ? '0 2px 8px 0 #38bdf855' : 'none',
+								boxShadow:
+									tab === tabName
+										? '0 2px 8px 0 #38bdf855'
+										: 'none',
 								cursor: 'pointer',
 							}}
 						>
-							{tabName.charAt(0).toUpperCase() + tabName.slice(1)}
+							{tabName.charAt(0).toUpperCase() +
+								tabName.slice(1)}
 						</button>
 					))}
 				</div>
 				<div style={{ minHeight: 240, width: '100%' }}>
 					{tab === 'themes' && <ThemeSelector />}
-					{tab === 'emoji' && (
-						<div style={{ textAlign: 'center' }}>
-							<h2 style={{ marginBottom: 12, fontWeight: 700, color: '#2563eb' }}>Emoji Packs</h2>
-							<div style={{ display: 'flex', gap: 18, justifyContent: 'center', flexWrap: 'wrap', marginTop: 16 }}>
-								{inventory.emoji.map((item: any) => (
-									<button
-										key={item.id}
-										onClick={() => handleEquip(item.id)}
-										style={{
-											padding: '14px 28px',
-											borderRadius: 14,
-											border: item.equipped ? '2.5px solid #38bdf8' : '2px solid #e0e7ef',
-											background: item.equipped ? 'linear-gradient(90deg, #e0f2fe 0%, #bae6fd 100%)' : '#fff',
-											fontWeight: 700,
-											color: item.equipped ? '#2563eb' : '#222',
-											boxShadow: item.equipped ? '0 0 12px 2px #38bdf855' : '0 1px 4px 0 #e3eaff33',
-											fontSize: '1.1rem',
-											cursor: 'pointer',
-											transition: 'all 0.18s',
-										}}
-										aria-label={`Equip ${item.name} emoji pack`}
-									>
-										{item.name}
-										{item.equipped && <span style={{ marginLeft: 8, color: '#38bdf8', fontWeight: 900 }}>✓</span>}
-									</button>
-								))}
-							</div>
-						</div>
+					{tab === 'emote' && (
+						<CustomizationCategory
+							title='Emote Packs'
+							items={inventory.emote}
+							onEquip={handleEquip}
+							ariaLabelPrefix='emote pack'
+						/>
 					)}
 					{tab === 'font' && (
-						<div style={{ textAlign: 'center' }}>
-							<h2 style={{ marginBottom: 12, fontWeight: 700, color: '#2563eb' }}>Fonts</h2>
-							<div style={{ display: 'flex', gap: 18, justifyContent: 'center', flexWrap: 'wrap', marginTop: 16 }}>
-								{inventory.font.map((item: any) => (
-									<button
-										key={item.id}
-										onClick={() => handleEquip(item.id)}
-										style={{
-											padding: '14px 28px',
-											borderRadius: 14,
-											border: item.equipped ? '2.5px solid #38bdf8' : '2px solid #e0e7ef',
-											background: item.equipped ? 'linear-gradient(90deg, #e0f2fe 0%, #bae6fd 100%)' : '#fff',
-											fontWeight: 700,
-											color: item.equipped ? '#2563eb' : '#222',
-											boxShadow: item.equipped ? '0 0 12px 2px #38bdf855' : '0 1px 4px 0 #e3eaff33',
-											fontSize: '1.1rem',
-											fontFamily: item.name,
-											cursor: 'pointer',
-											transition: 'all 0.18s',
-										}}
-										aria-label={`Equip ${item.name} font`}
-									>
-										{item.name}
-										{item.equipped && <span style={{ marginLeft: 8, color: '#38bdf8', fontWeight: 900 }}>✓</span>}
-									</button>
-								))}
-							</div>
-						</div>
+						<CustomizationCategory
+							title='Fonts'
+							items={inventory.font}
+							onEquip={handleEquip}
+							ariaLabelPrefix='font'
+						/>
 					)}
 					{tab === 'borders' && (
-						<div style={{ textAlign: 'center' }}>
-							<h2 style={{ marginBottom: 12, fontWeight: 700, color: '#2563eb' }}>Borders</h2>
-							{inventory.borders.length === 0 ? (
-								<div style={{ color: '#64748b', fontWeight: 500, fontSize: '1.1rem', marginTop: 32 }}>
-									No border styles unlocked yet.
-								</div>
-							) : (
-								<div style={{ display: 'flex', gap: 18, justifyContent: 'center', flexWrap: 'wrap', marginTop: 16 }}>
-									{inventory.borders.map((item: any) => (
-										<button
-											key={item.id}
-											onClick={() => handleEquip(item.id)}
-											style={{
-												padding: '14px 28px',
-												borderRadius: 14,
-												border: item.equipped ? '3px solid #38bdf8' : '2px solid #e0e7ef',
-												background: item.equipped ? 'linear-gradient(90deg, #e0f2fe 0%, #bae6fd 100%)' : '#fff',
-												fontWeight: 700,
-												color: item.equipped ? '#2563eb' : '#222',
-												boxShadow: item.equipped ? '0 0 12px 2px #38bdf855' : '0 1px 4px 0 #e3eaff33',
-												fontSize: '1.1rem',
-												cursor: 'pointer',
-												transition: 'all 0.18s',
-											}}
-											aria-label={`Equip ${item.name} border`}
-										>
-											{item.name}
-											{item.equipped && <span style={{ marginLeft: 8, color: '#38bdf8', fontWeight: 900 }}>✓</span>}
-										</button>
-									))}
-								</div>
-							)}
-						</div>
+						<CustomizationCategory
+							title='Borders'
+							items={inventory.borders}
+							onEquip={handleEquip}
+							ariaLabelPrefix='border'
+						/>
 					)}
 					{tab === 'background' && (
-						<div style={{ textAlign: 'center' }}>
-							<h2 style={{ marginBottom: 12, fontWeight: 700, color: '#2563eb' }}>Backgrounds</h2>
-							{inventory.background.length === 0 ? (
-								<div style={{ color: '#64748b', fontWeight: 500, fontSize: '1.1rem', marginTop: 32 }}>
-									No backgrounds unlocked yet.
-								</div>
-							) : (
-								<div style={{ display: 'flex', gap: 18, justifyContent: 'center', flexWrap: 'wrap', marginTop: 16 }}>
-									{inventory.background.map((item: any) => (
-										<button
-											key={item.id}
-											onClick={() => handleEquip(item.id)}
-											style={{
-												padding: '14px 28px',
-												borderRadius: 14,
-												border: item.equipped ? '3px solid #38bdf8' : '2px solid #e0e7ef',
-												background: item.equipped ? 'linear-gradient(90deg, #e0f2fe 0%, #bae6fd 100%)' : '#fff',
-												fontWeight: 700,
-												color: item.equipped ? '#2563eb' : '#222',
-												boxShadow: item.equipped ? '0 0 12px 2px #38bdf855' : '0 1px 4px 0 #e3eaff33',
-												fontSize: '1.1rem',
-												cursor: 'pointer',
-												transition: 'all 0.18s',
-											}}
-											aria-label={`Equip ${item.name} background`}
-										>
-											{item.name}
-											{item.equipped && <span style={{ marginLeft: 8, color: '#38bdf8', fontWeight: 900 }}>✓</span>}
-										</button>
-									))}
-								</div>
-							)}
-						</div>
+						<CustomizationCategory
+							title='Backgrounds'
+							items={inventory.background}
+							onEquip={handleEquip}
+							ariaLabelPrefix='background'
+						/>
 					)}
 				</div>
 			</div>

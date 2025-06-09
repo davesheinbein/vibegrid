@@ -12,17 +12,22 @@ import {
 import { useSelector, useDispatch } from 'react-redux';
 import { RootState } from '../../store';
 import { addMatchMessage } from '../../store/matchChatSlice';
+import {
+	scrollToBottom,
+	createChatMessage,
+	filterProfanityStub,
+} from '../../utils/helpers';
 
 const QUICKFIRE_MESSAGES = [
-	'You’ll regret that.',
-	'GG 🔥',
+	'You\u2019ll regret that.',
+	'GG \ud83d\udd25',
 	'Too easy.',
 	'Nice try!',
-	'💀',
-	'👑',
-	'💣',
-	'😱',
-	'🎯',
+	'\ud83d\udc80',
+	'\ud83d\udc51',
+	'\ud83d\udca3',
+	'\ud83d\ude31',
+	'\ud83c\udfaf',
 ];
 
 interface MatchChatMessage {
@@ -43,25 +48,24 @@ interface MatchChatWindowProps {
 const MatchChatWindow: React.FC<MatchChatWindowProps> = (
 	props
 ) => {
+	const { open, onClose, matchId, userId } = props;
+	const [input, setInput] = useState('');
+	const messagesEndRef = useRef<HTMLDivElement>(null);
 	const { settings } = useContext(UserSettingsContext);
 	const dispatch = useDispatch();
 	const matchMessages = useSelector(
 		(state: RootState) =>
-			state.matchChat.messages[props.matchId] || []
+			state.matchChat.messages[matchId] || []
 	);
-	const { open, onClose, matchId, userId } = props;
-	const [input, setInput] = useState('');
-	const messagesEndRef = useRef<HTMLDivElement>(null);
 
 	useEffect(() => {
-		if (messagesEndRef.current) {
-			messagesEndRef.current.scrollIntoView({
-				behavior: 'smooth',
-			});
-		}
+		scrollToBottom(messagesEndRef);
 	}, [matchMessages]);
 
-	const filteredMessages = settings.profanityFilter
+	const filter = settings?.profanityFilter
+		? filterProfanity
+		: filterProfanityStub;
+	const filteredMessages = settings?.profanityFilter
 		? matchMessages.map((msg) => ({
 				...msg,
 				content: filterProfanity(msg.content),
@@ -73,22 +77,30 @@ const MatchChatWindow: React.FC<MatchChatWindowProps> = (
 		type: 'text' | 'emoji' | 'quickfire' = 'text'
 	) => {
 		if (!content.trim()) return;
-		const filteredContent = settings.profanityFilter
-			? filterProfanity(content)
-			: content;
-		const msg = {
-			id: Math.random().toString(36).slice(2),
-			sender: userId,
+		const filteredContent = filter(content);
+		const msg = createChatMessage({
+			senderId: userId,
 			content: filteredContent,
 			type,
-			timestamp: Date.now(),
-		};
-		dispatch(addMatchMessage({ matchId, message: msg }));
+			// Match chat message shape is slightly different, but createChatMessage is extensible
+			extra: { timestamp: Date.now(), type },
+		});
+		dispatch(
+			addMatchMessage({
+				matchId,
+				message: {
+					...msg,
+					content: filteredContent,
+					sender: userId,
+					type,
+					timestamp: Date.now(),
+				},
+			})
+		);
 		setInput('');
 	};
 
-	// If chat is disabled, render nothing or a message
-	if (!settings.chatEnabled) return null;
+	if (!settings?.chatEnabled) return null;
 
 	return (
 		<Modal
@@ -147,4 +159,5 @@ const MatchChatWindow: React.FC<MatchChatWindowProps> = (
 	);
 };
 
+// Architectural note: This component is modular, uses shared helpers, and is ready for extension (e.g., emoji, file sharing, etc.)
 export default MatchChatWindow;

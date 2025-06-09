@@ -1,24 +1,15 @@
-import CustomPuzzleModal from '../components/modal/CustomPuzzleModal';
 import { useRouter } from 'next/router';
 import React from 'react';
 import {
 	getShareUrl,
 	copyToClipboard,
-	shareLinks,
 } from '../utils/helpers';
-import { CopyLinkButton } from '../components/ui/Buttons';
-import { Modal } from '../components/ui/Modal';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import {
-	faXTwitter,
-	faRedditAlien,
-	faLinkedinIn,
-	faTiktok,
-	faInstagram,
-	faMeta,
-} from '@fortawesome/free-brands-svg-icons';
+import { getShareLinks } from '../utils/shareLinks';
 import StartupPage from '@components/ui/StartupPage';
 import FriendsSidebar from '@components/ui/FriendsSidebar';
+import { Modal } from '../components/ui/Modal';
+import { CopyLinkButton } from '../components/ui/Buttons';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 
 export default function Home() {
 	const router = useRouter();
@@ -29,25 +20,26 @@ export default function Home() {
 	const [showShareModal, setShowShareModal] =
 		React.useState(false);
 
+	const shareText = 'Check out my Grid Royale result!';
+	const shareUrl = 'https://gridRoyale.app';
+	const shareTitle =
+		"Grid Royale: Can you solve today's grid?";
+	const shareLinks = getShareLinks(
+		'url',
+		shareText,
+		shareUrl,
+		shareTitle
+	);
+
 	return (
 		<>
-			<FriendsSidebar />
+			{/* <FriendsSidebar /> */}
 			<StartupPage
 				onStartDaily={() => router.push('/daily')}
 				onStartCustom={() => setShowCustomModal(true)}
 				onBrowseCustom={() => router.push('/browse')}
 				onShare={() => setShowShareModal(true)}
 			/>
-			{showCustomModal && (
-				<CustomPuzzleModal
-					open={showCustomModal}
-					onClose={() => setShowCustomModal(false)}
-					setCustomPuzzle={setCustomPuzzle}
-					setMode={() => {}}
-					user={null}
-					setShowSignInModal={() => {}}
-				/>
-			)}
 			{showShareModal && (
 				<Modal
 					open={showShareModal}
@@ -57,22 +49,6 @@ export default function Home() {
 						<h2>Share your Grid Royale result!</h2>
 						<div className='share-links-grid'>
 							{(() => {
-								const iconMap = {
-									X: <FontAwesomeIcon icon={faXTwitter} />,
-									Meta: <FontAwesomeIcon icon={faMeta} />,
-									Reddit: (
-										<FontAwesomeIcon icon={faRedditAlien} />
-									),
-									LinkedIn: (
-										<FontAwesomeIcon icon={faLinkedinIn} />
-									),
-									TikTok: (
-										<FontAwesomeIcon icon={faTiktok} />
-									),
-									Instagram: (
-										<FontAwesomeIcon icon={faInstagram} />
-									),
-								};
 								const rows = [];
 								for (
 									let i = 0;
@@ -94,13 +70,12 @@ export default function Home() {
 														className={`share-link share-link--${link.name.toLowerCase()}`}
 														data-platform={link.name}
 														key={link.name}
+														style={{ color: link.color }}
 													>
 														<span className='share-link-icon'>
-															{
-																iconMap[
-																	link.name as keyof typeof iconMap
-																]
-															}
+															<FontAwesomeIcon
+																icon={link.icon}
+															/>
 														</span>
 														<span className='share-link-text'>
 															{link.name}

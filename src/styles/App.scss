@@ -696,11 +696,12 @@ button:hover,
 .vs-mode-btn:hover,
 .friend-card-btn:hover,
 .modal-stats-ok-btn:hover {
-	background: linear-gradient(
-		90deg,
-		#38bdf8 0%,
-		#fbbf24 100%
-	);
+	background: lighten(#fde68a, 32%);
+	color: #1e293b;
+	border-color: #fde047;
+	box-shadow: 0 0 0 3px #fde04755;
+	transform: scale(1.04);
+	z-index: 2;
 	box-shadow: 0 4px 16px 0 #38bdf855;
 	transform: translateY(-2px) scale(1.03);
 }
@@ -1426,11 +1427,7 @@ body.dark-mode,
 	z-index: 1000;
 
 	.word-btn.selected {
-		background: linear-gradient(
-			90deg,
-			#fbbf24 0%,
-			#38bdf8 100%
-		);
+		background: lighten(#fbbf24, 32%);
 		color: #1e293b;
 		border-color: #fde047;
 		box-shadow: 0 0 0 3px #fde04755;
@@ -2146,10 +2143,7 @@ body.dark-mode .friend-chat-send-btn {
 
 	&:hover,
 	&:focus {
-		background: adjust-color(
-			$primary-blue,
-			$lightness: 12%
-		);
+		background: lighten($primary-blue, 12%);
 		transform: scale(1.04);
 	}
 }
@@ -2175,7 +2169,7 @@ body.dark-mode .friend-chat-send-btn {
 	position: relative;
 	&:hover,
 	&:focus {
-		background: adjust-color($primary-red, $lightness: 12%);
+		background: lighten($primary-red, 12%);
 		transform: scale(1.04);
 	}
 }

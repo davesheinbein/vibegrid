@@ -21,6 +21,8 @@ import {
 	setInMatch,
 	setMatchData,
 } from '../../store/multiplayerSlice';
+import styles from '../../styles/StartupPage.module.scss';
+import { setMatchmakingTimeout as createMatchmakingTimeout } from '../../utils/helpers';
 
 interface StartupPageProps {
 	onStartDaily: () => void;
@@ -62,12 +64,12 @@ const StartupPage: React.FC<StartupPageProps> = ({
 		useState(false);
 	const [matchmakingError, setMatchmakingError] =
 		useState('');
-	const [matchmakingTimeout, setMatchmakingTimeout] =
-		useState<NodeJS.Timeout | null>(null);
 	const [inVSBotGame, setInVSBotGame] = useState(false);
 	const [vsBotDifficulty, setVSBotDifficulty] = useState<
 		'easy' | 'medium' | 'hard' | 'legendary' | null
 	>(null);
+	const [matchmakingTimeout, setMatchmakingTimeout] =
+		useState<NodeJS.Timeout | null>(null);
 
 	useEffect(() => {
 		if (matchStarted) {
@@ -90,19 +92,20 @@ const StartupPage: React.FC<StartupPageProps> = ({
 			// Join matchmaking queue
 			if (socket) socket.emit('joinMatchmaking');
 			// Fallback if no match in 15s
-			const timeout = setTimeout(() => {
+			const timeoutId = createMatchmakingTimeout(() => {
 				setMatchmakingError(
 					'No opponent found — try again or play locally.'
 				);
 				if (socket) socket.emit('leaveMatchmaking');
 			}, 15000);
-			setMatchmakingTimeout(timeout);
+			setMatchmakingTimeout(timeoutId);
 			// Listen for match found
 			if (socket) {
 				socket.once(
 					'matchFound',
 					(payload: { roomCode: string }) => {
-						if (timeout) clearTimeout(timeout);
+						if (matchmakingTimeout)
+							clearTimeout(matchmakingTimeout);
 						setPendingRoomCode(payload.roomCode);
 						if (socket)
 							socket.emit('joinRoom', payload.roomCode);
@@ -157,60 +160,15 @@ const StartupPage: React.FC<StartupPageProps> = ({
 	return (
 		<div className='fullscreen-bg'>
 			<div
-				className='startup-page gridRoyale-container'
-				style={{
-					minHeight: '100vh',
-					display: 'flex',
-					flexDirection: 'column',
-					alignItems: 'center',
-					justifyContent: 'center',
-					background:
-						'linear-gradient(120deg,#f0f9ff 0%,#e0e7ff 100%)',
-				}}
+				className={`${styles.startupPageContainer} startup-page gridRoyale-container`}
 			>
 				<img
 					src='https://i.imgur.com/1jPtNmW.png'
 					alt='Grid Royale logo'
-					style={{ width: 360 }}
+					className={styles.logoImage}
 				/>
-				<h1
-					className='gridRoyale-title'
-					style={{
-						fontSize: 44,
-						margin: 0,
-						color: '#2563eb',
-						letterSpacing: 1,
-					}}
-				>
-					Grid Royale
-				</h1>
-				{session?.user?.name && (
-					<div
-						style={{
-							color: '#64748b',
-							fontWeight: 600,
-							fontSize: 18,
-							marginBottom: 8,
-							marginTop: 2,
-							textAlign: 'center',
-						}}
-					>
-						Signed in as{' '}
-						<span
-							style={{ color: '#2563eb', fontWeight: 700 }}
-						>
-							{session.user.name}
-						</span>
-					</div>
-				)}
-				<p
-					className='gridRoyale-subtitle'
-					style={{
-						color: '#64748b',
-						fontSize: 20,
-						margin: '10px 0 32px 0',
-					}}
-				>
+				<h1 className={styles.title}>Grid Royale</h1>
+				<p className={styles.subtitle}>
 					A daily word grouping puzzle. Can you find the
 					vibe?
 				</p>
@@ -262,6 +220,15 @@ const StartupPage: React.FC<StartupPageProps> = ({
 						onClick={onShare}
 						label='Share'
 					/>
+					{session?.user?.name && (
+						<div className={styles.signedInAs}>
+							Signed in as
+							<br />
+							<span className={styles.userName}>
+								{session.user.name}
+							</span>
+						</div>
+					)}
 				</div>
 				<Footer />
 			</div>
@@ -290,22 +257,12 @@ const StartupPage: React.FC<StartupPageProps> = ({
 					onClose={() => {
 						setShowMatchmaking(false);
 						setMatchmakingError('');
-						if (matchmakingTimeout)
-							clearTimeout(matchmakingTimeout);
 						if (socket) socket.emit('leaveMatchmaking');
 					}}
 				>
-					<div
-						style={{
-							padding: 32,
-							textAlign: 'center',
-							minWidth: 280,
-						}}
-					>
+					<div className={styles.matchmakingModalContent}>
 						<h2>Global Matchmaking</h2>
-						<div
-							style={{ margin: '18px 0', color: '#64748b' }}
-						>
+						<div className={styles.matchmakingMessage}>
 							{matchmakingError ||
 								'Searching for an opponent...'}
 						</div>
