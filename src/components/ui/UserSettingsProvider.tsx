@@ -4,6 +4,17 @@ export interface UserSettings {
 	chatEnabled: boolean;
 	profanityFilter: boolean;
 	notificationsEnabled: boolean;
+	theme?: string; // theme name
+	vsModeCustom?: {
+		playerColor?: string;
+		enemyColor?: string;
+		playerBg?: string;
+		enemyBg?: string;
+		boardBg?: string;
+		font?: string;
+		border?: string;
+		// Add emoji, font, etc. as needed
+	};
 }
 
 const defaultSettings: UserSettings = {

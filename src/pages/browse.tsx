@@ -7,7 +7,6 @@ import {
 	getShareText,
 } from '../utils/helpers';
 import { GoBackButton } from '../components/ui/Buttons';
-import { useNotificationBanner } from '../components/ui/MultiplayerProvider';
 import MatchChatWindow from '../components/ui/MatchChatWindow';
 import { UserSettingsContext } from '../components/ui/UserSettingsProvider';
 
@@ -32,7 +31,6 @@ export default function Browse() {
 	const [tabPuzzles, setTabPuzzles] = React.useState<any[]>(
 		[]
 	);
-	const { notify } = useNotificationBanner();
 	const [showChat, setShowChat] = React.useState(false);
 	const [chatMessages, setChatMessages] = React.useState<
 		any[]

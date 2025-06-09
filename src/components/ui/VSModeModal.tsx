@@ -99,7 +99,7 @@ const VSModeModal: React.FC<VSModeModalProps> = ({
 						>
 							Select Bot Difficulty
 						</h3>
-						{botDifficulties.map((bot) => (
+					{botDifficulties.map((bot) => (
 							<SubmitButton
 								key={bot.value}
 								onClick={() =>

@@ -8,6 +8,7 @@ import Footer from './Footer';
 import VSModeModal from './VSModeModal';
 import VSRoomModal from './VSRoomModal';
 import VSMultiplayerGame from './VSMultiplayerGame';
+import VSBotGame from './VSBotGame';
 import { Modal } from './Modal';
 import { UserSettingsContext } from './UserSettingsProvider';
 import { useRouter } from 'next/router';
@@ -131,26 +132,25 @@ const StartupPage: React.FC<StartupPageProps> = ({
 	}
 
 	if (inVSBotGame && vsBotDifficulty) {
-		// TODO: Replace with actual VSBotGame component when implemented
+		// Use a demo puzzle or fetch the appropriate puzzle for VS Bot mode
+		const demoPuzzle = {
+			title: 'VS Puzzle',
+			size: { rows: 4, cols: 4 },
+			groups: [
+				['cat', 'dog', 'lion', 'tiger'],
+				['apple', 'orange', 'grape', 'pear'],
+				['red', 'blue', 'green', 'yellow'],
+				['car', 'bus', 'train', 'plane'],
+			],
+			wildcards: [],
+		};
 		return (
-			<div style={{ padding: 32, textAlign: 'center' }}>
-				<h2>VS Bot Mode (WIP)</h2>
-				<p>
-					Difficulty: <b>{vsBotDifficulty}</b>
-				</p>
-				{/* Integrate NotificationBanner and MatchChatWindow here */}
-				<div style={{ margin: '24px 0' }}>
-					<button
-						className='gridRoyale-submit'
-						onClick={() => setInVSBotGame(false)}
-					>
-						Exit VS Bot Game
-					</button>
-				</div>
-				<div style={{ color: '#64748b', marginTop: 24 }}>
-					(Game logic, chat, and notifications coming soon)
-				</div>
-			</div>
+			<VSBotGame
+				puzzle={demoPuzzle}
+				botDifficulty={vsBotDifficulty}
+				userId={session?.user?.email || 'me'}
+				matchId={'vs-bot'}
+			/>
 		);
 	}
 

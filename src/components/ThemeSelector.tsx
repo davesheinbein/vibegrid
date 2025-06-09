@@ -1,6 +1,16 @@
 import React from 'react';
 
-// You can move this to a separate config file for scalability
+// Add VS mode color tokens to each theme
+export const vsModeDefaults = {
+	player: '#2563eb', // blue
+	enemy: '#ef4444', // red
+	playerBg: '#e0e7ff',
+	enemyBg: '#fee2e2',
+	boardBg: '#fff',
+	font: '#222',
+	border: '#e0e7ef',
+};
+
 export const themes = [
 	{
 		name: 'light',
@@ -9,6 +19,15 @@ export const themes = [
 		bg: '#f8f5ec',
 		font: '#222',
 		swatchType: 'solid',
+		vsMode: {
+			player: '#2563eb',
+			enemy: '#ef4444',
+			playerBg: '#e0e7ff',
+			enemyBg: '#fee2e2',
+			boardBg: '#fff',
+			font: '#222',
+			border: '#e0e7ef',
+		},
 	},
 	{
 		name: 'dark',
@@ -17,6 +36,15 @@ export const themes = [
 		bg: '#23272a',
 		font: '#f8f5ec',
 		swatchType: 'solid',
+		vsMode: {
+			player: '#3b82f6',
+			enemy: '#ef4444',
+			playerBg: '#1e293b',
+			enemyBg: '#3b1e1e',
+			boardBg: '#23272a',
+			font: '#f8f5ec',
+			border: '#334155',
+		},
 	},
 	{
 		name: 'oceanic',
@@ -25,6 +53,15 @@ export const themes = [
 		bg: '#0a2540',
 		font: '#a7f3f7',
 		swatchType: 'solid',
+		vsMode: {
+			player: '#3b82f6',
+			enemy: '#ef4444',
+			playerBg: '#1e293b',
+			enemyBg: '#3b1e1e',
+			boardBg: '#0a2540',
+			font: '#a7f3f7',
+			border: '#1e40af',
+		},
 	},
 	{
 		name: 'sunset',
@@ -33,6 +70,15 @@ export const themes = [
 		bg: 'linear-gradient(135deg, #ffb347 0%, #ff5e62 100%)', // orange/yellow gradient
 		font: '#fff',
 		swatchType: 'gradient',
+		vsMode: {
+			player: '#2563eb',
+			enemy: '#ef4444',
+			playerBg: '#e0e7ff',
+			enemyBg: '#fee2e2',
+			boardBg: '#fff',
+			font: '#222',
+			border: '#e0e7ef',
+		},
 	},
 ];
 

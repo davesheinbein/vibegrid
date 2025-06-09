@@ -22,6 +22,7 @@ import { UserSettingsContext } from './UserSettingsProvider';
 import { useSelector, useDispatch } from 'react-redux';
 import { addMatchMessage } from '../../store/matchChatSlice';
 import { RootState } from '../../store';
+import { themes, vsModeDefaults } from '../ThemeSelector';
 
 // Dummy puzzle for now; replace with actual puzzle from context/server
 const demoPuzzle = {
@@ -33,7 +34,16 @@ const demoPuzzle = {
 		['red', 'blue', 'green', 'yellow'],
 		['car', 'bus', 'train', 'plane'],
 	],
-	wildcards: [],
+	wildcards: [
+		'banana',
+		'rocket',
+		'cloud',
+		'book',
+		'chair',
+		'pizza',
+		'moon',
+		'robot',
+	],
 };
 
 // Types for chat messages
@@ -48,6 +58,19 @@ interface MatchChatMessage {
 // --- Multiplayer Game Logic and UI ---
 const VSMultiplayerGame: React.FC = () => {
 	const { settings } = useContext(UserSettingsContext);
+	const themeName = settings.theme || 'light';
+	const theme =
+		themes.find((t) => t.name === themeName)?.vsMode ||
+		vsModeDefaults;
+	const custom = settings.vsModeCustom || {};
+	const playerColor = custom.playerColor || theme.player;
+	const enemyColor = custom.enemyColor || theme.enemy;
+	const playerBg = custom.playerBg || theme.playerBg;
+	const enemyBg = custom.enemyBg || theme.enemyBg;
+	const boardBg = custom.boardBg || theme.boardBg;
+	const fontColor = custom.font || theme.font;
+	const borderColor = custom.border || theme.border;
+
 	const dispatch = useDispatch();
 	const matchId =
 		useSelector(
