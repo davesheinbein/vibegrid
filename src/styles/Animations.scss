@@ -1,0 +1,131 @@
+@keyframes burn-flicker {
+	0% {
+		box-shadow: 0 0 0 3px #facc15, 0 0 8px 2px #facc15;
+	}
+
+	100% {
+		box-shadow: 0 0 0 4px #f59e42, 0 0 12px 4px #facc15;
+	}
+}
+
+@keyframes fadeInUp {
+	from {
+		opacity: 0;
+		transform: translateY(32px);
+	}
+	to {
+		opacity: 1;
+		transform: translateY(0);
+	}
+}
+
+@keyframes swirl {
+	0% {
+		transform: rotate(0deg);
+	}
+
+	100% {
+		transform: rotate(360deg);
+	}
+}
+
+@keyframes twinkle {
+	0% {
+		transform: scale(1);
+		opacity: 1;
+	}
+
+	100% {
+		transform: scale(1.5) translate(10px, -10px);
+		opacity: 0;
+	}
+}
+
+@keyframes bounce {
+	0%,
+	100% {
+		transform: rotate(45deg) scale(1.2);
+	}
+
+	50% {
+		transform: rotate(45deg) scale(1.4);
+	}
+}
+
+@keyframes bounce {
+	0%,
+	100% {
+		transform: rotate(45deg) scale(1.2);
+	}
+
+	50% {
+		transform: rotate(45deg) scale(1.4);
+	}
+}
+
+@keyframes badge-bounce {
+	0% {
+		transform: scale(0.7);
+	}
+	60% {
+		transform: scale(1.2);
+	}
+	100% {
+		transform: scale(1);
+	}
+}
+
+@keyframes chat-bounce-in {
+	0% {
+		transform: scale(0.85) translateY(12px);
+		opacity: 0.2;
+	}
+	80% {
+		transform: scale(1.05) translateY(-2px);
+		opacity: 1;
+	}
+	100% {
+		transform: scale(1) translateY(0);
+		opacity: 1;
+	}
+}
+
+@keyframes pulseBtn {
+	0% {
+		box-shadow: 0 0 0 0 #2563eb44;
+	}
+	70% {
+		box-shadow: 0 0 0 12px #2563eb11;
+	}
+	100% {
+		box-shadow: 0 0 0 0 #2563eb00;
+	}
+}
+
+@keyframes fadeInScale {
+	0% {
+		opacity: 0;
+		transform: scale(0.7);
+	}
+	100% {
+		opacity: 1;
+		transform: scale(1);
+	}
+}
+
+@keyframes gridRoyale-word-fly-to-solved {
+	0% {
+		opacity: 1;
+		transform: scale(1) translateY(0);
+	}
+
+	60% {
+		opacity: 1;
+		transform: scale(1.15) translateY(-18px);
+	}
+
+	100% {
+		opacity: 0;
+		transform: scale(0.7) translateY(-60px);
+	}
+}

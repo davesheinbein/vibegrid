@@ -70,16 +70,6 @@ const SystemStatus: React.FC = () => {
 		null
 	);
 
-	// Only allow admin
-	if (status === 'loading') return null;
-	if (!session || !(session.user as any)?.isAdmin) {
-		return (
-			<div style={{ padding: 40, color: 'red' }}>
-				Access denied. Admins only.
-			</div>
-		);
-	}
-
 	useEffect(() => {
 		runAllChecks();
 		let interval: any;
@@ -91,6 +81,16 @@ const SystemStatus: React.FC = () => {
 		}
 		return () => interval && clearInterval(interval);
 	}, [autoRefresh, refreshInterval]);
+
+	// Only allow admin (must be after hooks)
+	if (status === 'loading') return null;
+	if (!session || !(session.user as any)?.isAdmin) {
+		return (
+			<div style={{ padding: 40, color: 'red' }}>
+				Access denied. Admins only.
+			</div>
+		);
+	}
 
 	async function runAllChecks() {
 		const now = new Date().toLocaleTimeString();

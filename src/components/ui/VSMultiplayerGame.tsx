@@ -4,7 +4,6 @@ import React, {
 	useCallback,
 	useContext,
 } from 'react';
-import { useMultiplayer } from './MultiplayerProvider';
 import {
 	checkGroupValidity,
 	partialMatchFeedback,
@@ -19,8 +18,10 @@ import FeedbackBanner from './FeedbackBanner';
 import { Modal } from './Modal';
 import InMatchChatWindow from './InMatchChatWindow';
 import MatchChatWindow from './MatchChatWindow';
-import { useNotificationBanner } from './MultiplayerProvider';
 import { UserSettingsContext } from './UserSettingsProvider';
+import { useSelector, useDispatch } from 'react-redux';
+import { addMatchMessage } from '../../store/matchChatSlice';
+import { RootState } from '../../store';
 
 // Dummy puzzle for now; replace with actual puzzle from context/server
 const demoPuzzle = {
@@ -46,9 +47,34 @@ interface MatchChatMessage {
 
 // --- Multiplayer Game Logic and UI ---
 const VSMultiplayerGame: React.FC = () => {
-	const multiplayer = useMultiplayer();
 	const { settings } = useContext(UserSettingsContext);
-	const { notify } = useNotificationBanner();
+	const dispatch = useDispatch();
+	const matchId =
+		useSelector(
+			(state: RootState) => state.multiplayer.matchId
+		) || '';
+	const userId =
+		useSelector(
+			(state: RootState) =>
+				state.multiplayer.matchData?.userId
+		) || '';
+	const roomCode =
+		useSelector(
+			(state: RootState) => state.multiplayer.roomId
+		) || '';
+	const matchStarted = useSelector(
+		(state: RootState) => state.multiplayer.inMatch
+	);
+	const opponentUserId =
+		useSelector(
+			(state: RootState) =>
+				state.multiplayer.matchData?.opponentUserId
+		) || '';
+	const socket = useSelector(
+		(state: RootState) =>
+			state.multiplayer.matchData?.socket
+	);
+
 	const [selectedWords, setSelectedWords] = useState<
 		string[]
 	>([]);
@@ -81,18 +107,12 @@ const VSMultiplayerGame: React.FC = () => {
 	const [showInMatchChat, setShowInMatchChat] =
 		useState(false);
 	const [showChat, setShowChat] = useState(false);
-	const [chatMessages, setChatMessages] = useState<
-		MatchChatMessage[]
-	>([]);
-	const userId = multiplayer?.userId || '';
-	const matchId = multiplayer?.matchId || '';
 
 	// TODO: Replace with puzzle from server/context
 	const puzzle = demoPuzzle;
 
 	// In-match chat integration
-	const multiplayerOpponentId =
-		multiplayer.opponentUserId || '';
+	const multiplayerOpponentId = opponentUserId || '';
 
 	// Shuffle words on mount
 	useEffect(() => {
@@ -108,12 +128,22 @@ const VSMultiplayerGame: React.FC = () => {
 
 	// Socket event handlers
 	useEffect(() => {
-		if (!multiplayer.socket) return;
-		const socket = multiplayer.socket;
+		if (!socket) return;
+		const socketInstance = socket;
 		// Receive opponent progress
-		socket.on(
+		socketInstance.on(
 			'opponentProgress',
-			({ solved, attempts, finished, time }) => {
+			({
+				solved,
+				attempts,
+				finished,
+				time,
+			}: {
+				solved: number;
+				attempts: number;
+				finished: boolean;
+				time: number;
+			}) => {
 				setOpponentProgress((prev) => ({
 					...prev,
 					solved,
@@ -124,40 +154,48 @@ const VSMultiplayerGame: React.FC = () => {
 			}
 		);
 		// Receive match end
-		socket.on(
+		socketInstance.on(
 			'matchEnded',
-			({ winner, time, opponentTime }) => {
+			({
+				winner,
+				time,
+				opponentTime,
+			}: {
+				winner: string;
+				time: number;
+				opponentTime: number;
+			}) => {
 				setGameOver(true);
 				setShowResult(true);
 				setEndTime(Date.now());
-				if (winner === socket.id) setResult('win');
+				if (winner === socketInstance.id) setResult('win');
 				else if (winner === 'draw') setResult('draw');
 				else setResult('lose');
 			}
 		);
 		// Opponent disconnect
-		socket.on('playerDisconnected', () => {
+		socketInstance.on('playerDisconnected', () => {
 			setGameOver(true);
 			setShowResult(true);
 			setResult('win'); // You win by default
 			setFeedback('Opponent disconnected. You win!');
 		});
 		return () => {
-			socket.off('opponentProgress');
-			socket.off('matchEnded');
-			socket.off('playerDisconnected');
+			socketInstance.off('opponentProgress');
+			socketInstance.off('matchEnded');
+			socketInstance.off('playerDisconnected');
 		};
-	}, [multiplayer.socket]);
+	}, [socket]);
 
 	// Send progress to opponent
 	useEffect(() => {
-		if (!multiplayer.socket) return;
-		multiplayer.socket.emit('updateProgress', {
+		if (!socket) return;
+		socket.emit('updateProgress', {
 			solved: solvedGroups.length,
 			attempts: attemptsLeft,
 			finished: gameOver,
 			time: endTime ? endTime - startTime : 0,
-			roomCode: multiplayer.roomCode,
+			roomCode: roomCode,
 		});
 	}, [
 		solvedGroups.length,
@@ -165,7 +203,6 @@ const VSMultiplayerGame: React.FC = () => {
 		gameOver,
 		endTime,
 		startTime,
-		multiplayer,
 	]);
 
 	// Puzzle group size and count
@@ -176,51 +213,38 @@ const VSMultiplayerGame: React.FC = () => {
 	// Group solve notification
 	const handleGroupSolve = useCallback(
 		(groupLabel: string) => {
-			notify(
-				'system',
-				`🎉 You solved the '${groupLabel}' group!`
-			);
+			// Notify group solve
 		},
-		[notify]
+		[]
 	);
 
 	// Burn notification (example, add where burn logic is handled)
 	const handleBurn = useCallback(
 		(burnedWord: string, isWildcard: boolean) => {
-			if (isWildcard) {
-				notify(
-					'burn',
-					`🔥 Burned wildcard: ${burnedWord} (+Bonus, +1 Attempt)`
-				);
-			} else {
-				notify(
-					'burn',
-					`💀 Incorrect burn: ${burnedWord} (-1 Attempt)`
-				);
-			}
+			// Handle burn notification
 		},
-		[notify]
+		[]
 	);
 
 	// Milestone notification (e.g. final 2 attempts)
 	useEffect(() => {
 		if (attemptsLeft === 2 && !gameOver) {
-			notify('system', '⚔️ Final 2 attempts remaining!');
+			// Notify final 2 attempts
 		}
-	}, [attemptsLeft, gameOver, notify]);
+	}, [attemptsLeft, gameOver]);
 
 	// Victory/defeat notification
 	useEffect(() => {
 		if (gameOver) {
 			if (result === 'win') {
-				notify('achievement', '🏆 You won the match!');
+				// Notify victory
 			} else if (result === 'lose') {
-				notify('system', '💀 You lost the match.');
+				// Notify defeat
 			} else if (result === 'draw') {
-				notify('system', '🤝 Draw!');
+				// Notify draw
 			}
 		}
-	}, [gameOver, result, notify]);
+	}, [gameOver, result]);
 
 	// Achievement unlocks (if socket/achievement system is available)
 	// multiplayer.socket?.on('achievement:unlocked', (data) => {
@@ -255,8 +279,8 @@ const VSMultiplayerGame: React.FC = () => {
 				setEndTime(Date.now());
 				setShowResult(true);
 				setResult('win');
-				multiplayer.socket?.emit('playerWon', {
-					roomCode: multiplayer.roomCode,
+				socket?.emit('playerWon', {
+					roomCode: roomCode,
 					time: Date.now() - startTime,
 				});
 			}
@@ -278,8 +302,8 @@ const VSMultiplayerGame: React.FC = () => {
 				setEndTime(Date.now());
 				setShowResult(true);
 				setResult('lose');
-				multiplayer.socket?.emit('matchEnded', {
-					roomCode: multiplayer.roomCode,
+				socket?.emit('matchEnded', {
+					roomCode: roomCode,
 					winner: 'opponent',
 					time: Date.now() - startTime,
 				});
@@ -293,7 +317,6 @@ const VSMultiplayerGame: React.FC = () => {
 		groupCount,
 		attemptsLeft,
 		gameOver,
-		multiplayer,
 		startTime,
 	]);
 
@@ -332,31 +355,38 @@ const VSMultiplayerGame: React.FC = () => {
 
 	// Socket event: receive chat message
 	useEffect(() => {
-		if (!multiplayer?.socket) return;
-		const handler = (msg: MatchChatMessage) =>
-			setChatMessages((prev) => [...prev, msg]);
-		multiplayer.socket.on('match-chat', handler);
-		return () => {
-			multiplayer.socket?.off('match-chat', handler);
+		if (!socket) return;
+		const handler = (msg: MatchChatMessage) => {
+			dispatch(addMatchMessage({ matchId, message: msg }));
 		};
-	}, [multiplayer?.socket]);
+		socket.on('match-chat', handler);
+		return () => {
+			socket.off('match-chat', handler);
+		};
+	}, [socket, dispatch, matchId]);
 
-	const sendMessage = (
-		msg: Omit<MatchChatMessage, 'id' | 'timestamp'>
+	const handleSendMatchChat = (
+		content: string,
+		type: 'text' | 'emoji' | 'quickfire' = 'text'
 	) => {
-		const fullMsg: MatchChatMessage = {
-			...msg,
+		if (!content.trim()) return;
+		const msg = {
 			id: Math.random().toString(36).slice(2),
+			sender: userId,
+			content,
+			type,
 			timestamp: Date.now(),
 		};
-		if (multiplayer.socket) {
-			multiplayer.socket.emit('match-chat', {
-				...fullMsg,
-				matchId,
-			});
+		dispatch(addMatchMessage({ matchId, message: msg }));
+		if (socket) {
+			socket.emit('match-chat', { ...msg, matchId });
 		}
-		setChatMessages((prev) => [...prev, fullMsg]);
 	};
+
+	const matchChatMessages = useSelector(
+		(state: RootState) =>
+			state.matchChat.messages[matchId] || []
+	);
 
 	return (
 		<div
@@ -365,11 +395,10 @@ const VSMultiplayerGame: React.FC = () => {
 		>
 			<h2>VS Mode: Multiplayer Puzzle</h2>
 			<div style={{ margin: '18px 0' }}>
-				Room Code: <b>{multiplayer.roomCode}</b>
+				Room Code: <b>{roomCode}</b>
 			</div>
 			<div style={{ margin: '18px 0', color: '#2563eb' }}>
-				Match started:{' '}
-				{multiplayer.matchStarted ? 'Yes' : 'No'}
+				Match started: {matchStarted ? 'Yes' : 'No'}
 			</div>
 			<div
 				style={{
@@ -460,8 +489,8 @@ const VSMultiplayerGame: React.FC = () => {
 			</button>
 			{showInMatchChat && (
 				<InMatchChatWindow
-					matchId={multiplayer.roomCode || ''}
-					friendId={multiplayerOpponentId}
+					matchId={roomCode || ''}
+					friendId={opponentUserId}
 					onClose={() => setShowInMatchChat(false)}
 				/>
 			)}
@@ -476,8 +505,6 @@ const VSMultiplayerGame: React.FC = () => {
 				onClose={() => setShowChat(false)}
 				matchId={matchId}
 				userId={userId}
-				sendMessage={sendMessage}
-				messages={chatMessages}
 			/>
 		</div>
 	);

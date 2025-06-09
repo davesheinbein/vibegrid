@@ -1,10 +1,15 @@
 import React, {
-	useContext,
 	useEffect,
 	useRef,
 	useState,
+	useContext,
 } from 'react';
-import { useFriends } from './FriendsProvider';
+import { useSelector, useDispatch } from 'react-redux';
+import { RootState } from '../../store';
+import {
+	addMessage,
+	clearUnread,
+} from '../../store/friendsSlice';
 import {
 	UserSettingsContext,
 	filterProfanity,
@@ -19,52 +24,54 @@ interface InMatchChatWindowProps {
 const InMatchChatWindow: React.FC<
 	InMatchChatWindowProps
 > = ({ matchId, friendId, onClose }) => {
-	const {
-		chatHistory,
-		sendFriendMessage,
-		loadChatHistory,
-		clearUnread,
-	} = useFriends();
+	const dispatch = useDispatch();
+	const chatHistory = useSelector(
+		(state: RootState) => state.friends.chatHistory
+	);
 	const { settings } = useContext(UserSettingsContext);
 	const [message, setMessage] = useState('');
 	const messagesEndRef = useRef<HTMLDivElement>(null);
+	const chatKey = `${matchId}:${friendId}`;
 
 	useEffect(() => {
-		// For in-match chat, you may want to use a separate event/namespace
-		loadChatHistory(`${matchId}:${friendId}`);
-		clearUnread(`${matchId}:${friendId}`);
-	}, [matchId, friendId]);
+		dispatch(clearUnread(chatKey));
+	}, [chatKey, dispatch]);
 
 	useEffect(() => {
 		messagesEndRef.current?.scrollIntoView({
 			behavior: 'smooth',
 		});
-	}, [chatHistory[`${matchId}:${friendId}`]]);
+	}, [chatHistory[chatKey]]);
 
 	const handleSend = (e: React.FormEvent) => {
 		e.preventDefault();
 		if (message.trim()) {
-			// When sending a message, filter if enabled
-			const filteredContent =
-				settings.profanityFilter &&
-				filterProfanity(message.trim());
-			sendFriendMessage(
-				`${matchId}:${friendId}`,
-				filteredContent
+			const filteredContent = settings.profanityFilter
+				? filterProfanity(message.trim())
+				: message.trim();
+			const msg = {
+				id: Math.random().toString(36).slice(2),
+				senderId: 'me', // Replace with actual userId if available
+				message: filteredContent,
+				sentAt: new Date().toISOString(),
+				expiresAt: '',
+				groupId: undefined,
+				receiverId: friendId,
+				system: false,
+			};
+			dispatch(
+				addMessage({ chatId: chatKey, message: msg })
 			);
 			setMessage('');
 		}
 	};
 
-	// Filter incoming messages if profanityFilter is enabled
 	const filteredMessages = settings.profanityFilter
-		? (chatHistory[`${matchId}:${friendId}`] || []).map(
-				(msg) => ({
-					...msg,
-					message: filterProfanity(msg.message),
-				})
-		  )
-		: chatHistory[`${matchId}:${friendId}`] || [];
+		? (chatHistory[chatKey] || []).map((msg) => ({
+				...msg,
+				message: filterProfanity(msg.message),
+		  }))
+		: chatHistory[chatKey] || [];
 
 	if (!settings.chatEnabled) return null;
 
@@ -75,7 +82,7 @@ const InMatchChatWindow: React.FC<
 				<button onClick={onClose}>×</button>
 			</div>
 			<div className='inmatch-chat-messages'>
-				{filteredMessages.map((msg) => (
+				{filteredMessages.map((msg: any) => (
 					<div
 						key={msg.id}
 						className={`chat-message${

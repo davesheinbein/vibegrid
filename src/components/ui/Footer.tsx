@@ -6,7 +6,6 @@ import {
 	faXTwitter,
 	faAmazon,
 } from '@fortawesome/free-brands-svg-icons';
-import { DarkModeToggle } from './Buttons';
 
 const Footer: React.FC = () => {
 	return (
@@ -33,8 +32,6 @@ const Footer: React.FC = () => {
 			</div>
 			<div className='footer-right'>
 				<ul className='social-icons-footer'>
-					{/* dark/light mode */}
-					<DarkModeToggle />
 					<li>
 						<a
 							href='https://instagram.com'

@@ -1,10 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/router';
 import { SubmitButton } from '../components/ui/Buttons';
-import {
-	useMultiplayer,
-	notifyAchievement,
-} from '../components/ui/MultiplayerProvider';
 
 interface Achievement {
 	id: string;
@@ -16,7 +12,6 @@ interface Achievement {
 
 const AchievementsPage: React.FC = () => {
 	const router = useRouter();
-	const { addNotification, socket } = useMultiplayer();
 	const [userAchievements, setUserAchievements] = useState<
 		Record<string, boolean>
 	>({});
@@ -32,28 +27,7 @@ const AchievementsPage: React.FC = () => {
 	const [loading, setLoading] = useState(true);
 	const [resetting, setResetting] = useState(false);
 
-	// Listen for real-time achievement unlocks
-	useEffect(() => {
-		if (!socket) return;
-		const handler = (data: {
-			achievement: { label: string; id: string };
-		}) => {
-			setUserAchievements((prev) => ({
-				...prev,
-				[data.achievement.id]: true,
-			}));
-			setJustUnlocked(data.achievement.label);
-			notifyAchievement(
-				data.achievement.label,
-				addNotification
-			);
-			setTimeout(() => setJustUnlocked(null), 3200);
-		};
-		socket.on('achievement:unlocked', handler);
-		return () => {
-			socket.off('achievement:unlocked', handler);
-		};
-	}, [socket, addNotification]);
+	// TODO: Replace real-time achievement unlocks with Redux-based notification if needed
 
 	// Simulate earning an achievement (for demo/testing)
 	const handleEarn = (id: string, label: string) => {
@@ -63,7 +37,7 @@ const AchievementsPage: React.FC = () => {
 				[id]: true,
 			}));
 			setJustUnlocked(label);
-			notifyAchievement(label, addNotification);
+			// TODO: Replace with Redux-based notification
 			setTimeout(() => setJustUnlocked(null), 3200);
 		}
 	};

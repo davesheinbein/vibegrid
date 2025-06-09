@@ -1,5 +1,10 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { useFriends } from './FriendsProvider';
+import { useSelector, useDispatch } from 'react-redux';
+import { RootState } from '../../store';
+import {
+	addMessage,
+	clearUnread,
+} from '../../store/friendsSlice';
 
 interface FriendChatWindowProps {
 	chatId: string; // can be userId (DM) or groupId (group chat)
@@ -10,14 +15,16 @@ const FriendChatWindow: React.FC<FriendChatWindowProps> = ({
 	chatId,
 	onClose,
 }) => {
-	const {
-		chatHistory,
-		sendMessage,
-		loadChatHistory,
-		clearUnread,
-		friends,
-		groups,
-	} = useFriends();
+	const dispatch = useDispatch();
+	const chatHistory = useSelector(
+		(state: RootState) => state.friends.chatHistory
+	);
+	const friends = useSelector(
+		(state: RootState) => state.friends.friends
+	);
+	const groups = useSelector(
+		(state: RootState) => state.friends.groups
+	);
 	const [message, setMessage] = useState('');
 	const messagesEndRef = useRef<HTMLDivElement>(null);
 
@@ -28,9 +35,8 @@ const FriendChatWindow: React.FC<FriendChatWindowProps> = ({
 		: undefined;
 
 	useEffect(() => {
-		loadChatHistory(chatId);
-		clearUnread(chatId);
-	}, [chatId]);
+		dispatch(clearUnread(chatId));
+	}, [chatId, dispatch]);
 
 	useEffect(() => {
 		messagesEndRef.current?.scrollIntoView({
@@ -41,7 +47,16 @@ const FriendChatWindow: React.FC<FriendChatWindowProps> = ({
 	const handleSend = (e: React.FormEvent) => {
 		e.preventDefault();
 		if (message.trim()) {
-			sendMessage(chatId, message);
+			const msg = {
+				id: Math.random().toString(36).slice(2),
+				senderId: 'me', // Replace with actual userId if available
+				message: message.trim(),
+				sentAt: new Date().toISOString(),
+				expiresAt: '',
+				groupId: isGroup ? chatId : undefined,
+				receiverId: isGroup ? undefined : chatId,
+			};
+			dispatch(addMessage({ chatId, message: msg }));
 			setMessage('');
 		}
 	};
@@ -79,7 +94,7 @@ const FriendChatWindow: React.FC<FriendChatWindowProps> = ({
 				</button>
 			</div>
 			<div className='friend-chat-messages'>
-				{messages.map((msg) => (
+				{messages.map((msg: any) => (
 					<div
 						key={msg.id}
 						className={`friend-chat-message${

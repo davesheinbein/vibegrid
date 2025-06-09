@@ -414,22 +414,37 @@ body.dark-mode .word-btn.selected {
 .startup-btn-daily {
 	background: #2563eb; /* blue */
 	color: #fff;
+	&:hover {
+		background: #3b82f6; /* lighter blue */
+	}
 }
 .startup-btn-vs {
 	background: #f43f5e; /* vibrant red/pink */
 	color: #fff;
+	&:hover {
+		background: #ef4444; /* darker red */
+	}
 }
 .startup-btn-custom {
 	background: #fbbf24; /* yellow */
 	color: #222;
+	&:hover {
+		background: #fde047; /* lighter yellow */
+	}
 }
 .startup-btn-browse {
 	background: #38bdf8; /* cyan */
 	color: #003087;
+	&:hover {
+		background: #0ea5e9; /* darker cyan */
+	}
 }
 .startup-btn-shop {
 	background: #10b981; /* teal/green */
 	color: #fff;
+	&:hover {
+		background: #059669; /* darker teal */
+	}
 }
 .startup-btn-customization {
 	background: #a78bfa; /* purple */
@@ -438,10 +453,16 @@ body.dark-mode .word-btn.selected {
 .startup-btn-achievements {
 	background: #f59e42; /* orange */
 	color: #fff;
+	&:hover {
+		background: #f97316; /* darker orange */
+	}
 }
 .startup-share-btn {
 	background: #e1306c; /* magenta/instagram */
 	color: #fff;
+	&:hover {
+		background: #c13584; /* darker magenta */
+	}
 }
 
 // --- StartupPage Main Menu Buttons: Consistent Width ---
@@ -481,21 +502,4 @@ body.dark-mode .word-btn.selected {
 .startup-btn-achievements,
 .startup-share-btn {
 	margin: 0;
-}
-
-@keyframes gridRoyale-word-fly-to-solved {
-	0% {
-		opacity: 1;
-		transform: scale(1) translateY(0);
-	}
-
-	60% {
-		opacity: 1;
-		transform: scale(1.15) translateY(-18px);
-	}
-
-	100% {
-		opacity: 0;
-		transform: scale(0.7) translateY(-60px);
-	}
 }

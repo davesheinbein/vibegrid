@@ -1,5 +1,14 @@
-import React, { useEffect, useContext } from 'react';
-import { UserSettingsContext } from './UserSettingsProvider';
+import React from 'react';
+import { useSelector, useDispatch } from 'react-redux';
+import { RootState } from '../../store';
+import { removeNotification } from '../../store/notificationsSlice';
+
+const typeColors: Record<NotificationType, string> = {
+	burn: '#ff7043', // orange/red
+	achievement: '#ffd700', // gold
+	system: '#2196f3', // blue
+	taunt: '#a259f7', // purple
+};
 
 export type NotificationType =
 	| 'burn'
@@ -14,23 +23,26 @@ interface NotificationBannerProps {
 	index: number;
 }
 
-const typeColors: Record<NotificationType, string> = {
-	burn: '#ff7043', // orange/red
-	achievement: '#ffd700', // gold
-	system: '#2196f3', // blue
-	taunt: '#a259f7', // purple
-};
-
 const NotificationBanner: React.FC<
 	NotificationBannerProps
 > = ({ type, message, onClose, index }) => {
-	const { settings } = useContext(UserSettingsContext);
-	if (!settings.notificationsEnabled) return null;
+	const settings = useSelector(
+		(state: RootState) => state.customization.settings
+	); // Or wherever notification settings live
+	const dispatch = useDispatch();
 
-	useEffect(() => {
-		const timer = setTimeout(onClose, 2500);
+	React.useEffect(() => {
+		if (settings && settings.notificationsEnabled === false)
+			return;
+		const timer = setTimeout(() => {
+			dispatch(removeNotification(message));
+			onClose();
+		}, 2500);
 		return () => clearTimeout(timer);
-	}, [onClose]);
+	}, [onClose, settings, dispatch, message]);
+
+	if (settings && settings.notificationsEnabled === false)
+		return null;
 
 	return (
 		<div
@@ -54,7 +66,10 @@ const NotificationBanner: React.FC<
 				pointerEvents: 'auto',
 				cursor: 'pointer',
 			}}
-			onClick={onClose}
+			onClick={() => {
+				dispatch(removeNotification(message));
+				onClose();
+			}}
 			aria-live='polite'
 		>
 			{message}

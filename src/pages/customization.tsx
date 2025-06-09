@@ -1,51 +1,25 @@
 import React from 'react';
 import { useRouter } from 'next/router';
+import { useSelector, useDispatch } from 'react-redux';
+import { RootState } from '../store';
+import { equipItem } from '../store/customizationSlice';
+import { themes } from '../components/ThemeSelector';
+import { GoBackButton } from '../components/ui/Buttons';
 
-// Placeholder for user's owned and equipped items
-const sampleInventory = [
-	{
-		id: 'theme1',
-		type: 'theme',
-		name: 'Oceanic',
-		equipped: true,
-	},
-	{
-		id: 'theme2',
-		type: 'theme',
-		name: 'Sunset',
-		equipped: false,
-	},
-	{
-		id: 'emoji1',
-		type: 'emoji',
-		name: 'Party Parrot',
-		equipped: false,
-	},
-	{
-		id: 'font1',
-		type: 'font',
-		name: 'Comic Sans',
-		equipped: false,
-	},
-];
+const getThemeConfig = (themeName: string) =>
+	themes.find(
+		(t) => t.label.toLowerCase() === themeName.toLowerCase()
+	) || themes[0];
 
 const CustomizationPage: React.FC = () => {
 	const router = useRouter();
-	// In a real app, fetch inventory and equipped items from backend
-	const [inventory, setInventory] =
-		React.useState(sampleInventory);
+	const inventory = useSelector(
+		(state: RootState) => state.customization
+	);
+	const dispatch = useDispatch();
 
 	const handleEquip = (itemId: string) => {
-		setInventory((inv) =>
-			inv.map((item) =>
-				item.id === itemId
-					? { ...item, equipped: true }
-					: item.type ===
-					  inv.find((i) => i.id === itemId)?.type
-					? { ...item, equipped: false }
-					: item
-			)
-		);
+		dispatch(equipItem(itemId));
 		// TODO: Call backend to equip item
 	};
 
@@ -57,8 +31,19 @@ const CustomizationPage: React.FC = () => {
 				padding: 24,
 				maxWidth: 600,
 				margin: '0 auto',
+				position: 'relative',
 			}}
 		>
+			<GoBackButton
+				onClick={() => router.back()}
+				style={{
+					position: 'absolute',
+					top: 16,
+					left: 16,
+					zIndex: 10,
+				}}
+				label=''
+			/>
 			<h1
 				style={{
 					fontSize: '2rem',
@@ -80,125 +65,135 @@ const CustomizationPage: React.FC = () => {
 				View and equip your unlocked themes, fonts, and
 				emoji packs. More coming soon!
 			</p>
-			<div
-				style={{
-					display: 'flex',
-					flexDirection: 'column',
-					gap: 32,
-				}}
-			>
-				{['theme', 'font', 'emoji'].map((type) => (
-					<div key={type}>
-						<h2
-							style={{
-								fontSize: 20,
-								marginBottom: 10,
-								color: '#2563eb',
-								fontWeight: 700,
-								letterSpacing: 0.5,
-							}}
-						>
-							{type === 'theme' && '🎨 '}
-							{type === 'font' && '🔤 '}
-							{type === 'emoji' && '😃 '}
-							{type.charAt(0).toUpperCase() + type.slice(1)}
-							s
-						</h2>
-						<div
-							style={{
-								display: 'flex',
-								gap: 18,
-								flexWrap: 'wrap',
-							}}
-						>
-							{inventory.filter(
-								(item) => item.type === type
-							).length === 0 ? (
-								<span style={{ color: '#94a3b8' }}>
-									No {type}s unlocked yet.
-								</span>
-							) : (
-								inventory
-									.filter((item) => item.type === type)
-									.map((item) => (
+
+			{['theme', 'emoji', 'font'].map((type) => (
+				<div key={type}>
+					<div
+						style={{
+							display: 'flex',
+							gap: 16,
+							flexWrap: 'wrap',
+						}}
+					>
+						{inventory
+							.filter((item) => item.type === type)
+							.map((item) => {
+								const themeCfg =
+									type === 'theme'
+										? getThemeConfig(item.name)
+										: null;
+								return (
+									<div
+										key={item.id}
+										style={{
+											border: item.equipped
+												? '2.5px solid #38bdf8'
+												: '1.5px solid #e0e7ef',
+											borderRadius: 14,
+											padding: 16,
+											minWidth: 120,
+											textAlign: 'center',
+											background: item.equipped
+												? '#e0f7fa'
+												: '#fff',
+											boxShadow: item.equipped
+												? '0 0 16px 2px #38bdf855'
+												: '0 1px 4px 0 #e3eaff33',
+											transition:
+												'box-shadow 0.22s, border 0.22s, background 0.22s',
+										}}
+									>
 										<div
-											key={item.id}
 											style={{
-												border: item.equipped
-													? '2.5px solid #38bdf8'
-													: '2px solid #e0e7ef',
-												borderRadius: 12,
-												padding: '16px 22px',
-												background: item.equipped
-													? 'linear-gradient(90deg,#a7f3d0 0%,#fde68a 100%)'
-													: '#f8fafc',
-												color: item.equipped
-													? '#2563eb'
-													: '#222',
 												fontWeight: 600,
-												fontSize: 18,
-												boxShadow: item.equipped
-													? '0 2px 12px 0 #bae6fd'
-													: '0 1px 4px 0 #e0e7ef',
-												cursor: item.equipped
-													? 'default'
-													: 'pointer',
-												opacity: item.equipped ? 1 : 0.92,
-												transition: 'all 0.18s',
-												minWidth: 120,
-												textAlign: 'center',
-												position: 'relative',
-												outline: item.equipped
-													? '2px solid #38bdf8'
-													: undefined,
-											}}
-											onClick={() =>
-												!item.equipped &&
-												handleEquip(item.id)
-											}
-											aria-pressed={item.equipped}
-											tabIndex={0}
-											onKeyDown={(e) => {
-												if (
-													!item.equipped &&
-													(e.key === 'Enter' ||
-														e.key === ' ')
-												) {
-													handleEquip(item.id);
-												}
+												marginBottom: 8,
 											}}
 										>
 											{item.name}
-											{item.equipped && (
-												<span
-													style={{
-														position: 'absolute',
-														top: 8,
-														right: 10,
-														fontSize: 18,
-														color: '#38bdf8',
-													}}
-													aria-label='Equipped'
-												>
-													✓
-												</span>
-											)}
 										</div>
-									))
-							)}
-						</div>
+										{/* Theme swatch preview for themes only */}
+										{type === 'theme' && themeCfg && (
+											<label
+												className='container'
+												style={{
+													margin: '0 auto 12px auto',
+													display: 'block',
+													width: 54,
+													height: 54,
+													borderRadius: 16,
+													cursor: item.equipped
+														? 'default'
+														: 'pointer',
+												}}
+												aria-label={`Preview ${themeCfg.label} theme`}
+											>
+												<input
+													type='radio'
+													name='theme-swatch'
+													checked={item.equipped}
+													onChange={() =>
+														handleEquip(item.id)
+													}
+													style={{ display: 'none' }}
+													disabled={item.equipped}
+												/>
+												<span className='checkbox-wrapper'>
+													<span
+														className='checkmark'
+														style={{
+															background:
+																themeCfg.swatchType ===
+																'gradient'
+																	? themeCfg.bg
+																	: themeCfg.color,
+															borderColor: item.equipped
+																? themeCfg.color
+																: '#4b5eaa',
+															borderRadius: item.equipped
+																? '50%'
+																: '8px',
+															boxShadow: item.equipped
+																? `0 0 8px 2px ${themeCfg.color}99`
+																: '0 0 8px rgba(75, 94, 170, 0.3)',
+															transition:
+																'background 0.4s, border-color 0.3s, border-radius 0.3s',
+														}}
+													></span>
+													<span className='nebula-glow'></span>
+													<span className='sparkle-container'></span>
+												</span>
+											</label>
+										)}
+										{/* Add emoji/font preview here if needed */}
+										<button
+											onClick={() => handleEquip(item.id)}
+											style={{
+												background: item.equipped
+													? '#38bdf8'
+													: '#fbbf24',
+												color: item.equipped
+													? '#fff'
+													: '#222',
+												border: 'none',
+												borderRadius: 8,
+												padding: '6px 18px',
+												fontWeight: 600,
+												cursor: item.equipped
+													? 'default'
+													: 'pointer',
+												opacity: item.equipped ? 0.7 : 1,
+												marginTop: 10,
+											}}
+											disabled={item.equipped}
+										>
+											{item.equipped ? 'Equipped' : 'Equip'}
+										</button>
+									</div>
+								);
+							})}
 					</div>
-				))}
-			</div>
-			<div style={{ marginTop: 36, textAlign: 'center' }}>
-				<button
-					className='gridRoyale-submit'
-					style={{ width: 180 }}
-					onClick={() => router.push('/')}
-				>
-					Back to Home
-				</button>
-			</div>
+				</div>
+			))}
 		</div>
 	);
 };

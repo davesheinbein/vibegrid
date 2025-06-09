@@ -4,8 +4,9 @@ import GoogleProvider from 'next-auth/providers/google';
 export default NextAuth({
 	providers: [
 		GoogleProvider({
-			clientId: process.env.GOOGLE_CLIENT_ID,
-			clientSecret: process.env.GOOGLE_CLIENT_SECRET,
+			clientId: process.env.GOOGLE_CLIENT_ID as string,
+			clientSecret: process.env
+				.GOOGLE_CLIENT_SECRET as string,
 		}),
 	],
 	session: {
@@ -14,18 +15,21 @@ export default NextAuth({
 	callbacks: {
 		async jwt({ token, account, profile }) {
 			if (account && profile) {
-				token.id = profile.sub;
+				token.id = (profile as any).sub;
 				token.email = profile.email;
 				token.name = profile.name;
-				token.picture = profile.picture;
+				token.picture = (profile as any).picture;
 			}
 			return token;
 		},
 		async session({ session, token }) {
-			session.user.id = token.id;
-			session.user.email = token.email;
-			session.user.name = token.name;
-			session.user.image = token.picture;
+			if (session.user) {
+				session.user.name = token.name as string;
+				session.user.email = token.email as string;
+				session.user.image = token.picture as string;
+				// Add id as a custom property
+				(session.user as any).id = token.id;
+			}
 			return session;
 		},
 	},

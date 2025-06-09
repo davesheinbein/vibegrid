@@ -28,6 +28,19 @@ const StatisticsModal: React.FC<StatisticsModalProps> = ({
 	setUser,
 	dailyCompleted,
 }) => {
+	const mockStats = {
+		completed: 58,
+		winPercentage: 78,
+		currentStreak: 0,
+		maxStreak: 5,
+		perfectPuzzles: 20,
+		purpleFirst: 6,
+		mistakeDistribution: [20, 11, 3, 11, 13], // 0-4 mistakes
+	};
+	const histogramMax = Math.max(
+		...mockStats.mistakeDistribution
+	);
+
 	if (!open) return null;
 	let content;
 	if (!user) {
@@ -35,96 +48,153 @@ const StatisticsModal: React.FC<StatisticsModalProps> = ({
 			<div
 				className='xwd__modal--body modal-stats-body animate-opening stats-modal-signin-body'
 				tabIndex={0}
+				style={{ textAlign: 'center', padding: 32 }}
 			>
-				<article className='xwd__modal--content modal-stats-content stats-modal-signin-content'>
-					<div className='stats-modal-lottie-container'>
-						<DotLottieReact
-							src='https://lottie.host/8594b998-44b5-4401-bf10-cba5b54c9716/KUen1nqUtU.lottie'
-							loop
-							autoplay
-							className='stats-modal-signin-icon'
-						/>
-					</div>
-					<h2 className='stats-modal-signin-title'>
-						Sign in to view your stats
-					</h2>
-					<p className='modal-stats-message stats-modal-signin-message'>
-						Sign in to see your statistics and leaderboard
-						placement.
-					</p>
-				</article>
+				<h2 className='modal-system-header'>Statistics</h2>
+				<p style={{ color: '#64748b', fontWeight: 500 }}>
+					Sign in to see your stats!
+				</p>
 			</div>
 		);
 	} else if (!dailyCompleted) {
 		content = (
-			<div className='modal-stats-incomplete'>
-				<h2>Complete the Daily Mission</h2>
-				<p className='modal-stats-desc'>
-					You must finish today's daily puzzle to view your
-					statistics and leaderboard placement.
+			<div
+				className='xwd__modal--body modal-stats-body animate-opening stats-modal-incomplete-body'
+				tabIndex={0}
+				style={{ textAlign: 'center', padding: 32 }}
+			>
+				<h2 className='modal-system-header'>Statistics</h2>
+				<p style={{ color: '#64748b', fontWeight: 500 }}>
+					Complete a daily puzzle to see your stats!
 				</p>
-				<SubmitButton
-					onClick={onClose}
-					className='modal-stats-ok-btn'
-				>
-					OK
-				</SubmitButton>
 			</div>
 		);
 	} else {
 		content = (
-			<div className='modal-stats-complete'>
-				<h2>Your Grid Royale Stats</h2>
-				<div className='modal-stats-summary'>
-					Games Played: 12
-					<br />
-					Win Rate: 75%
-					<br />
-					Avg. Score: 82
-					<br />
-					Best Streak: 5
+			<article className='xwd__modal--content'>
+				<div className='Stats-module_stats_container__ZcJgI'>
+					<h2
+						data-testid='conn-modal__title'
+						className='modal-system-header'
+					>
+						Statistics
+					</h2>
+					<div className='connections-lifetime-stats Stats-module_stats__Oq7rS'>
+						<div
+							className='Stat-module_stats__row__xnktL'
+							data-testid='stats__row'
+						>
+							<div
+								data-testid='stat-completed'
+								id='stat__completed'
+								className='Stat-module_stat__xk7C1'
+							>
+								<div>{mockStats.completed}</div>
+								<div className='Stat-module_stat__label__Q5EYk'>
+									Completed
+								</div>
+							</div>
+							<div
+								data-testid='stat-win_percentage'
+								id='stat__win_percentage'
+								className='Stat-module_stat__xk7C1'
+							>
+								<div>{mockStats.winPercentage}</div>
+								<div className='Stat-module_stat__label__Q5EYk'>
+									Win %
+								</div>
+							</div>
+							<div
+								data-testid='stat-current_streak'
+								id='stat__current_streak'
+								className='Stat-module_stat__xk7C1'
+							>
+								<div>{mockStats.currentStreak}</div>
+								<div className='Stat-module_stat__label__Q5EYk'>
+									Current Streak
+								</div>
+							</div>
+							<div
+								data-testid='stat-max_streak'
+								id='stat__max_streak'
+								className='Stat-module_stat__xk7C1'
+							>
+								<div>{mockStats.maxStreak}</div>
+								<div className='Stat-module_stat__label__Q5EYk'>
+									Max Streak
+								</div>
+							</div>
+						</div>
+						<div
+							className='Stat-module_stats__row__xnktL'
+							data-testid='stats__row'
+						>
+							<div
+								data-testid='stat-perfect_puzzles'
+								id='stat__perfect_puzzles'
+								className='Stat-module_stat__xk7C1'
+							>
+								<div>{mockStats.perfectPuzzles}</div>
+								<div className='Stat-module_stat__label__Q5EYk'>
+									Perfect Puzzles
+								</div>
+							</div>
+							<div
+								data-testid='stat-purple_first_puzzles'
+								id='stat__purple_first_puzzles'
+								className='Stat-module_stat__xk7C1'
+							>
+								<div>{mockStats.purpleFirst}</div>
+								<div className='Stat-module_stat__label__Q5EYk'>
+									Purple First
+								</div>
+							</div>
+						</div>
+					</div>
+					<div className='Stats-module_mistakes__dA1vb'>
+						<h3>MISTAKE DISTRIBUTION</h3>
+						<div className='Stats-module_histogram_container__grXlP'>
+							{mockStats.mistakeDistribution.map(
+								(val, i) => (
+									<div
+										className='Stats-module_histogram_row__jE8b_'
+										data-testid='stats__histogram_row'
+										key={i}
+									>
+										<p>{i}</p>
+										<div
+											className='Stats-module_histogram_bar___Mxj8'
+											data-testid='stats__histogram_bar'
+											style={{
+												width: `${Math.round(
+													(val / histogramMax) * 100
+												)}%`,
+											}}
+										>
+											{val}
+										</div>
+									</div>
+								)
+							)}
+						</div>
+					</div>
+					<a
+						href='https://help.nytimes.com/hc/en-us/articles/28525912587924-Connections'
+						className='Stats-module_faq__hcRQo'
+						target='_blank'
+						rel='noreferrer'
+					>
+						Having questions about stats? Visit our Help
+						Center
+						<div className='Stats-module_inline_carrot__icon__G2cbk dark_inline_carrot__icon'></div>
+					</a>
 				</div>
-				<h3 className='modal-stats-leaderboard-title'>
-					Leaderboard
-				</h3>
-				<table className='modal-stats-leaderboard-table'>
-					<thead>
-						<tr className='modal-stats-leaderboard-header'>
-							<th className='modal-stats-leaderboard-th'>
-								Rank
-							</th>
-							<th className='modal-stats-leaderboard-th'>
-								Name
-							</th>
-							<th className='modal-stats-leaderboard-th'>
-								Score
-							</th>
-						</tr>
-					</thead>
-					<tbody>
-						<tr className='modal-stats-leaderboard-row'>
-							<td>1</td>
-							<td>Alice</td>
-							<td>98</td>
-						</tr>
-						<tr className='modal-stats-leaderboard-row'>
-							<td>2</td>
-							<td>Bob</td>
-							<td>91</td>
-						</tr>
-						<tr className='modal-stats-leaderboard-row modal-stats-leaderboard-row--you'>
-							<td>3</td>
-							<td>{user.name || 'You'}</td>
-							<td>82</td>
-						</tr>
-					</tbody>
-				</table>
-			</div>
+			</article>
 		);
 	}
 	return (
 		<Modal open={open} onClose={onClose}>
-			<div className='modal-stats-modal'>{content}</div>
+			{content}
 		</Modal>
 	);
 };

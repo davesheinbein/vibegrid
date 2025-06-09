@@ -1,7 +1,7 @@
 import React, {
-	useState,
 	useEffect,
 	useContext,
+	useState,
 } from 'react';
 import { useRouter } from 'next/router';
 import {
@@ -27,7 +27,11 @@ import EndGameModal from '../components/modal/EndGameModal';
 import RulesModal from '../components/modal/RulesModal';
 import StatisticsModal from '../components/modal/StatisticsModal';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faChartBar } from '@fortawesome/free-solid-svg-icons';
+import {
+	faChartBar,
+	faInfo,
+	faInfoCircle,
+} from '@fortawesome/free-solid-svg-icons';
 import {
 	faXTwitter,
 	faMeta,
@@ -38,26 +42,42 @@ import {
 } from '@fortawesome/free-brands-svg-icons';
 import { faShareAlt } from '@fortawesome/free-solid-svg-icons';
 import { Modal } from '../components/ui/Modal';
-import { useNotificationBanner } from '../components/ui/MultiplayerProvider';
 import { UserSettingsContext } from '../components/ui/UserSettingsProvider';
+import { useSelector, useDispatch } from 'react-redux';
+import { RootState } from '../store';
+import {
+	setSelectedWords,
+	setLockedWords,
+	setFeedback,
+	setAttempts,
+	setSolvedGroups,
+	setCurrentGroup,
+	setIsSolved,
+} from '../store/gameSlice';
 
 interface DailyPageProps {
 	onBack?: () => void;
 }
 
 export default function Daily(props: DailyPageProps) {
-	const [selectedWords, setSelectedWords] = useState<
-		string[]
-	>([]);
-	const [lockedWords, setLockedWords] = useState<string[]>(
-		[]
+	const dispatch = useDispatch();
+	const selectedWords = useSelector(
+		(state: RootState) => state.game.selectedWords
 	);
-	const [feedback, setFeedback] = useState('');
-	const [attemptsLeft, setAttemptsLeft] = useState(4);
-	const [gameOver, setGameOver] = useState(false);
-	const [solvedGroups, setSolvedGroups] = useState<
-		string[][]
-	>([]);
+	const lockedWords = useSelector(
+		(state: RootState) => state.game.lockedWords
+	);
+	const feedback = useSelector(
+		(state: RootState) => state.game.feedback
+	);
+	const attemptsLeft = useSelector(
+		(state: RootState) => state.game.attempts
+	);
+	const solvedGroups = useSelector(
+		(state: RootState) => state.game.solvedGroups
+	);
+	const gameOver =
+		attemptsLeft === 0 || solvedGroups.length > 0;
 	const [showRules, setShowRules] = useState(false);
 	const [showStats, setShowStats] = useState(false);
 	const [shake, setShake] = useState(false);
@@ -80,8 +100,10 @@ export default function Daily(props: DailyPageProps) {
 	} | null>(null);
 	const [showGameOverBanner, setShowGameOverBanner] =
 		useState(false);
+	const [finishTime, setFinishTime] = useState<
+		number | null
+	>(null);
 
-	const { notify } = useNotificationBanner();
 	const { settings } = useContext(UserSettingsContext);
 	const router = useRouter();
 
@@ -120,12 +142,11 @@ export default function Daily(props: DailyPageProps) {
 				)
 			)
 		);
-		setSelectedWords([]);
-		setLockedWords([]);
-		setFeedback('');
-		setAttemptsLeft(4);
-		setGameOver(false);
-		setSolvedGroups([]);
+		dispatch(setSelectedWords([]));
+		dispatch(setLockedWords([]));
+		dispatch(setFeedback(''));
+		dispatch(setAttempts(4));
+		dispatch(setSolvedGroups([]));
 		setBurnSuspect(null);
 		setBurnedWildcards([]);
 		setBurnBonus(0);
@@ -171,18 +192,14 @@ export default function Daily(props: DailyPageProps) {
 		if (isWildcard(burnSuspect)) {
 			const newBurned = [...burnedWildcards, burnSuspect];
 			setBurnedWildcards(newBurned);
-			setLockedWords((prev) => [...prev, burnSuspect]);
+			dispatch(
+				setLockedWords((prev) => [...prev, burnSuspect])
+			);
 			setBurnBonus(
 				(prev) => prev + (attemptsLeft >= 2 ? 10 : 5)
 			);
-			setAttemptsLeft((prev) => prev + 1); // Always increment by 1 for each wildcard burn
+			dispatch(setAttempts((prev) => prev + 1)); // Always increment by 1 for each wildcard burn
 			setFeedback('🔥 Correct burn! Bonus awarded!');
-			notify(
-				'burn',
-				`🔥 Burned wildcard: ${burnSuspect} (+${
-					attemptsLeft >= 2 ? 10 : 5
-				} Bonus, +1 Attempt)`
-			);
 			// Optionally: emit chat/taunt here
 			// socket.emit('match:chat', { matchId, message: '🔥 Burned a wildcard!', type: 'emoji' });
 			if (
@@ -195,23 +212,15 @@ export default function Daily(props: DailyPageProps) {
 				setFeedback(
 					'🔥 All wildcards burned! Extra attempt awarded!'
 				);
-				notify(
-					'burn',
-					'🔥 All wildcards burned! Extra attempt awarded!'
-				);
 			}
 		} else {
-			setAttemptsLeft((prev) => prev - 1);
+			dispatch(setAttempts((prev) => prev - 1));
 			setFeedback(
 				'❌ That word belongs to a group! Penalty.'
 			);
-			notify(
-				'burn',
-				`💀 Incorrect burn: ${burnSuspect} (-1 Attempt)`
-			);
 		}
 		setBurnSuspect(null);
-		setSelectedWords([]);
+		dispatch(setSelectedWords([]));
 	};
 
 	const handleWordTap = (word: string) => {
@@ -221,14 +230,16 @@ export default function Daily(props: DailyPageProps) {
 			return;
 		}
 		if (selectedWords.includes(word)) {
-			setSelectedWords((prev) =>
-				prev.filter((w) => w !== word)
+			dispatch(
+				setSelectedWords((prev) =>
+					prev.filter((w) => w !== word)
+				)
 			);
 			setBurnSuspect(word);
 		} else if (burnSuspect) {
 			setBurnSuspect(word);
 		} else if (selectedWords.length < groupSize) {
-			setSelectedWords((prev) => [...prev, word]);
+			dispatch(setSelectedWords((prev) => [...prev, word]));
 		}
 	};
 
@@ -257,19 +268,22 @@ export default function Daily(props: DailyPageProps) {
 				g.every((word) => groupMatch.includes(word))
 			)
 		) {
-			setLockedWords((prev) => [...prev, ...selectedWords]);
-			setSolvedGroups((prev) => [...prev, groupMatch]);
-			setFeedback('Group locked in!');
-			notify(
-				'system',
-				`🎉 Solved the '${groupMatch}' group!`
+			dispatch(
+				setLockedWords((prev) => [
+					...prev,
+					...selectedWords,
+				])
 			);
-			setSelectedWords([]);
+			dispatch(
+				setSolvedGroups((prev) => [...prev, groupMatch])
+			);
+			setFeedback('Group locked in!');
+			dispatch(setSelectedWords([]));
 		} else if (groupMatch) {
 			setFeedback('This group is already solved.');
-			setSelectedWords([]);
+			dispatch(setSelectedWords([]));
 		} else {
-			setAttemptsLeft((prev) => prev - 1);
+			dispatch(setAttempts((prev) => prev - 1));
 			setFeedback(
 				partialMatchFeedback(
 					selectedWords,
@@ -282,17 +296,16 @@ export default function Daily(props: DailyPageProps) {
 			);
 			setShake(true);
 			setTimeout(() => setShake(false), 500);
-			setSelectedWords([]);
+			dispatch(setSelectedWords([]));
 		}
 	};
 
 	const handleRestart = () => {
-		setSelectedWords([]);
-		setLockedWords([]);
-		setFeedback('');
-		setAttemptsLeft(4);
-		setGameOver(false);
-		setSolvedGroups([]);
+		dispatch(setSelectedWords([]));
+		dispatch(setLockedWords([]));
+		dispatch(setFeedback(''));
+		dispatch(setAttempts(4));
+		dispatch(setSolvedGroups([]));
 	};
 
 	const handleRandomize = () => {
@@ -334,6 +347,13 @@ export default function Daily(props: DailyPageProps) {
 		return base + burnBonus + attemptsBonus;
 	};
 
+	// Format timer MM:SS
+	const formatTimer = (t: number) => {
+		const mm = String(Math.floor(t / 60)).padStart(2, '0');
+		const ss = String(t % 60).padStart(2, '0');
+		return `${mm}:${ss}`;
+	};
+
 	const getShareText = () => {
 		const solved = solvedGroups.length;
 		const attempts = 4 - attemptsLeft;
@@ -341,7 +361,11 @@ export default function Daily(props: DailyPageProps) {
 		const total = gridWordCount;
 		const score = getFinalScore();
 		const url = getShareUrl();
-		return `I scored ${score} in ${solved}/${groupCount} groups solved in ${attempts} attempts! on Grid Royale!\nCan you beat my score? Try the daily puzzle:\n${url}`;
+		let timeStr = '';
+		if (finishTime !== null) {
+			timeStr = ` in ${formatTimer(finishTime)}`;
+		}
+		return `I scored ${score} in ${solved}/${groupCount} groups solved in ${attempts} attempts${timeStr}! on Grid Royale!\nCan you beat my score? Try the daily puzzle:\n${url}`;
 	};
 	const getShareUrl = () => 'https://gridRoyale.app';
 	const getShareTitle = () =>
@@ -396,11 +420,11 @@ export default function Daily(props: DailyPageProps) {
 	useEffect(() => {
 		if (!gameOver) {
 			if (allGroupsSolved()) {
-				setGameOver(true);
+				dispatch(setIsSolved(true));
 				setShowGameOverBanner(false);
 				setEndTime(Date.now());
 			} else if (attemptsLeft === 0) {
-				setGameOver(true);
+				dispatch(setIsSolved(false));
 				setShowGameOverBanner(true);
 				setEndTime(Date.now());
 			}
@@ -427,6 +451,7 @@ export default function Daily(props: DailyPageProps) {
 	const [timer, setTimer] = useState(0); // seconds
 	const [timerInterval, setTimerInterval] =
 		useState<NodeJS.Timeout | null>(null);
+	const [showGrid, setShowGrid] = useState(false);
 
 	// Start timer when timerActive becomes true
 	useEffect(() => {
@@ -461,18 +486,68 @@ export default function Daily(props: DailyPageProps) {
 				const timeout = setTimeout(() => {
 					setShowCountdown(false);
 					setTimerActive(true);
+					setShowGrid(true);
 				}, 1000);
 				return () => clearTimeout(timeout);
 			}
 		}
 	}, [showCountdown, countdownValue]);
 
-	// Format timer MM:SS
-	const formatTimer = (t: number) => {
-		const mm = String(Math.floor(t / 60)).padStart(2, '0');
-		const ss = String(t % 60).padStart(2, '0');
-		return `${mm}:${ss}`;
-	};
+	// When the game ends, set finishTime to timer
+	useEffect(() => {
+		if (gameOver && finishTime === null) {
+			setFinishTime(timer);
+		}
+	}, [gameOver, timer, finishTime]);
+
+	// --- Helper functions for updating arrays in Redux state ---
+	function addToArray<T>(arr: T[], items: T | T[]): T[] {
+		return Array.isArray(items)
+			? [...arr, ...items]
+			: [...arr, items];
+	}
+	function removeFromArray<T>(arr: T[], item: T): T[] {
+		return arr.filter((x) => x !== item);
+	}
+
+	// Helper: set feedback as array
+	function setFeedbackMsg(msg: string) {
+		dispatch(setFeedback([msg]));
+	}
+
+	// Helper: add to lockedWords
+	function addLockedWords(words: string | string[]) {
+		dispatch(
+			setLockedWords(addToArray(lockedWords, words))
+		);
+	}
+
+	// Helper: add to solvedGroups
+	function addSolvedGroup(group: string[]) {
+		dispatch(setSolvedGroups([...solvedGroups, group]));
+	}
+
+	// Helper: add to selectedWords
+	function addSelectedWord(word: string) {
+		dispatch(setSelectedWords([...selectedWords, word]));
+	}
+
+	// Helper: remove from selectedWords
+	function removeSelectedWord(word: string) {
+		dispatch(
+			setSelectedWords(removeFromArray(selectedWords, word))
+		);
+	}
+
+	// Helper: clear selectedWords
+	function clearSelectedWords() {
+		dispatch(setSelectedWords([]));
+	}
+
+	// Helper: set attempts
+	function setAttemptsValue(val: number) {
+		dispatch(setAttempts(val));
+	}
 
 	return (
 		<div className='fullscreen-bg'>
@@ -571,73 +646,78 @@ export default function Daily(props: DailyPageProps) {
 							onClick={() => setShowRules(true)}
 							aria-label='How to Play'
 						>
-							<svg
+							<FontAwesomeIcon
+								icon={faInfoCircle}
 								className='rules-icon'
-								viewBox='0 0 24 24'
-								width='28'
-								height='28'
-								fill='none'
-								stroke='currentColor'
-								strokeWidth='2'
-								strokeLinecap='round'
-								strokeLinejoin='round'
-							>
-								<circle cx='12' cy='12' r='10' />
-								<line x1='12' y1='16' x2='12' y2='12' />
-								<line x1='12' y1='8' x2='12' y2='8' />
-							</svg>
+							/>
 						</button>
 					</div>
 				</div>
 				{/* Dimmed grid overlay if pregame modal or countdown is active */}
-				<div
-					className={`daily-center-flex-row${
-						showPreGameModal || showCountdown
-							? ' dimmed-grid'
-							: ''
-					}`}
-				>
+				{!showPreGameModal && (
 					<div
-						className='gridRoyale-grid daily-grid'
-						data-cols={gridCols}
-						data-rows={gridRows}
-						style={{
-							gridTemplateColumns: `repeat(${gridCols}, 1fr)`,
-						}}
+						className={`daily-center-flex-row${
+							showCountdown ? ' dimmed-grid' : ''
+						}`}
 					>
-						{gridWords.map((word: string) => (
-							<WordButton
-								key={word}
-								word={word}
-								isSelected={selectedWords.includes(word)}
-								isLocked={lockedWords.includes(word)}
-								isBurned={burnedWildcards.includes(word)}
-								onClick={() =>
-									!showPreGameModal &&
-									!showCountdown &&
-									handleWordTap(word)
-								}
-								onContextMenu={(e: React.MouseEvent) =>
-									!showPreGameModal &&
-									!showCountdown &&
-									handleWordRightClick(word, e)
-								}
-								burnSuspect={burnSuspect === word}
-							/>
-						))}
-						{animatingGroup &&
-							animatingGroup.map((word: string) => (
-								<WordButton
-									key={word + '-animating'}
-									word={word}
-									isSelected={false}
-									isLocked={true}
-									onClick={() => {}}
-									className='word-btn animating-to-solved'
-								/>
-							))}
+						{!showGrid && (
+							<div className='pregame-waiting-message'>
+								{showCountdown ? (
+									<>
+										<div className='pregame-waiting-dot' />
+										<div className='pregame-waiting-dot' />
+										<div className='pregame-waiting-dot' />
+									</>
+								) : (
+									'Get Ready...'
+								)}
+							</div>
+						)}
+						{showGrid && (
+							<div
+								className='gridRoyale-grid daily-grid'
+								data-cols={gridCols}
+								data-rows={gridRows}
+								style={{
+									gridTemplateColumns: `repeat(${gridCols}, 1fr)`,
+								}}
+							>
+								{gridWords.map((word: string) => (
+									<WordButton
+										key={word}
+										word={word}
+										isSelected={selectedWords.includes(
+											word
+										)}
+										isLocked={lockedWords.includes(word)}
+										isBurned={burnedWildcards.includes(
+											word
+										)}
+										onClick={() =>
+											!showCountdown && handleWordTap(word)
+										}
+										onContextMenu={(e: React.MouseEvent) =>
+											!showCountdown &&
+											handleWordRightClick(word, e)
+										}
+										burnSuspect={burnSuspect === word}
+									/>
+								))}
+								{animatingGroup &&
+									animatingGroup.map((word: string) => (
+										<WordButton
+											key={word + '-animating'}
+											word={word}
+											isSelected={false}
+											isLocked={true}
+											onClick={() => {}}
+											className='word-btn animating-to-solved'
+										/>
+									))}
+							</div>
+						)}
 					</div>
-				</div>
+				)}
 				<div className='gridRoyale-controls'>
 					{!burnSuspect && (
 						<div
@@ -666,7 +746,7 @@ export default function Daily(props: DailyPageProps) {
 						</div>
 					)}
 					<div className='daily-controls-flex-col'>
-						<FeedbackBanner message={feedback} />
+						<FeedbackBanner message={feedback[0] || ''} />
 						<div className='gridRoyale-attempts-bar'>
 							{[...Array(attemptsLeft > 4 ? 5 : 4)].map(
 								(_, i) => (
@@ -694,7 +774,9 @@ export default function Daily(props: DailyPageProps) {
 							<button
 								className='deselect-btn'
 								aria-label='Deselect all'
-								onClick={() => setSelectedWords([])}
+								onClick={() =>
+									dispatch(setSelectedWords([]))
+								}
 							>
 								Deselect All
 							</button>
@@ -724,6 +806,11 @@ export default function Daily(props: DailyPageProps) {
 						burnBonus={burnBonus}
 						win={allGroupsSolved()}
 						onShare={() => setShowShare(true)}
+						finishTime={
+							finishTime !== null
+								? formatTimer(finishTime)
+								: ''
+						}
 					/>
 				)}
 				<Modal
@@ -759,6 +846,20 @@ export default function Daily(props: DailyPageProps) {
 							>
 								I scored <b>{getFinalScore()}</b> on Grid
 								Royale!
+							</div>
+							<div
+								style={{
+									marginTop: 8,
+									color: '#2563eb',
+									fontSize: '1em',
+								}}
+							>
+								Finished in:{' '}
+								<b>
+									{finishTime !== null
+										? formatTimer(finishTime)
+										: ''}
+								</b>
 							</div>
 							<div
 								style={{

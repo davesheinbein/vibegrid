@@ -9,6 +9,9 @@ import {
 	UserSettingsContext,
 	filterProfanity,
 } from './UserSettingsProvider';
+import { useSelector, useDispatch } from 'react-redux';
+import { RootState } from '../../store';
+import { addMatchMessage } from '../../store/matchChatSlice';
 
 const QUICKFIRE_MESSAGES = [
 	'You’ll regret that.',
@@ -35,24 +38,18 @@ interface MatchChatWindowProps {
 	onClose: () => void;
 	matchId: string;
 	userId: string;
-	sendMessage: (
-		msg: Omit<MatchChatMessage, 'id' | 'timestamp'>
-	) => void;
-	messages: MatchChatMessage[];
 }
 
 const MatchChatWindow: React.FC<MatchChatWindowProps> = (
 	props
 ) => {
 	const { settings } = useContext(UserSettingsContext);
-	const {
-		open,
-		onClose,
-		matchId,
-		userId,
-		sendMessage,
-		messages,
-	} = props;
+	const dispatch = useDispatch();
+	const matchMessages = useSelector(
+		(state: RootState) =>
+			state.matchChat.messages[props.matchId] || []
+	);
+	const { open, onClose, matchId, userId } = props;
 	const [input, setInput] = useState('');
 	const messagesEndRef = useRef<HTMLDivElement>(null);
 
@@ -62,30 +59,31 @@ const MatchChatWindow: React.FC<MatchChatWindowProps> = (
 				behavior: 'smooth',
 			});
 		}
-	}, [messages]);
+	}, [matchMessages]);
 
-	// Filter incoming messages if profanityFilter is enabled
 	const filteredMessages = settings.profanityFilter
-		? messages.map((msg) => ({
+		? matchMessages.map((msg) => ({
 				...msg,
 				content: filterProfanity(msg.content),
 		  }))
-		: messages;
+		: matchMessages;
 
 	const handleSend = (
 		content: string,
 		type: 'text' | 'emoji' | 'quickfire' = 'text'
 	) => {
 		if (!content.trim()) return;
-		// When sending a message, filter if enabled
 		const filteredContent = settings.profanityFilter
 			? filterProfanity(content)
 			: content;
-		sendMessage({
+		const msg = {
+			id: Math.random().toString(36).slice(2),
 			sender: userId,
 			content: filteredContent,
 			type,
-		});
+			timestamp: Date.now(),
+		};
+		dispatch(addMatchMessage({ matchId, message: msg }));
 		setInput('');
 	};
 

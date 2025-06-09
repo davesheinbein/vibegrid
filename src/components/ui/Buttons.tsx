@@ -3,17 +3,26 @@ import {
 	getShareUrl,
 	copyToClipboard,
 } from '../../utils/helpers';
-import { useFriends } from './FriendsProvider';
+import { useSelector, useDispatch } from 'react-redux';
+import { RootState } from '../../store';
+import { setSidebarOpen } from '../../store/friendsSlice';
 
 export const GoBackButton: React.FC<{
 	onClick: () => void;
 	className?: string;
 	label?: string;
-}> = ({ onClick, className = '', label = 'Back' }) => (
+	style?: React.CSSProperties;
+}> = ({
+	onClick,
+	className = '',
+	label = 'Back',
+	style,
+}) => (
 	<button
 		className={`back-icon-btn ${className}`.trim()}
 		onClick={onClick}
 		aria-label={label}
+		style={style}
 	>
 		<span className='back-arrow' aria-hidden='true'>
 			&#8592;
@@ -25,11 +34,18 @@ export const CloseButton: React.FC<{
 	onClick: () => void;
 	className?: string;
 	label?: string;
-}> = ({ onClick, className = '', label = 'Close' }) => (
+	style?: React.CSSProperties;
+}> = ({
+	onClick,
+	className = '',
+	label = 'Close',
+	style,
+}) => (
 	<button
 		onClick={onClick}
 		className={`share-modal-close ${className}`.trim()}
 		aria-label={label}
+		style={style}
 	>
 		<span className='close-x'>&#215;</span>
 	</button>
@@ -89,11 +105,19 @@ export const SubmitButton: React.FC<{
 	onClick: () => void;
 	className?: string;
 	disabled?: boolean;
-}> = ({ children, onClick, className = '', disabled }) => (
+	style?: React.CSSProperties;
+}> = ({
+	children,
+	onClick,
+	className = '',
+	disabled,
+	style,
+}) => (
 	<button
-		className={`gridRoyale-submit ${className}`.trim()}
 		onClick={onClick}
+		className={`submit-btn ${className}`.trim()}
 		disabled={disabled}
+		style={style}
 	>
 		{children}
 	</button>
@@ -231,7 +255,12 @@ export const CopyLinkButton: React.FC = () => {
 };
 
 export const FriendsToggleButton: React.FC = () => {
-	const { isSidebarOpen, toggleSidebar } = useFriends();
+	const dispatch = useDispatch();
+	const isSidebarOpen = useSelector(
+		(state: RootState) => state.friends.isSidebarOpen
+	);
+	const toggleSidebar = () =>
+		dispatch(setSidebarOpen(!isSidebarOpen));
 	return (
 		<button
 			onClick={toggleSidebar}

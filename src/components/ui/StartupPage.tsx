@@ -8,10 +8,18 @@ import Footer from './Footer';
 import VSModeModal from './VSModeModal';
 import VSRoomModal from './VSRoomModal';
 import VSMultiplayerGame from './VSMultiplayerGame';
-import { useMultiplayer } from './MultiplayerProvider';
 import { Modal } from './Modal';
 import { UserSettingsContext } from './UserSettingsProvider';
 import { useRouter } from 'next/router';
+import { useSession } from 'next-auth/react';
+import { useSelector, useDispatch } from 'react-redux';
+import { RootState } from '../../store';
+import {
+	setRoomId,
+	setMatchId,
+	setInMatch,
+	setMatchData,
+} from '../../store/multiplayerSlice';
 
 interface StartupPageProps {
 	onStartDaily: () => void;
@@ -27,8 +35,21 @@ const StartupPage: React.FC<StartupPageProps> = ({
 	onShare,
 }) => {
 	const router = useRouter();
-	const multiplayer = useMultiplayer();
 	const { settings } = useContext(UserSettingsContext);
+	const { data: session } = useSession();
+	const dispatch = useDispatch();
+
+	// Redux multiplayer state
+	const multiplayer = useSelector(
+		(state: RootState) => state.multiplayer
+	);
+	const matchStarted = multiplayer.inMatch;
+	const isHost = multiplayer.matchData?.isHost;
+	const opponentJoined =
+		multiplayer.matchData?.opponentJoined;
+	const socket = multiplayer.matchData?.socket;
+	const roomCodeRedux = multiplayer.roomId;
+
 	const [showVSModeModal, setShowVSModeModal] =
 		useState(false);
 	const [showRoomModal, setShowRoomModal] = useState(false);
@@ -48,12 +69,12 @@ const StartupPage: React.FC<StartupPageProps> = ({
 	>(null);
 
 	useEffect(() => {
-		if (multiplayer.matchStarted) {
+		if (matchStarted) {
 			setShowRoomModal(false);
 			setShowMatchmaking(false);
 			setInVSGame(true);
 		}
-	}, [multiplayer.matchStarted]);
+	}, [matchStarted]);
 
 	// Handle VS Mode selection
 	const handleVSModeSelect = (
@@ -66,24 +87,28 @@ const StartupPage: React.FC<StartupPageProps> = ({
 			setShowMatchmaking(true);
 			setMatchmakingError('');
 			// Join matchmaking queue
-			multiplayer.socket?.emit('joinMatchmaking');
+			if (socket) socket.emit('joinMatchmaking');
 			// Fallback if no match in 15s
 			const timeout = setTimeout(() => {
 				setMatchmakingError(
 					'No opponent found — try again or play locally.'
 				);
-				multiplayer.socket?.emit('leaveMatchmaking');
+				if (socket) socket.emit('leaveMatchmaking');
 			}, 15000);
 			setMatchmakingTimeout(timeout);
 			// Listen for match found
-			multiplayer.socket?.once(
-				'matchFound',
-				({ roomCode }) => {
-					if (timeout) clearTimeout(timeout);
-					setPendingRoomCode(roomCode);
-					multiplayer.joinRoom(roomCode);
-				}
-			);
+			if (socket) {
+				socket.once(
+					'matchFound',
+					(payload: { roomCode: string }) => {
+						if (timeout) clearTimeout(timeout);
+						setPendingRoomCode(payload.roomCode);
+						if (socket)
+							socket.emit('joinRoom', payload.roomCode);
+						// Optionally update Redux state here
+					}
+				);
+			}
 		} else if (mode === 'bot' && botDifficulty) {
 			setVSBotDifficulty(botDifficulty);
 			setInVSBotGame(true);
@@ -92,11 +117,13 @@ const StartupPage: React.FC<StartupPageProps> = ({
 
 	const handleCreateRoom = (roomCode: string) => {
 		setPendingRoomCode(roomCode);
-		multiplayer.createRoom(roomCode);
+		if (socket) socket.emit('createRoom', roomCode);
+		// Optionally update Redux state here
 	};
 	const handleJoinRoom = (roomCode: string) => {
 		setPendingRoomCode(roomCode);
-		multiplayer.joinRoom(roomCode);
+		if (socket) socket.emit('joinRoom', roomCode);
+		// Optionally update Redux state here
 	};
 
 	if (inVSGame) {
@@ -157,6 +184,25 @@ const StartupPage: React.FC<StartupPageProps> = ({
 				>
 					Grid Royale
 				</h1>
+				{session?.user?.name && (
+					<div
+						style={{
+							color: '#64748b',
+							fontWeight: 600,
+							fontSize: 18,
+							marginBottom: 8,
+							marginTop: 2,
+							textAlign: 'center',
+						}}
+					>
+						Signed in as{' '}
+						<span
+							style={{ color: '#2563eb', fontWeight: 700 }}
+						>
+							{session.user.name}
+						</span>
+					</div>
+				)}
 				<p
 					className='gridRoyale-subtitle'
 					style={{
@@ -233,10 +279,7 @@ const StartupPage: React.FC<StartupPageProps> = ({
 					onCreateRoom={handleCreateRoom}
 					onJoinRoom={handleJoinRoom}
 					isJoining={
-						multiplayer &&
-						!multiplayer.isHost &&
-						!!pendingRoomCode &&
-						!multiplayer.opponentJoined
+						!isHost && !!pendingRoomCode && !opponentJoined
 					}
 				/>
 			)}
@@ -249,7 +292,7 @@ const StartupPage: React.FC<StartupPageProps> = ({
 						setMatchmakingError('');
 						if (matchmakingTimeout)
 							clearTimeout(matchmakingTimeout);
-						multiplayer.socket?.emit('leaveMatchmaking');
+						if (socket) socket.emit('leaveMatchmaking');
 					}}
 				>
 					<div

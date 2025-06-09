@@ -11,6 +11,7 @@ interface EndGameModalProps {
 	burnBonus: number;
 	win: boolean;
 	onShare: () => void;
+	finishTime?: string;
 }
 
 const EndGameModal: React.FC<EndGameModalProps> = ({
@@ -21,6 +22,7 @@ const EndGameModal: React.FC<EndGameModalProps> = ({
 	burnBonus,
 	win,
 	onShare,
+	finishTime,
 }) => {
 	const router = useRouter();
 
@@ -69,6 +71,17 @@ const EndGameModal: React.FC<EndGameModalProps> = ({
 						)}
 						{!win && <div>Burn Bonus: {burnBonus}</div>}
 					</div>
+					{finishTime && (
+						<div
+							style={{
+								marginTop: 10,
+								color: '#2563eb',
+								fontSize: '1em',
+							}}
+						>
+							Finished in: <b>{finishTime}</b>
+						</div>
+					)}
 				</div>
 				<p className='endgame-modal-desc'>
 					Come back tomorrow for the next daily challenge!
