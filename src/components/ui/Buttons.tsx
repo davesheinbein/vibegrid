@@ -6,6 +6,7 @@ import {
 import { useSelector, useDispatch } from 'react-redux';
 import { RootState } from '../../store';
 import { setSidebarOpen } from '../../store/friendsSlice';
+import { useSession } from 'next-auth/react';
 
 export const GoBackButton: React.FC<{
 	onClick: () => void;
@@ -254,7 +255,15 @@ export const CopyLinkButton: React.FC = () => {
 	);
 };
 
-export const FriendsToggleButton: React.FC = () => {
+export const FriendsToggleButton: React.FC<{
+	onClick?: () => void;
+	className?: string;
+	style?: React.CSSProperties;
+}> = ({ onClick, className = '', style }) => {
+	const { data: session, status } = useSession();
+	const isAuthenticated =
+		status === 'authenticated' && session?.user;
+
 	const dispatch = useDispatch();
 	const isSidebarOpen = useSelector(
 		(state: RootState) => state.friends.isSidebarOpen
@@ -264,30 +273,58 @@ export const FriendsToggleButton: React.FC = () => {
 	return (
 		<button
 			onClick={toggleSidebar}
-			className={`friends-toggle-btn${
-				isSidebarOpen ? ' active' : ''
-			}`}
+			className={`friends-toggle-btn ${className}`}
+			style={{
+				border: 'none',
+				background: 'none',
+				padding: 0,
+				borderRadius: '50%',
+				width: 44,
+				height: 44,
+				boxShadow: '0 2px 8px #e3eaff33',
+				cursor: 'pointer',
+				...style,
+			}}
 			aria-label={
 				isSidebarOpen
 					? 'Close friends sidebar'
 					: 'Open friends sidebar'
 			}
-			style={{
-				position: 'fixed',
-				top: 24,
-				right: 24,
-				zIndex: 9999,
-				boxShadow: '0 2px 12px 0 #e3eaff55',
-			}}
 		>
-			<span className='friends-toggle-glow' />
-			<span
-				className='friends-toggle-icon'
-				role='img'
-				aria-label='Friends'
-			>
-				👥
-			</span>
+			{isAuthenticated && session.user?.image ? (
+				<img
+					src={session.user.image}
+					alt={session.user.name || 'Profile'}
+					style={{
+						width: 36,
+						height: 36,
+						borderRadius: '50%',
+						objectFit: 'cover',
+						border: '2px solid #38bdf8',
+					}}
+				/>
+			) : (
+				<span
+					className='friends-toggle-icon'
+					style={{ fontSize: 28, color: '#2563eb' }}
+				>
+					{/* Default icon, e.g. FontAwesome user-friends or similar */}
+					<svg
+						width='28'
+						height='28'
+						viewBox='0 0 24 24'
+						fill='none'
+						stroke='#2563eb'
+						strokeWidth='2'
+						strokeLinecap='round'
+						strokeLinejoin='round'
+					>
+						<circle cx='9' cy='7' r='4' />
+						<path d='M17 11v-1a4 4 0 0 0-4-4' />
+						<path d='M21 21v-2a4 4 0 0 0-4-4H7a4 4 0 0 0-4 4v2' />
+					</svg>
+				</span>
+			)}
 		</button>
 	);
 };

@@ -136,7 +136,7 @@ const FriendsSidebar: React.FC = () => {
 				{isSidebarOpen && (
 					<button
 						className='friends-sidebar-close-btn'
-						onClick={() => setShow(false)}
+						onClick={() => dispatch(setSidebarOpen(false))}
 						style={{
 							position: 'absolute',
 							left: '-48px',
