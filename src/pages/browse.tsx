@@ -1,14 +1,14 @@
 import React, { useContext } from 'react';
 import { useRouter } from 'next/router';
-import CustomPuzzleModal from '../components/modal/CustomPuzzleModal';
+import { CustomPuzzleModal } from '../components/ui-kit/modals';
+import { GoBackButton } from '../components/ui-kit/buttons';
+import { MatchChatWindow } from '../components/ui-kit/chat';
+import { UserSettingsContext } from '../components/ui-kit/providers';
 import {
 	getShareUrl,
 	getShareTitle,
 	getShareText,
 } from '../utils/helpers';
-import { GoBackButton } from '../components/ui/Buttons';
-import MatchChatWindow from '../components/ui/MatchChatWindow';
-import { UserSettingsContext } from '../components/ui/UserSettingsProvider';
 
 export default function Browse() {
 	const router = useRouter();
@@ -112,16 +112,15 @@ export default function Browse() {
 					onClose={() => setShowChat(false)}
 					matchId={matchId}
 					userId={userId}
-					sendMessage={sendMessage}
-					messages={chatMessages}
 				/>
 				<CustomPuzzleModal
 					open={true}
 					onClose={() => setMode('browse')}
-					setCustomPuzzle={setCustomPuzzle}
-					setMode={handleSetMode}
-					user={user}
-					setShowSignInModal={() => {}}
+					onSave={(puzzle) => {
+						setCustomPuzzle(puzzle);
+						setMode('browse');
+					}}
+					initialData={customPuzzle}
 				/>
 			</>
 		);
@@ -139,10 +138,12 @@ export default function Browse() {
 			<div className='browse-puzzles-header'>
 				<GoBackButton
 					onClick={() => router.push('/')}
-					className='browse-back-btn'
+					className='back-icon-btn'
 				/>
-
-				<div className='browse-puzzles-header-title'>
+				<div
+					className='browse-puzzles-header-title'
+					style={{ flex: 1 }}
+				>
 					<h1 className='gridRoyale-title'>
 						Browse Custom Puzzles
 					</h1>

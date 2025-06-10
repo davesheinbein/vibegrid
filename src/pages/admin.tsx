@@ -1,6 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import CustomPuzzleModal from '../components/modal/CustomPuzzleModal';
+import CustomPuzzleModal from '../components/ui-kit/modals/CustomPuzzleModal';
+import { useRouter } from 'next/router';
+import io from 'socket.io-client';
+import Modal from '../components/ui-kit/modals/Modal';
 
 // --- Types for admin data ---
 interface User {
@@ -68,6 +71,100 @@ const QA_SIDEBAR = [
 	{ label: 'Settings', action: 'settings' },
 ];
 
+const QA_SIM_EVENTS = [
+	{
+		label: 'Solve Group',
+		event: 'qa:solve-group',
+		payload: {
+			group: ['Apple', 'Banana', 'Pear', 'Cranberry'],
+			userId: 'test-user',
+			matchId: 'test-match',
+		},
+	},
+	{
+		label: 'Bot Emote',
+		event: 'qa:bot-emote',
+		payload: {
+			emote: '😈',
+			userId: 'test-user',
+			matchId: 'test-match',
+		},
+	},
+	{
+		label: 'Show Win Modal',
+		event: 'qa:win-modal',
+		payload: {
+			userId: 'test-user',
+			matchId: 'test-match',
+		},
+	},
+	{
+		label: 'Show Loss Modal',
+		event: 'qa:loss-modal',
+		payload: {
+			userId: 'test-user',
+			matchId: 'test-match',
+		},
+	},
+];
+
+const ADMIN_SECTIONS = [
+	'System Overview',
+	'Live Matches',
+	'Match Playback',
+	'Player Analytics',
+	'Matchmaking',
+	'QA Tools',
+	'Communication',
+	'Puzzle Quality',
+	'Retention',
+	'Moderator Tools',
+	'Usage Metrics',
+	'Event Feed',
+];
+
+// Add a simple chart placeholder component
+const ChartPlaceholder = ({ title }: { title: string }) => (
+	<div
+		style={{
+			background: '#fff',
+			borderRadius: 12,
+			boxShadow: '0 2px 8px #e3eaff22',
+			padding: 24,
+			marginBottom: 32,
+			minHeight: 180,
+			display: 'flex',
+			flexDirection: 'column',
+			alignItems: 'center',
+			justifyContent: 'center',
+			color: '#64748b',
+			fontSize: 18,
+			fontWeight: 500,
+		}}
+	>
+		<div style={{ marginBottom: 12 }}>{title}</div>
+		<div
+			style={{
+				width: '100%',
+				height: 120,
+				background:
+					'linear-gradient(90deg,#e0e7ff 0%,#f3f4f6 100%)',
+				borderRadius: 8,
+				opacity: 0.7,
+			}}
+		/>
+		<div
+			style={{
+				marginTop: 10,
+				fontSize: 14,
+				color: '#a1a1aa',
+			}}
+		>
+			(Chart coming soon)
+		</div>
+	</div>
+);
+
 export default function Admin() {
 	const [activeTab, setActiveTab] = useState(TOP_NAV[0]);
 	const [qaSidebarAction, setQASidebarAction] = useState(
@@ -76,6 +173,20 @@ export default function Admin() {
 	const [showAddPuzzleModal, setShowAddPuzzleModal] =
 		useState(false);
 	const [adminUser, setAdminUser] = useState<any>(null); // Optionally fetch admin user info if needed
+	const router = useRouter();
+	const [socket, setSocket] = useState<any>(null);
+	const [sending, setSending] = useState<string | null>(
+		null
+	);
+	const [section, setSection] = useState(ADMIN_SECTIONS[0]);
+	const [showReplay, setShowReplay] = useState(false);
+	const [replayData, setReplayData] = useState<any>(null);
+	const [simParams, setSimParams] = useState({
+		skill: 50,
+		region: 'NA',
+		queueSize: 8,
+	});
+	const [simResult, setSimResult] = useState<any>(null);
 
 	// --- Dashboard Data ---
 	const [stats, setStats] = useState<any>({
@@ -312,20 +423,20 @@ export default function Admin() {
 					inner.onclick = (e) => e.stopPropagation();
 					panel.appendChild(inner);
 					document.body.appendChild(panel);
-					import('../components/ui/SettingsPanel').then(
-						({ default: SettingsPanel }) => {
-							const root = document.createElement('div');
-							inner.appendChild(root);
-							// @ts-ignore
-							import('react-dom/client').then(
-								(ReactDOMClient) => {
-									const rootInstance =
-										ReactDOMClient.createRoot(root);
-									rootInstance.render(<SettingsPanel />);
-								}
-							);
-						}
-					);
+					import(
+						'../components/ui-kit/settings/SettingsPanel'
+					).then(({ default: SettingsPanel }) => {
+						const root = document.createElement('div');
+						inner.appendChild(root);
+						// @ts-ignore
+						import('react-dom/client').then(
+							(ReactDOMClient) => {
+								const rootInstance =
+									ReactDOMClient.createRoot(root);
+								rootInstance.render(<SettingsPanel />);
+							}
+						);
+					});
 					return;
 				}
 				default:
@@ -339,8 +450,141 @@ export default function Admin() {
 		}
 	};
 
+	// --- VS Mode QA Navigation with test data ---
+	const handleVSQANav = (
+		route: string,
+		params: Record<string, string>
+	) => {
+		const url = new URL(route, window.location.origin);
+		Object.entries(params).forEach(([key, value]) =>
+			url.searchParams.set(key, value)
+		);
+		router.push(url.pathname + url.search);
+	};
+
+	// --- Match State Simulation (stub with test data) ---
+	const handleSimulate = (action: string) => {
+		let msg = '';
+		switch (action) {
+			case 'solve-player':
+				msg =
+					'Player solved group: ["Apple", "Banana", "Pear", "Cranberry"]';
+				break;
+			case 'solve-opponent':
+				msg =
+					'Opponent solved group: ["Plane", "Car", "Bus", "Train"]';
+				break;
+			case 'bot-emote':
+				msg = 'Bot emote: 😈 Taunt';
+				break;
+			case 'win-modal':
+				msg =
+					'Endgame modal: Player WIN (score: 4, mistakes: 1)';
+				break;
+			case 'loss-modal':
+				msg =
+					'Endgame modal: Player LOSS (score: 2, mistakes: 4)';
+				break;
+			default:
+				msg = 'Unknown simulation.';
+		}
+		alert(msg);
+	};
+
+	// --- DEV QA MODE badge (shows if ?qa=true) ---
+	const isQAMode =
+		typeof window !== 'undefined' &&
+		router.query.qa === 'true';
+
+	// --- Test data for debug panel ---
+	const debugData = {
+		mode: 'Bot Match — Easy',
+		roomCode: 'QA1234',
+		playerScore: 3,
+		opponentScore: 2,
+		mistakes: 1,
+		status: 'in progress',
+		socket: 'connected',
+	};
+
+	useEffect(() => {
+		// Only connect once
+		if (!socket) {
+			const s = io({ path: '/api/socket' });
+			setSocket(s);
+			return () => s.disconnect();
+		}
+	}, []);
+
+	// Mock match data for playback
+	const mockMatch = {
+		id: 'QA-MATCH-1',
+		players: ['TestUser', 'TestFriend'],
+		events: [
+			{ type: 'start', ts: 0 },
+			{
+				type: 'solve',
+				who: 'TestUser',
+				group: ['Apple', 'Banana', 'Pear', 'Cranberry'],
+				ts: 5,
+			},
+			{ type: 'mistake', who: 'TestFriend', ts: 12 },
+			{
+				type: 'emote',
+				who: 'TestUser',
+				emote: '👏',
+				ts: 14,
+			},
+			{
+				type: 'solve',
+				who: 'TestFriend',
+				group: ['Plane', 'Car', 'Bus', 'Train'],
+				ts: 20,
+			},
+			{
+				type: 'chat',
+				who: 'TestUser',
+				msg: 'Nice!',
+				ts: 22,
+			},
+			{
+				type: 'solve',
+				who: 'TestUser',
+				group: ['Bath', 'Shower', 'Sink', 'Toilet'],
+				ts: 30,
+			},
+			{ type: 'win', who: 'TestUser', ts: 40 },
+		],
+		duration: 42,
+	};
+	const [replayStep, setReplayStep] = useState(0);
+
 	return (
-		<div className='admin-dashboard-container'>
+		<div
+			className='admin-dashboard-container'
+			style={{ position: 'relative' }}
+		>
+			{isQAMode && (
+				<div
+					style={{
+						position: 'fixed',
+						top: 12,
+						left: 12,
+						zIndex: 9999,
+						background: 'rgba(37,99,235,0.12)',
+						color: '#2563eb',
+						fontWeight: 700,
+						borderRadius: 8,
+						padding: '6px 16px',
+						boxShadow: '0 2px 8px 0 #2563eb22',
+						letterSpacing: 1,
+						fontSize: 15,
+						animation: 'fadeIn 0.4s',
+					}}
+				>
+					DEV QA MODE
+				</div>
+			)}
 			<h1 className='admin-header'>
 				Grid Royale Admin Dashboard
 			</h1>
@@ -405,8 +649,21 @@ export default function Admin() {
 						<h2>Puzzle Management</h2>
 						<button
 							onClick={() => setShowAddPuzzleModal(true)}
+							style={{
+								background: '#2563eb',
+								color: '#fff',
+								border: 'none',
+								borderRadius: 8,
+								padding: '10px 22px',
+								fontWeight: 700,
+								fontSize: 16,
+								marginBottom: 18,
+								cursor: 'pointer',
+								boxShadow: '0 2px 8px 0 #2563eb22',
+								transition: 'background 0.18s, color 0.18s',
+							}}
 						>
-							Add New Puzzle
+							Create Custom Puzzle
 						</button>
 						{puzzlesError && (
 							<div
@@ -454,9 +711,7 @@ export default function Admin() {
 							<CustomPuzzleModal
 								open={showAddPuzzleModal}
 								onClose={() => setShowAddPuzzleModal(false)}
-								setCustomPuzzle={handleAdminAddPuzzle}
-								setMode={() => {}}
-								user={adminUser}
+								onSave={handleAdminAddPuzzle}
 							/>
 						)}
 					</div>
@@ -622,6 +877,190 @@ export default function Admin() {
 							</ul>
 						</aside>
 						<section className='admin-qa-main'>
+							<h2 style={{ marginBottom: 12 }}>
+								VS Mode QA Navigation
+							</h2>
+							<p
+								style={{
+									color: '#64748b',
+									marginBottom: 18,
+								}}
+							>
+								Jump into any VS Mode page instantly for QA
+								and development.
+							</p>
+							<div
+								style={{
+									display: 'flex',
+									flexWrap: 'wrap',
+									gap: 12,
+									marginBottom: 32,
+								}}
+							>
+								<button
+									style={qaBtnStyle}
+									onClick={() =>
+										handleVSQANav('/vs/friend/lobby', {
+											qa: 'true',
+											room: 'QA1234',
+										})
+									}
+								>
+									Go to Room Code Lobby
+								</button>
+								<button
+									style={qaBtnStyle}
+									onClick={() =>
+										handleVSQANav('/vs/friend/match', {
+											qa: 'true',
+											match: 'QA-MATCH-1',
+											player: 'TestUser',
+											opponent: 'TestFriend',
+										})
+									}
+								>
+									Start Friend Match
+								</button>
+								<button
+									style={qaBtnStyle}
+									onClick={() =>
+										handleVSQANav('/vs/matchmaking/match', {
+											qa: 'true',
+											match: 'QA-MATCH-2',
+											player: 'TestUser',
+											opponent: 'GlobalRival',
+										})
+									}
+								>
+									Start Global Match
+								</button>
+								<button
+									style={qaBtnStyle}
+									onClick={() =>
+										handleVSQANav('/vs/bot/match', {
+											qa: 'true',
+											difficulty: 'easy',
+											match: 'QA-BOT-EASY',
+											player: 'TestUser',
+											bot: 'Bot-Easy',
+										})
+									}
+								>
+									Start Bot Match (Easy)
+								</button>
+								<button
+									style={qaBtnStyle}
+									onClick={() =>
+										handleVSQANav('/vs/bot/match', {
+											qa: 'true',
+											difficulty: 'legendary',
+											match: 'QA-BOT-LEG',
+											player: 'TestUser',
+											bot: 'Bot-Legendary',
+										})
+									}
+								>
+									Start Bot Match (Legendary)
+								</button>
+							</div>
+							<h2 style={{ marginBottom: 12 }}>
+								Quick Match Actions
+							</h2>
+							<p
+								style={{
+									color: '#64748b',
+									marginBottom: 18,
+								}}
+							>
+								Trigger simulated events within an active VS
+								match (QA Mode only).
+							</p>
+							<div
+								style={{
+									display: 'flex',
+									flexWrap: 'wrap',
+									gap: 12,
+									marginBottom: 32,
+								}}
+							>
+								<button
+									style={qaBtnStyle}
+									onClick={() =>
+										handleSimulate('solve-player')
+									}
+								>
+									Solve Group (Player)
+								</button>
+								<button
+									style={qaBtnStyle}
+									onClick={() =>
+										handleSimulate('solve-opponent')
+									}
+								>
+									Solve Group (Opponent/Bot)
+								</button>
+								<button
+									style={qaBtnStyle}
+									onClick={() =>
+										handleSimulate('bot-emote')
+									}
+								>
+									Trigger Bot Emote
+								</button>
+								<button
+									style={qaBtnStyle}
+									onClick={() =>
+										handleSimulate('win-modal')
+									}
+								>
+									Trigger Win Modal
+								</button>
+								<button
+									style={qaBtnStyle}
+									onClick={() =>
+										handleSimulate('loss-modal')
+									}
+								>
+									Trigger Loss Modal
+								</button>
+							</div>
+							<h2 style={{ marginBottom: 12 }}>
+								Active Session Debug Panel
+							</h2>
+							<div
+								style={{
+									background: '#f8fafc',
+									borderRadius: 12,
+									padding: 18,
+									marginBottom: 24,
+									boxShadow: '0 1px 4px 0 #e3eaff22',
+									fontSize: 15,
+								}}
+							>
+								<div>
+									Current mode: <b>{debugData.mode}</b>
+								</div>
+								<div>
+									Room code: <b>{debugData.roomCode}</b>
+								</div>
+								<div>
+									Player score:{' '}
+									<b>{debugData.playerScore}</b>
+								</div>
+								<div>
+									Opponent score:{' '}
+									<b>{debugData.opponentScore}</b>
+								</div>
+								<div>
+									Mistakes: <b>{debugData.mistakes}</b>
+								</div>
+								<div>
+									Match status: <b>{debugData.status}</b>
+								</div>
+								<div>
+									Socket: <b>{debugData.socket}</b>
+								</div>
+							</div>
 							<h3>
 								Selected QA Tool:{' '}
 								<span style={{ color: '#2563eb' }}>
@@ -639,10 +1078,631 @@ export default function Admin() {
 									Run
 								</button>
 							</div>
+							<div style={{ marginTop: 24 }}>
+								<h3>Live Event Simulation</h3>
+								<p
+									style={{
+										color: '#64748b',
+										marginBottom: 12,
+									}}
+								>
+									Emit socket events to simulate live match
+									actions.
+								</p>
+								<div
+									style={{
+										display: 'flex',
+										gap: 16,
+										flexWrap: 'wrap',
+										marginBottom: 24,
+									}}
+								>
+									{QA_SIM_EVENTS.map(
+										({ label, event, payload }) => (
+											<button
+												key={event}
+												style={{
+													borderRadius: 999,
+													padding: '10px 24px',
+													fontWeight: 600,
+													background: '#e0e7ff',
+													color: '#2563eb',
+													border: 'none',
+													boxShadow:
+														sending === event
+															? '0 0 0 2px #2563eb55'
+															: '0 1px 4px #e3eaff33',
+													opacity:
+														sending === event ? 0.6 : 1,
+													cursor:
+														sending === event
+															? 'not-allowed'
+															: 'pointer',
+													transition: 'all 0.18s',
+												}}
+												disabled={
+													sending === event || !socket
+												}
+												onClick={async () => {
+													setSending(event);
+													try {
+														socket.emit(event, payload);
+													} finally {
+														setTimeout(
+															() => setSending(null),
+															600
+														);
+													}
+												}}
+											>
+												{label}
+											</button>
+										)
+									)}
+								</div>
+							</div>
 						</section>
 					</div>
 				)}
+				{section === 'Live Matches' && (
+					<div>
+						<h2 style={{ fontSize: 24, marginBottom: 18 }}>
+							Live & Recent Matches
+						</h2>
+						<table
+							style={{
+								width: '100%',
+								background: '#fff',
+								borderRadius: 12,
+								boxShadow: '0 2px 8px #e3eaff22',
+								marginBottom: 32,
+							}}
+						>
+							<thead>
+								<tr style={{ background: '#f3f4f6' }}>
+									<th style={{ padding: 10 }}>Match ID</th>
+									<th>Players</th>
+									<th>Duration</th>
+									<th>Actions</th>
+								</tr>
+							</thead>
+							<tbody>
+								<tr>
+									<td style={{ padding: 10 }}>
+										{mockMatch.id}
+									</td>
+									<td>{mockMatch.players.join(' vs ')}</td>
+									<td>{mockMatch.duration}s</td>
+									<td>
+										<button
+											style={{
+												background: '#e0e7ff',
+												color: '#2563eb',
+												border: 'none',
+												borderRadius: 8,
+												padding: '6px 18px',
+												fontWeight: 600,
+												cursor: 'pointer',
+											}}
+											onClick={() => {
+												setReplayData(mockMatch);
+												setShowReplay(true);
+												setReplayStep(0);
+											}}
+										>
+											Replay
+										</button>
+									</td>
+								</tr>
+							</tbody>
+						</table>
+					</div>
+				)}
+				{section === 'Player Analytics' && (
+					<div>
+						<h2 style={{ fontSize: 24, marginBottom: 18 }}>
+							Player Analytics & Puzzle Heatmaps
+						</h2>
+						<ChartPlaceholder title='Time Per Move (seconds)' />
+						<ChartPlaceholder title='Error Frequency by Step' />
+						<ChartPlaceholder title='Puzzle Heatmap (Mistake Density)' />
+						<div
+							style={{
+								color: '#64748b',
+								fontSize: 15,
+								marginTop: 18,
+							}}
+						>
+							<b>Tip:</b> Use these analytics to identify
+							bottlenecks, difficult puzzles, and player
+							hesitation points.
+						</div>
+					</div>
+				)}
+				{section === 'Matchmaking' && (
+					<div>
+						<h2 style={{ fontSize: 24, marginBottom: 18 }}>
+							Matchmaking Diagnostics & Simulation
+						</h2>
+						<div
+							style={{
+								display: 'flex',
+								gap: 32,
+								marginBottom: 32,
+							}}
+						>
+							<div style={{ flex: 1 }}>
+								<h3 style={{ marginBottom: 10 }}>
+									Queue Stats (Mock)
+								</h3>
+								<div
+									style={{
+										background: '#fff',
+										borderRadius: 12,
+										boxShadow: '0 2px 8px #e3eaff22',
+										padding: 18,
+										marginBottom: 18,
+									}}
+								>
+									<div>
+										Current Queue Size: <b>8</b>
+									</div>
+									<div>
+										Avg Wait Time: <b>22s</b>
+									</div>
+									<div>
+										Skill Range: <b>32 - 78</b>
+									</div>
+									<div>
+										Regions: <b>NA (5), EU (2), AS (1)</b>
+									</div>
+								</div>
+							</div>
+							<div style={{ flex: 1 }}>
+								<h3 style={{ marginBottom: 10 }}>
+									Simulate Matchmaking
+								</h3>
+								<div
+									style={{
+										background: '#fff',
+										borderRadius: 12,
+										boxShadow: '0 2px 8px #e3eaff22',
+										padding: 18,
+									}}
+								>
+									<div style={{ marginBottom: 10 }}>
+										<label>
+											Skill Level:{' '}
+											<input
+												type='range'
+												min={0}
+												max={100}
+												value={simParams.skill}
+												onChange={(e) =>
+													setSimParams((p) => ({
+														...p,
+														skill: +e.target.value,
+													}))
+												}
+											/>
+										</label>{' '}
+										<b>{simParams.skill}</b>
+									</div>
+									<div style={{ marginBottom: 10 }}>
+										<label>
+											Region:
+											<select
+												value={simParams.region}
+												onChange={(e) =>
+													setSimParams((p) => ({
+														...p,
+														region: e.target.value,
+													}))
+												}
+											>
+												<option value='NA'>NA</option>
+												<option value='EU'>EU</option>
+												<option value='AS'>AS</option>
+											</select>
+										</label>
+									</div>
+									<div style={{ marginBottom: 10 }}>
+										<label>
+											Queue Size:{' '}
+											<input
+												type='number'
+												min={1}
+												max={100}
+												value={simParams.queueSize}
+												onChange={(e) =>
+													setSimParams((p) => ({
+														...p,
+														queueSize: +e.target.value,
+													}))
+												}
+											/>
+										</label>
+									</div>
+									<button
+										style={{
+											background: '#2563eb',
+											color: '#fff',
+											border: 'none',
+											borderRadius: 8,
+											padding: '8px 22px',
+											fontWeight: 700,
+											cursor: 'pointer',
+											marginTop: 8,
+										}}
+										onClick={() =>
+											setSimResult({
+												matched: Math.floor(
+													simParams.queueSize / 2
+												),
+												avgWait: Math.max(
+													10,
+													40 - simParams.skill / 2
+												),
+												region: simParams.region,
+											})
+										}
+									>
+										Simulate
+									</button>
+								</div>
+							</div>
+						</div>
+						{simResult && (
+							<div
+								style={{
+									background: '#e0e7ff',
+									borderRadius: 12,
+									padding: 18,
+									color: '#2563eb',
+									fontWeight: 600,
+									fontSize: 17,
+									marginBottom: 18,
+								}}
+							>
+								Simulation: Matched{' '}
+								<b>{simResult.matched}</b> pairs in region{' '}
+								<b>{simResult.region}</b> (Avg Wait:{' '}
+								<b>{simResult.avgWait}s</b>)
+							</div>
+						)}
+						<div
+							style={{
+								color: '#64748b',
+								fontSize: 15,
+								marginTop: 18,
+							}}
+						>
+							<b>Tip:</b> Use simulation to validate
+							fairness and efficiency under different queue
+							conditions.
+						</div>
+					</div>
+				)}
+				{section === 'Communication' && (
+					<div>
+						<h2 style={{ fontSize: 24, marginBottom: 18 }}>
+							Communication & Sentiment Monitoring
+						</h2>
+						<div
+							style={{
+								background: '#fff',
+								borderRadius: 12,
+								boxShadow: '0 2px 8px #e3eaff22',
+								padding: 24,
+								marginBottom: 32,
+							}}
+						>
+							<b>Chat/Emote Sentiment:</b>{' '}
+							<span style={{ color: '#2563eb' }}>
+								Positive (82%)
+							</span>
+							,{' '}
+							<span style={{ color: '#ef4444' }}>
+								Negative (6%)
+							</span>
+							, Neutral (12%)
+							<br />
+							<b>Flagged Toxic Messages:</b>{' '}
+							<span style={{ color: '#ef4444' }}>3</span>
+							<div
+								style={{ marginTop: 18, color: '#64748b' }}
+							>
+								(Sentiment heatmaps and phrase clouds coming
+								soon)
+							</div>
+						</div>
+					</div>
+				)}
+				{section === 'Puzzle Quality' && (
+					<div>
+						<h2 style={{ fontSize: 24, marginBottom: 18 }}>
+							Puzzle Quality Dashboard
+						</h2>
+						<div
+							style={{
+								background: '#fff',
+								borderRadius: 12,
+								boxShadow: '0 2px 8px #e3eaff22',
+								padding: 24,
+								marginBottom: 32,
+							}}
+						>
+							<b>Flagged Puzzles:</b>{' '}
+							<span style={{ color: '#ef4444' }}>2</span>{' '}
+							<br />
+							<b>Avg Solve Time:</b> 38s <br />
+							<b>Fail Rate:</b> 14% <br />
+							<b>Direct Edit/Flag tools coming soon.</b>
+						</div>
+					</div>
+				)}
+				{section === 'Retention' && (
+					<div>
+						<h2 style={{ fontSize: 24, marginBottom: 18 }}>
+							User Retention & Lifecycle Insights
+						</h2>
+						<div
+							style={{
+								background: '#fff',
+								borderRadius: 12,
+								boxShadow: '0 2px 8px #e3eaff22',
+								padding: 24,
+								marginBottom: 32,
+							}}
+						>
+							<b>7-day Retention:</b> 41% <br />
+							<b>Churn Point:</b> Level 3 <br />
+							<b>
+								Progression Funnel and cohort analysis
+								coming soon.
+							</b>
+						</div>
+					</div>
+				)}
+				{section === 'Moderator Tools' && (
+					<div>
+						<h2 style={{ fontSize: 24, marginBottom: 18 }}>
+							Live Moderator Tools
+						</h2>
+						<div
+							style={{
+								background: '#fff',
+								borderRadius: 12,
+								boxShadow: '0 2px 8px #e3eaff22',
+								padding: 24,
+								marginBottom: 32,
+							}}
+						>
+							<b>
+								Live Match Observer, Chat Monitor,
+								Mute/Kick/Warning controls coming soon.
+							</b>
+						</div>
+					</div>
+				)}
+				{section === 'Usage Metrics' && (
+					<div>
+						<h2 style={{ fontSize: 24, marginBottom: 18 }}>
+							Cross-Platform Usage Metrics
+						</h2>
+						<div
+							style={{
+								background: '#fff',
+								borderRadius: 12,
+								boxShadow: '0 2px 8px #e3eaff22',
+								padding: 24,
+								marginBottom: 32,
+							}}
+						>
+							<b>Device Breakdown:</b> Desktop 62%, Mobile
+							34%, Tablet 4% <br />
+							<b>Top OS:</b> macOS, Windows, iOS <br />
+							<b>Game Version:</b> v1.2.3 (latest) <br />
+							<b>
+								Platform-specific issue tracking coming
+								soon.
+							</b>
+						</div>
+					</div>
+				)}
+				{section === 'Event Feed' && (
+					<div>
+						<h2 style={{ fontSize: 24, marginBottom: 18 }}>
+							Event & Achievement Tracking Feed
+						</h2>
+						<div
+							style={{
+								background: '#fff',
+								borderRadius: 12,
+								boxShadow: '0 2px 8px #e3eaff22',
+								padding: 24,
+								marginBottom: 32,
+							}}
+						>
+							<b>Recent Milestones:</b>
+							<ul style={{ marginTop: 10 }}>
+								<li>🏆 User123 unlocked "Puzzle Master"</li>
+								<li>🎉 User456 completed 100th match</li>
+								<li>⭐ User789 gave 5-star feedback</li>
+							</ul>
+							<b>
+								Live event feed and filters coming soon.
+							</b>
+						</div>
+					</div>
+				)}
 			</div>
+			{/* Match Replay Modal */}
+			<Modal
+				open={showReplay}
+				onClose={() => setShowReplay(false)}
+			>
+				<h2 style={{ color: '#2563eb', marginBottom: 12 }}>
+					Match Replay: {replayData?.id}
+				</h2>
+				<div style={{ marginBottom: 18 }}>
+					<b>Players:</b>{' '}
+					{replayData?.players?.join(' vs ')}
+				</div>
+				<div
+					style={{
+						background: '#f3f4f6',
+						borderRadius: 8,
+						padding: 18,
+						minHeight: 120,
+						marginBottom: 18,
+					}}
+				>
+					{replayData?.events
+						?.slice(0, replayStep + 1)
+						.map((ev: any, i: number) => (
+							<div
+								key={i}
+								style={{
+									marginBottom: 6,
+									color:
+										ev.type === 'mistake'
+											? '#ef4444'
+											: ev.type === 'solve'
+											? '#2563eb'
+											: '#222',
+									fontWeight: ev.type === 'win' ? 700 : 500,
+								}}
+							>
+								<span
+									style={{
+										marginRight: 8,
+										fontWeight: 700,
+									}}
+								>
+									[{ev.ts}s]
+								</span>
+								{ev.type === 'solve' && (
+									<span>
+										✅ <b>{ev.who}</b> solved group:{' '}
+										<span style={{ color: '#2563eb' }}>
+											{ev.group.join(', ')}
+										</span>
+									</span>
+								)}
+								{ev.type === 'mistake' && (
+									<span>
+										❌ <b>{ev.who}</b> made a mistake
+									</span>
+								)}
+								{ev.type === 'emote' && (
+									<span>
+										😃 <b>{ev.who}</b> sent emote:{' '}
+										<span style={{ fontSize: 18 }}>
+											{ev.emote}
+										</span>
+									</span>
+								)}
+								{ev.type === 'chat' && (
+									<span>
+										💬 <b>{ev.who}</b>:{' '}
+										<span style={{ color: '#64748b' }}>
+											{ev.msg}
+										</span>
+									</span>
+								)}
+								{ev.type === 'win' && (
+									<span>
+										🏆 <b>{ev.who}</b> won the match!
+									</span>
+								)}
+								{ev.type === 'start' && (
+									<span>Match started</span>
+								)}
+							</div>
+						))}
+				</div>
+				<div
+					style={{
+						display: 'flex',
+						alignItems: 'center',
+						gap: 12,
+						marginBottom: 8,
+					}}
+				>
+					<button
+						onClick={() =>
+							setReplayStep((s) => Math.max(0, s - 1))
+						}
+						disabled={replayStep === 0}
+						style={{
+							borderRadius: 8,
+							padding: '6px 18px',
+							border: 'none',
+							background: '#e0e7ff',
+							color: '#2563eb',
+							fontWeight: 600,
+							cursor:
+								replayStep === 0
+									? 'not-allowed'
+									: 'pointer',
+						}}
+					>
+						Prev
+					</button>
+					<span style={{ fontWeight: 600 }}>
+						Step {replayStep + 1} /{' '}
+						{replayData?.events?.length || 1}
+					</span>
+					<button
+						onClick={() =>
+							setReplayStep((s) =>
+								Math.min(
+									(replayData?.events?.length || 1) - 1,
+									s + 1
+								)
+							)
+						}
+						disabled={
+							replayStep ===
+							(replayData?.events?.length || 1) - 1
+						}
+						style={{
+							borderRadius: 8,
+							padding: '6px 18px',
+							border: 'none',
+							background: '#e0e7ff',
+							color: '#2563eb',
+							fontWeight: 600,
+							cursor:
+								replayStep ===
+								(replayData?.events?.length || 1) - 1
+									? 'not-allowed'
+									: 'pointer',
+						}}
+					>
+						Next
+					</button>
+				</div>
+			</Modal>
 		</div>
 	);
 }
+
+// --- QA Button Style ---
+const qaBtnStyle = {
+	background:
+		'linear-gradient(90deg,#38bdf8 0%,#2563eb 100%)',
+	color: '#fff',
+	border: 'none',
+	borderRadius: 999,
+	padding: '10px 22px',
+	fontWeight: 700,
+	fontSize: 16,
+	boxShadow: '0 2px 8px 0 #38bdf855',
+	cursor: 'pointer',
+	transition: 'background 0.18s, color 0.18s',
+	outline: 'none',
+	marginBottom: 0,
+	animation: 'fadeIn 0.22s',
+};

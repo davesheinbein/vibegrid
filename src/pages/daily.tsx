@@ -22,11 +22,15 @@ import {
 	WordButton,
 	GoBackButton,
 	CopyLinkButton,
-} from '../components/ui/Buttons';
-import FeedbackBanner from '../components/ui/FeedbackBanner';
-import EndGameModal from '../components/modal/EndGameModal';
-import RulesModal from '../components/modal/RulesModal';
-import StatisticsModal from '../components/modal/StatisticsModal';
+} from '../components/ui-kit/buttons';
+import {
+	FeedbackBanner,
+	EndGameModal,
+	RulesModal,
+	StatisticsModal,
+	PreGameModal,
+	Modal,
+} from '../components/ui-kit';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
 	faChartBar,
@@ -42,8 +46,7 @@ import {
 	faInstagram,
 } from '@fortawesome/free-brands-svg-icons';
 import { faShareAlt } from '@fortawesome/free-solid-svg-icons';
-import { Modal } from '../components/ui/Modal';
-import { UserSettingsContext } from '../components/ui/UserSettingsProvider';
+import { UserSettingsContext } from '../components/ui-kit/providers';
 import { useSelector, useDispatch } from 'react-redux';
 import { RootState } from '../store';
 import {
@@ -66,7 +69,6 @@ import {
 	clearSelectedWords,
 	setAttemptsValue,
 } from '../utils/helpers';
-import PreGameModal from '../components/modal/PreGameModal';
 import {
 	getDailyCompletion,
 	setDailyCompletion,
@@ -75,6 +77,7 @@ import {
 	clearDailyPuzzleProgress,
 } from '../utils/dailyCompletion';
 import { getShareLinks } from '../utils/shareLinks';
+import { useSession } from 'next-auth/react';
 
 // --- Helper functions for updating arrays in Redux state ---
 // (Now imported from src/utils/helpers.ts)
@@ -84,6 +87,15 @@ interface DailyPageProps {
 }
 
 export default function Daily(props: DailyPageProps) {
+	const { data: session } = useSession();
+	const user = session?.user
+		? {
+				name: session.user.name || '',
+				email: session.user.email || '',
+				photoUrl: session.user.image || undefined,
+		  }
+		: null;
+
 	const dispatch = useDispatch();
 	const selectedWords = useSelector(
 		(state: RootState) => state.game.selectedWords
@@ -115,11 +127,6 @@ export default function Daily(props: DailyPageProps) {
 		null
 	);
 	const [showShare, setShowShare] = useState(false);
-	const [user, setUser] = useState<{
-		name: string;
-		email: string;
-		photoUrl?: string;
-	} | null>(null);
 	const [showGameOverBanner, setShowGameOverBanner] =
 		useState(false);
 	const [finishTime, setFinishTime] = useState<
@@ -613,10 +620,6 @@ export default function Daily(props: DailyPageProps) {
 						</div>
 					</div>
 				)}
-				{/* Game Over Banner */}
-				{showGameOverBanner && (
-					<FeedbackBanner message='Game Over! You are out of attempts.' />
-				)}
 				<div className='gridRoyale-header-row'>
 					<GoBackButton
 						onClick={
@@ -625,7 +628,6 @@ export default function Daily(props: DailyPageProps) {
 								: () => window.location.assign('/')
 						}
 						className='back-icon-btn'
-						label='Back'
 					/>
 					<div className='gridRoyale-header-heading'>
 						<h1 className='gridRoyale-title'>
@@ -1027,12 +1029,12 @@ export default function Daily(props: DailyPageProps) {
 					open={showStats}
 					onClose={() => setShowStats(false)}
 					user={user}
-					setUser={setUser}
 					dailyCompleted={gameOver && allGroupsSolved()}
 				/>
 				<RulesModal
 					open={showRules}
 					onClose={() => setShowRules(false)}
+					mode='daily'
 				/>
 			</div>
 		</div>

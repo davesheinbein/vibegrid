@@ -5,10 +5,12 @@ import {
 	copyToClipboard,
 } from '../utils/helpers';
 import { getShareLinks } from '../utils/shareLinks';
-import StartupPage from '@components/ui/StartupPage';
-import FriendsSidebar from '@components/ui/FriendsSidebar';
-import { Modal } from '../components/ui/Modal';
-import { CopyLinkButton } from '../components/ui/Buttons';
+import {
+	StartupPage,
+	Modal,
+	CopyLinkButton,
+	CustomPuzzleModal,
+} from '../components/ui-kit';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 
 export default function Home() {
@@ -33,13 +35,23 @@ export default function Home() {
 
 	return (
 		<>
-			{/* <FriendsSidebar /> */}
 			<StartupPage
 				onStartDaily={() => router.push('/daily')}
 				onStartCustom={() => setShowCustomModal(true)}
 				onBrowseCustom={() => router.push('/browse')}
 				onShare={() => setShowShareModal(true)}
 			/>
+			{showCustomModal && (
+				<CustomPuzzleModal
+					open={showCustomModal}
+					onClose={() => setShowCustomModal(false)}
+					onSave={(puzzle) => {
+						setCustomPuzzle(puzzle);
+						setShowCustomModal(false);
+					}}
+					initialData={customPuzzle}
+				/>
+			)}
 			{showShareModal && (
 				<Modal
 					open={showShareModal}

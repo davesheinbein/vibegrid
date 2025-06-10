@@ -1,3 +1,5 @@
+@use 'sass:color';
+
 .gridRoyale-icons {
 	display: flex;
 	justify-content: center;
@@ -271,20 +273,13 @@
 	}
 
 	&.selected {
-		background: lighten(#fde047, 12%);
+		background: color.adjust(#fde047, $lightness: 12%);
 		color: #1e293b;
 		border-color: #fde047;
 		box-shadow: 0 0 0 3px #fde04755;
 		transform: scale(1.04);
 		z-index: 2;
 	}
-}
-
-body.dark-mode .word-btn.selected {
-	background: #fbbf24;
-	color: #1e293b;
-	border-color: #fde047;
-	box-shadow: 0 0 0 3px #fde04755;
 }
 
 .gridRoyale-container {
@@ -366,7 +361,7 @@ body.dark-mode .word-btn.selected {
 	transition: background 0.2s, box-shadow 0.18s;
 	text-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
 	&:hover {
-		background: lighten(#fde047, 12%);
+		background: color.adjust(#fde047, $lightness: 12%);
 	}
 }
 

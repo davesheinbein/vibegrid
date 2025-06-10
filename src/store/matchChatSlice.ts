@@ -7,7 +7,7 @@ export interface MatchChatMessage {
 	id: string;
 	sender: string;
 	content: string;
-	type: 'text' | 'emoji' | 'quickfire';
+	type: 'text' | 'emoji' | 'quickfire' | 'system';
 	timestamp: number;
 }
 

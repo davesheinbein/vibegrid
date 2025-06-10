@@ -30,11 +30,6 @@ globalThis.__BUILD_MANIFEST = {
       "static/chunks/main.js",
       "static/chunks/pages/admin.js"
     ],
-    "/customization": [
-      "static/chunks/webpack.js",
-      "static/chunks/main.js",
-      "static/chunks/pages/customization.js"
-    ],
     "/daily": [
       "static/chunks/webpack.js",
       "static/chunks/main.js",

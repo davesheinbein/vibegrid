@@ -1,0 +1,50 @@
+@use 'sass:color';
+
+// --- Consistent Button Styles ---
+button,
+.submit-btn,
+.vs-mode-btn,
+.friend-card-btn,
+.modal-stats-ok-btn {
+	border-radius: 12px;
+	font-size: 1rem;
+	font-weight: 600;
+	padding: 10px;
+	background-color: #38bdf8;
+	background: linear-gradient(
+		90deg,
+		#2563eb 0%,
+		#38bdf8 100%
+	);
+	color: #1e293b;
+	border: none;
+	box-shadow: 0 2px 8px 0 #e3eaff33;
+	transition: background 0.18s, box-shadow 0.18s,
+		transform 0.12s;
+	cursor: pointer;
+}
+
+button:hover,
+.submit-btn:hover,
+.vs-mode-btn:hover,
+.friend-card-btn:hover,
+.modal-stats-ok-btn:hover {
+	background: color.adjust(#2563eb, $lightness: 10%);
+	color: #1e293b;
+	border-color: #38bdf8;
+	box-shadow: 0 0 0 3px #fde04755;
+	transform: translateY(-2px) scale(1.03);
+	z-index: 2;
+	box-shadow: 0 4px 16px 0 #38bdf855;
+}
+
+button:active,
+.submit-btn:active,
+.vs-mode-btn:active,
+.friend-card-btn:active,
+.modal-stats-ok-btn:active {
+	background: color.adjust(#2563eb, $lightness: 30%);
+	border-color: #38bdf8;
+	box-shadow: 0 1px 4px 0 #e3eaff33;
+	transform: scale(0.98);
+}

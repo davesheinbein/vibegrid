@@ -119,7 +119,6 @@ export function getBotMove(
 
 /**
  * Simulates the bot playing the puzzle to completion, returning its solved groups, attempts left, and time taken.
- * Used in VSBotGame.tsx for bot progress display.
  */
 export async function runVSBot(
 	puzzle: {

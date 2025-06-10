@@ -124,16 +124,7 @@ const CustomizationPage: React.FC = () => {
 		>
 			<GoBackButton
 				onClick={() => router.back()}
-				style={{
-					position: 'absolute',
-					top: 24,
-					left: 24,
-					zIndex: 10,
-					background: '#fff',
-					borderRadius: 12,
-					boxShadow: '0 2px 8px 0 #e3eaff33',
-				}}
-				label=''
+				className='back-icon-btn'
 			/>
 			<div
 				style={{

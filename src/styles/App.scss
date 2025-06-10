@@ -1,5 +1,7 @@
+@use 'sass:color';
 @use './Variables.scss' as *;
 @use './Animations.scss' as *;
+@use './Buttons.scss';
 @use './Browse.scss';
 @use './Daily.scss';
 @use './Footer.scss';
@@ -41,10 +43,6 @@ body {
 	min-height: 100vh;
 	padding: 24px;
 	position: relative;
-}
-
-.browse-back-btn {
-	margin-right: 16px;
 }
 
 .browse-empty-msg {
@@ -104,48 +102,6 @@ body {
 	margin-left: 2px;
 	color: #64748b;
 	font-size: 16px;
-}
-
-.browse-puzzles {
-	&-header {
-		display: flex;
-		flex-direction: column;
-		align-items: center;
-		justify-self: center;
-		width: 100%;
-		position: relative;
-		display: flex;
-		justify-content: space-between;
-		align-items: center;
-		flex-direction: column;
-		z-index: 2;
-	}
-
-	&-tabs {
-		display: flex;
-		gap: 12px;
-		margin-top: 10px;
-	}
-
-	&-tabs button {
-		font-weight: 400;
-		background: none;
-		border: none;
-		border-bottom: 2px solid transparent;
-		color: #64748b;
-		font-size: 18px;
-		cursor: pointer;
-		padding: 6px 18px;
-		border-radius: 0;
-		transition: color 0.2s, border-bottom 0.2s;
-		&.active,
-		&:active,
-		&:hover {
-			font-weight: 700;
-			border-bottom: 2px solid #38bdf8;
-			color: #2563eb;
-		}
-	}
 }
 
 .gridRoyale-header {
@@ -547,13 +503,6 @@ body {
 	}
 }
 
-.modal-close-absolute {
-	position: absolute;
-	top: 12px;
-	right: 12px;
-	z-index: 2;
-}
-
 .rules-modal {
 	position: fixed;
 	inset: 0;
@@ -571,6 +520,7 @@ body {
 		text-align: left;
 		min-width: 260px;
 		max-width: 90vw;
+
 		h2 {
 			font-size: 1.25rem;
 			margin-bottom: 1rem;
@@ -581,6 +531,7 @@ body {
 			margin: 0 0 1.2rem 1.2rem;
 			padding: 0;
 			font-size: 1.05rem;
+
 			li {
 				margin-bottom: 0.5em;
 			}
@@ -668,58 +619,6 @@ body {
 	border: 1.5px solid rgba(255, 255, 255, 0.28);
 }
 
-// --- Consistent Button Styles ---
-button,
-.submit-btn,
-.vs-mode-btn,
-.friend-card-btn,
-.modal-stats-ok-btn {
-	border-radius: 12px;
-	font-size: 1rem;
-	font-weight: 600;
-	padding: 10px;
-	background: linear-gradient(
-		90deg,
-		#fbbf24 0%,
-		#38bdf8 100%
-	);
-	color: #1e293b;
-	border: none;
-	box-shadow: 0 2px 8px 0 #e3eaff33;
-	transition: background 0.18s, box-shadow 0.18s,
-		transform 0.12s;
-	cursor: pointer;
-}
-
-button:hover,
-.submit-btn:hover,
-.vs-mode-btn:hover,
-.friend-card-btn:hover,
-.modal-stats-ok-btn:hover {
-	background: lighten(#fde68a, 32%);
-	color: #1e293b;
-	border-color: #fde047;
-	box-shadow: 0 0 0 3px #fde04755;
-	transform: scale(1.04);
-	z-index: 2;
-	box-shadow: 0 4px 16px 0 #38bdf855;
-	transform: translateY(-2px) scale(1.03);
-}
-
-button:active,
-.submit-btn:active,
-.vs-mode-btn:active,
-.friend-card-btn:active,
-.modal-stats-ok-btn:active {
-	background: linear-gradient(
-		90deg,
-		#fbbf24 0%,
-		#38bdf8 100%
-	);
-	box-shadow: 0 1px 4px 0 #e3eaff33;
-	transform: scale(0.98);
-}
-
 // --- Notification Toasts ---
 .notification-toast {
 	position: fixed;
@@ -752,19 +651,8 @@ button:active,
 	border: 1.5px solid rgba(255, 255, 255, 0.28);
 }
 
-// --- Modal Consistency ---
-.share-modal-content,
-.modal-stats-modal,
-.endgame-modal .modal-content {
-	border-radius: 18px;
-	background: rgba(255, 255, 255, 0.92);
-}
-
 // --- Font and Color Consistency ---
-body,
-.gridRoyale-container,
-.modal-content,
-.share-modal-content {
+body {
 	font-family: 'Inter', 'Segoe UI', Arial, sans-serif;
 	color: #1e293b;
 }
@@ -789,49 +677,10 @@ select:focus {
 }
 
 // --- Dark Mode Consistency ---
-body.dark-mode,
-.dark-mode {
-	background: #1e293b;
-	color: #f1f5f9;
-}
-
-body.dark-mode .glassy-modal,
-.dark-mode .glassy-modal,
-body.dark-mode .glassy-friend-card,
-.dark-mode .glassy-friend-card,
-body.dark-mode .friends-sidebar-overlay,
-.dark-mode .friends-sidebar-overlay,
-body.dark-mode .share-modal,
-.dark-mode .share-modal {
-	background: rgba(30, 41, 59, 0.38);
-	box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.28);
-	border: 1.5px solid rgba(148, 163, 184, 0.18);
-}
-
-body.dark-mode .share-modal-content,
-.dark-mode .share-modal-content,
-body.dark-mode .modal-stats-modal,
-.dark-mode .modal-stats-modal {
-	background: rgba(30, 41, 59, 0.92);
-	color: #f1f5f9;
-}
-
-body.dark-mode .notification-toast,
-.dark-mode .notification-toast {
-	background: rgba(30, 41, 59, 0.88);
-	color: #fbbf24;
-	border: 1.5px solid rgba(148, 163, 184, 0.18);
-}
-
-body.dark-mode,
-.dark-mode {
-	background: #0f172a;
-	color: #f1f5f9;
-}
 
 .back-icon-btn {
 	position: absolute;
-	top: 24px;
+	top: 40px;
 	left: 40px;
 	padding: 0;
 	background: linear-gradient(
@@ -901,44 +750,6 @@ body.dark-mode,
 .gridRoyale-solved-word-list
 	.gridRoyale-solved-word:not(:last-child) {
 	margin-right: 0.1rem;
-}
-
-.dark-mode-toggle {
-	display: flex;
-	align-items: center;
-	justify-content: center;
-	gap: 0.7rem;
-	margin: 1.1rem auto 0.7rem auto;
-	padding: 0.5rem 1.5rem;
-	background: #f9fafb;
-	border-radius: 2rem;
-	box-shadow: 0 1px 6px 0 #e5e7eb;
-	font-size: 1.08rem;
-	font-weight: 600;
-	color: #1f2937;
-	cursor: pointer;
-	border: 2px solid #e5e7eb;
-	transition: background 0.25s ease-in-out, color 0.25s,
-		border 0.25s;
-	user-select: none;
-}
-
-.dark-mode .dark-mode-toggle {
-	background: #374151;
-	color: #fbbf24;
-	border: 2px solid #374151;
-	box-shadow: 0 1px 6px 0 #1f2937;
-}
-
-.dark-mode-toggle input[type='checkbox'] {
-	accent-color: #f59e0b;
-	width: 1.2em;
-	height: 1.2em;
-	margin-right: 0.5em;
-}
-
-.dark-mode .dark-mode-toggle input[type='checkbox'] {
-	accent-color: #fbbf24;
 }
 
 .container {
@@ -1427,19 +1238,12 @@ body.dark-mode,
 	z-index: 1000;
 
 	.word-btn.selected {
-		background: lighten(#fbbf24, 32%);
+		background: color.adjust(#fbbf24, $lightness: 32%);
 		color: #1e293b;
 		border-color: #fde047;
 		box-shadow: 0 0 0 3px #fde04755;
 		transform: scale(1.04);
 		z-index: 2;
-	}
-
-	body.dark-mode .word-btn.selected {
-		background: #fbbf24;
-		color: #1e293b;
-		border-color: #fde047;
-		box-shadow: 0 0 0 3px #fde04755;
 	}
 
 	&.open {
@@ -1465,25 +1269,6 @@ body.dark-mode,
 	outline: none;
 	z-index: 9999;
 	transition: box-shadow 0.18s, transform 0.13s;
-
-	.friends-toggle-glow {
-		position: absolute;
-		width: 60px;
-		height: 60px;
-		left: 50%;
-		top: 50%;
-		transform: translate(-50%, -50%);
-		border-radius: 50%;
-		box-shadow: 0 0 16px 6px #fbbf24cc, 0 0 0 0 #fbbf2400;
-		opacity: 0.7;
-		pointer-events: none;
-		transition: box-shadow 0.22s, opacity 0.22s;
-	}
-
-	&.active .friends-toggle-glow {
-		box-shadow: 0 0 32px 12px #fbbf24cc, 0 0 0 0 #fbbf2400;
-		opacity: 1;
-	}
 }
 
 .friends-toggle-icon {
@@ -1589,38 +1374,6 @@ body.dark-mode,
 }
 
 // Dark mode
-body.dark-mode .friends-sidebar {
-	background: rgba(30, 41, 59, 0.97);
-	box-shadow: -4px 0 32px 0 #0f172a55;
-}
-
-body.dark-mode .friends-sidebar-section {
-	background: rgba(30, 41, 59, 0.85);
-	box-shadow: 0 2px 8px 0 #0f172a33;
-}
-
-body.dark-mode .friends-sidebar-section-title {
-	color: #fbbf24;
-}
-
-body.dark-mode .friends-sidebar-section-title:hover {
-	color: #38bdf8;
-}
-
-body.dark-mode .friends-add-input {
-	background: #1e293b;
-	color: #f1f5f9;
-	border-color: #334155;
-}
-
-body.dark-mode .friends-add-btn {
-	background: linear-gradient(
-		90deg,
-		#38bdf8 0%,
-		#fbbf24 100%
-	);
-	color: #1e293b;
-}
 
 /* Friend Card Styles */
 .friend-card {
@@ -1809,45 +1562,6 @@ body.dark-mode .friends-add-btn {
 	}
 }
 
-// Dark mode
-body.dark-mode .friend-card {
-	background: #1e293b;
-	box-shadow: 0 1px 6px 0 #0f172a33;
-}
-
-body.dark-mode .friend-card:hover,
-body.dark-mode .friend-card.hovered {
-	background: #334155;
-	box-shadow: 0 2px 12px 0 #38bdf855;
-}
-
-body.dark-mode .avatar-circle {
-	background: linear-gradient(
-		90deg,
-		#38bdf8 0%,
-		#fbbf24 100%
-	);
-	color: #1e293b;
-}
-
-body.dark-mode .friend-card-username {
-	color: #fbbf24;
-}
-
-body.dark-mode .friend-hover-card {
-	background: #1e293b;
-	color: #f1f5f9;
-	box-shadow: 0 4px 24px 0 #0ea5e955;
-}
-
-body.dark-mode .friend-hover-username {
-	color: #fbbf24;
-}
-
-body.dark-mode .friend-hover-rank {
-	color: #38bdf8;
-}
-
 .floating-chat-dock,
 .friend-chat-window {
 	position: fixed;
@@ -2018,58 +1732,6 @@ body.dark-mode .friend-hover-rank {
 	background: none;
 }
 
-// Dark mode
-body.dark-mode .floating-chat-dock,
-body.dark-mode .friend-chat-window {
-	background: #1e293b;
-	box-shadow: 0 8px 32px 0 #0f172a55;
-}
-
-body.dark-mode .friend-chat-header,
-body.dark-mode .friend-chat-input-row {
-	background: #1e293b;
-	border-color: #334155;
-}
-
-body.dark-mode .friend-chat-title {
-	color: #fbbf24;
-}
-
-body.dark-mode .friend-chat-message.inbound {
-	background: #334155;
-	color: #f1f5f9;
-	border-color: #475569;
-}
-
-body.dark-mode .friend-chat-message.outbound {
-	background: linear-gradient(
-		90deg,
-		#38bdf8 0%,
-		#fbbf24 100%
-	);
-	color: #1e293b;
-}
-
-body.dark-mode .friend-chat-message.system {
-	background: #334155;
-	color: #fbbf24;
-}
-
-body.dark-mode .friend-chat-input {
-	background: #1e293b;
-	color: #f1f5f9;
-	border-color: #334155;
-}
-
-body.dark-mode .friend-chat-send-btn {
-	background: linear-gradient(
-		90deg,
-		#38bdf8 0%,
-		#fbbf24 100%
-	);
-	color: #1e293b;
-}
-
 /* --- Pregame Modal for Daily Puzzle --- */
 .pregame-modal-overlay {
 	position: fixed;
@@ -2143,7 +1805,10 @@ body.dark-mode .friend-chat-send-btn {
 
 	&:hover,
 	&:focus {
-		background: lighten($primary-blue, 12%);
+		background: color.adjust(
+			$primary-blue,
+			$lightness: 12%
+		);
 		transform: scale(1.04);
 	}
 }
@@ -2169,7 +1834,7 @@ body.dark-mode .friend-chat-send-btn {
 	position: relative;
 	&:hover,
 	&:focus {
-		background: lighten($primary-red, 12%);
+		background: color.adjust($primary-red, $lightness: 12%);
 		transform: scale(1.04);
 	}
 }

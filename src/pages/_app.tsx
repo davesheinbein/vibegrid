@@ -1,10 +1,10 @@
 import '../styles/index.scss';
 import '../styles/App.scss';
 import type { AppProps } from 'next/app';
-import { FriendsToggleButton } from '../components/ui/Buttons';
-import FriendsSidebar from '../components/ui/FriendsSidebar';
+import { FriendsToggleButton } from '../components/ui-kit/buttons';
+import FriendsSidebar from '../components/ui-kit/chat/FriendsSidebar';
 import { SessionProvider } from 'next-auth/react';
-import { UserSettingsProvider } from '../components/ui/UserSettingsProvider';
+import { UserSettingsProvider } from '../components/ui-kit';
 import { Provider as ReduxProvider } from 'react-redux';
 import { store } from '../store';
 import React, { useState } from 'react';
