@@ -21,10 +21,8 @@ import StatisticsModal from '../modals/StatisticsModal';
 import PreGameModal from '../modals/PreGameModal';
 import { Modal } from '../modals/Modal';
 import dailyPuzzles from '../../../data/dailyPuzzles.json';
-import { getShareLinks } from '../../../utils/shareLinks';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
-	faShareAlt,
 	faChartBar,
 	faInfoCircle,
 } from '@fortawesome/free-solid-svg-icons';
@@ -35,6 +33,9 @@ import {
 import { playSound } from '../../../utils/sound';
 import { useRouter } from 'next/router';
 import io from 'socket.io-client';
+import { NotificationBanner } from '../banners';
+import ShareModalContent from '../modals/ShareModalContent';
+import axios from 'axios';
 
 // VSBotGame: VS Mode board vs Bot, visually identical to Daily Puzzle with VS overlays
 const VSBotGame: React.FC<any> = ({
@@ -50,7 +51,21 @@ const VSBotGame: React.FC<any> = ({
 	const [selected, setSelected] = useState<string[]>([]);
 	const [locked, setLocked] = useState<string[]>([]);
 	const [feedback, setFeedback] = useState('');
-	const [attemptsLeft, setAttemptsLeft] = useState(4);
+	const [notification, setNotification] = useState<
+		string | null
+	>(null);
+	const [notificationType, setNotificationType] = useState<
+		'positive' | 'negative' | 'neutral'
+	>('neutral');
+	const [shakeSelected, setShakeSelected] = useState(false);
+	const [correctPulse, setCorrectPulse] = useState(false);
+	const [pointsAnim, setPointsAnim] = useState<{
+		value: number;
+		key: number;
+	} | null>(null);
+	const [streak, setStreak] = useState(0);
+	const [soundEnabled, setSoundEnabled] = useState(true); // TODO: get from user settings
+
 	const [opponentSelected, setOpponentSelected] = useState<
 		string[]
 	>([]); // Bot's current selection
@@ -186,6 +201,10 @@ const VSBotGame: React.FC<any> = ({
 	const groupCount = totalGroups;
 	const gridWordCount = gridRows * gridCols;
 
+	// Calculate initial attempts based on columns and wildcards
+	const [attemptsLeft, setAttemptsLeft] =
+		useState(gridCols);
+
 	// Animate solved group
 	useEffect(() => {
 		if (
@@ -261,8 +280,13 @@ const VSBotGame: React.FC<any> = ({
 		setBurnSuspect((prev) => (prev === word ? null : word));
 	};
 
+	// Submission handler
 	const handleSubmit = () => {
-		if (gameOver) return;
+		// Use the total number of words in the puzzle
+		const totalWords =
+			(activePuzzle?.groups?.flat().length || 0) +
+			(activePuzzle?.wildcards?.length || 0);
+		if (locked.length === totalWords) return;
 		if (selected.length !== groupSize) {
 			setFeedback(`Select exactly ${groupSize} words.`);
 			return;
@@ -273,21 +297,39 @@ const VSBotGame: React.FC<any> = ({
 		);
 		if (
 			groupMatch &&
-			!solvedGroups.some((g: string[]) =>
-				g.every((word) => groupMatch.includes(word))
-			)
+			!locked.some((w) => groupMatch.includes(w))
 		) {
-			setLocked((prev) => [...prev, ...selected]);
-			setSolvedGroups((prev) => [...prev, groupMatch]);
-			setFeedback('Group locked in!');
-			setSelected([]);
+			// Correct group
+			setLocked((prev) => [...prev, ...groupMatch]);
+			setNotification('✅ Nice! You earned 10 points.');
+			setNotificationType('positive');
+			setPointsAnim({ value: 10, key: Date.now() });
+			setCorrectPulse(true);
+			setStreak((s) => s + 1);
+			if (soundEnabled) playSound('success');
+			setTimeout(() => setCorrectPulse(false), 700);
+			setTimeout(() => setNotification(null), 2000);
+			// Do NOT clear selected; user must deselect manually
 		} else if (groupMatch) {
 			setFeedback('This group is already solved.');
-			setSelected([]);
+			setNotification('This group is already solved.');
+			setNotificationType('neutral');
+			setTimeout(() => setNotification(null), 2000);
 		} else {
+			// Incorrect
 			setAttemptsLeft((prev) => prev - 1);
 			setFeedback('Not a valid group.');
-			setSelected([]);
+			setNotification(
+				'❌ Missed it! Try again — you lost 3 points.'
+			);
+			setNotificationType('negative');
+			setPointsAnim({ value: -3, key: Date.now() });
+			setShakeSelected(true);
+			if (soundEnabled) playSound('fail');
+			setStreak(0);
+			setTimeout(() => setShakeSelected(false), 500);
+			setTimeout(() => setNotification(null), 2000);
+			// Do NOT clear selected; user must deselect manually
 		}
 	};
 
@@ -463,16 +505,283 @@ const VSBotGame: React.FC<any> = ({
 		};
 	}, [isQAMode, roomCode]);
 
-	// Rendering logic
-	if (loading || !activePuzzle) {
+	const [botStats, setBotStats] = useState<any>(null);
+	const [botStatsLoading, setBotStatsLoading] =
+		useState(true);
+	const [botStatsError, setBotStatsError] = useState<
+		string | null
+	>(null);
+
+	// Fetch bot stats on mount or when botDifficulty changes
+	useEffect(() => {
+		if (!botDifficulty) return;
+		setBotStatsLoading(true);
+		axios
+			.get(`/api/bot-stats/${botDifficulty}`)
+			.then((res) => {
+				setBotStats(res.data);
+				setBotStatsLoading(false);
+			})
+			.catch((err) => {
+				setBotStatsError('Could not load stats');
+				setBotStatsLoading(false);
+			});
+	}, [botDifficulty]);
+
+	// --- Animate and update stats after match ---
+	const [showStatsBanner, setShowStatsBanner] =
+		useState(false);
+	const [postMatchStats, setPostMatchStats] =
+		useState<any>(null);
+
+	// Helper: Calculate stats delta for animation
+	const getStatsDelta = (oldStats: any, newStats: any) => {
+		if (!oldStats || !newStats) return {};
+		const delta: Record<string, number> = {};
+		for (const key in newStats) {
+			if (
+				typeof newStats[key] === 'number' &&
+				typeof oldStats[key] === 'number'
+			) {
+				delta[key] = newStats[key] - oldStats[key];
+			}
+		}
+		return delta;
+	};
+
+	// Call this when match ends
+	const handleMatchEnd = async (result: {
+		win: boolean;
+		perfect: boolean;
+		points: number;
+		finishTime: number;
+		groupsSolvedFirst: number;
+		botOutsolvedFirst: number;
+		threeMistakeFail: boolean;
+		totalWordsGuessed: number;
+		totalMistakes: number;
+		accuracy: number;
+		mostGuessedWord: string;
+		mostCommonTheme: string;
+		dramaticComeback: boolean;
+		clutchWin: boolean;
+		cleanSweep: boolean;
+		multiPerfect: boolean;
+	}) => {
+		if (!botDifficulty) return;
+		// Prepare update object (merge with previous stats)
+		const prev = botStats || {};
+		const update = {
+			completed: (prev.completed || 0) + 1,
+			winCount: (prev.winCount || 0) + (result.win ? 1 : 0),
+			lossCount:
+				(prev.lossCount || 0) + (!result.win ? 1 : 0),
+			winPercentage:
+				(((prev.winCount || 0) + (result.win ? 1 : 0)) /
+					((prev.completed || 0) + 1)) *
+				100,
+			currentStreak: result.win
+				? (prev.currentStreak || 0) + 1
+				: 0,
+			maxStreak: result.win
+				? Math.max(
+						(prev.currentStreak || 0) + 1,
+						prev.maxStreak || 0
+				  )
+				: prev.maxStreak || 0,
+			perfectPuzzles:
+				(prev.perfectPuzzles || 0) +
+				(result.perfect ? 1 : 0),
+			totalPoints:
+				(prev.totalPoints || 0) + (result.points || 0),
+			fastestWinTime:
+				result.win &&
+				(prev.fastestWinTime == null ||
+					result.finishTime < prev.fastestWinTime)
+					? result.finishTime
+					: prev.fastestWinTime,
+			averageMatchTime:
+				((prev.averageMatchTime || 0) *
+					(prev.completed || 0) +
+					(result.finishTime || 0)) /
+				((prev.completed || 0) + 1),
+			groupsSolvedFirst:
+				(prev.groupsSolvedFirst || 0) +
+				(result.groupsSolvedFirst || 0),
+			botOutsolvedFirst:
+				(prev.botOutsolvedFirst || 0) +
+				(result.botOutsolvedFirst || 0),
+			threeMistakeFails:
+				(prev.threeMistakeFails || 0) +
+				(result.threeMistakeFail ? 1 : 0),
+			totalWordsGuessed:
+				(prev.totalWordsGuessed || 0) +
+				(result.totalWordsGuessed || 0),
+			totalMistakes:
+				(prev.totalMistakes || 0) +
+				(result.totalMistakes || 0),
+			accuracyPercentage:
+				((prev.accuracyPercentage || 0) *
+					(prev.completed || 0) +
+					(result.accuracy || 0)) /
+				((prev.completed || 0) + 1),
+			mostGuessedWord:
+				result.mostGuessedWord || prev.mostGuessedWord,
+			mostCommonTheme:
+				result.mostCommonTheme || prev.mostCommonTheme,
+			dramaticComebacks:
+				(prev.dramaticComebacks || 0) +
+				(result.dramaticComeback ? 1 : 0),
+			clutchWins:
+				(prev.clutchWins || 0) + (result.clutchWin ? 1 : 0),
+			cleanSweeps:
+				(prev.cleanSweeps || 0) +
+				(result.cleanSweep ? 1 : 0),
+			multiPerfects:
+				(prev.multiPerfects || 0) +
+				(result.multiPerfect ? 1 : 0),
+			averageMistakesPerMatch:
+				((prev.averageMistakesPerMatch || 0) *
+					(prev.completed || 0) +
+					(result.totalMistakes || 0)) /
+				((prev.completed || 0) + 1),
+		};
+		// Post to backend
+		const res = await axios.post(
+			`/api/bot-stats/${botDifficulty}`,
+			update
+		);
+		setPostMatchStats(res.data);
+		setShowStatsBanner(true);
+		setTimeout(() => setShowStatsBanner(false), 6000);
+		// Refresh stats for next match
+		setBotStats(res.data);
+	};
+
+	// Example: Call handleMatchEnd when game ends
+	useEffect(() => {
+		if (gameOver && finishTime !== null) {
+			// TODO: Gather all result data from game state
+			handleMatchEnd({
+				win: allGroupsSolved(),
+				perfect: /* logic for perfect puzzle */ false,
+				points: getFinalScore(),
+				finishTime,
+				groupsSolvedFirst: 0, // TODO
+				botOutsolvedFirst: 0, // TODO
+				threeMistakeFail: false, // TODO
+				totalWordsGuessed: 0, // TODO
+				totalMistakes: 0, // TODO
+				accuracy: 0, // TODO
+				mostGuessedWord: '', // TODO
+				mostCommonTheme: '', // TODO
+				dramaticComeback: false, // TODO
+				clutchWin: false, // TODO
+				cleanSweep: false, // TODO
+				multiPerfect: false, // TODO
+			});
+		}
+		// eslint-disable-next-line
+	}, [gameOver, finishTime]);
+
+	// --- Collapsible in-game stats banner ---
+	const [statsCollapsed, setStatsCollapsed] =
+		useState(true);
+	const renderInGameStatsBanner = () => {
+		const stats = postMatchStats || botStats;
+		if (!stats) return null;
 		return (
-			<div className='fullscreen-bg'>
-				<div className='gridRoyale-container'>
-					Loading...
+			<div
+				style={{
+					position: 'fixed',
+					top: 12,
+					left: '50%',
+					transform: 'translateX(-50%)',
+					zIndex: 50,
+					background: '#e0e7ff',
+					borderRadius: 16,
+					boxShadow: '0 2px 12px #2563eb22',
+					padding: statsCollapsed
+						? '6px 18px'
+						: '18px 32px',
+					minWidth: 180,
+					maxWidth: 420,
+					transition: 'all 0.4s cubic-bezier(.4,2,.6,1)',
+					cursor: 'pointer',
+					fontSize: 15,
+					color: '#222',
+					userSelect: 'none',
+				}}
+				onClick={() => setStatsCollapsed((v) => !v)}
+			>
+				<div
+					style={{
+						fontWeight: 700,
+						fontSize: 17,
+						marginBottom: statsCollapsed ? 0 : 8,
+					}}
+				>
+					VS Bot Stats {statsCollapsed ? '▼' : '▲'}
 				</div>
+				{!statsCollapsed && (
+					<div
+						style={{
+							display: 'flex',
+							flexWrap: 'wrap',
+							gap: 12,
+						}}
+					>
+						<div>
+							Completed: <b>{stats.completed}</b>
+						</div>
+						<div>
+							Win %:{' '}
+							<b>{stats.winPercentage?.toFixed(1) ?? 0}%</b>
+						</div>
+						<div>
+							Current Streak: <b>{stats.currentStreak}</b>
+						</div>
+						<div>
+							Max Streak: <b>{stats.maxStreak}</b>
+						</div>
+						<div>
+							Perfects: <b>{stats.perfectPuzzles}</b>
+						</div>
+						<div>
+							Total Points: <b>{stats.totalPoints}</b>
+						</div>
+						<div>
+							Fastest:{' '}
+							<b>
+								{stats.fastestWinTime
+									? `${Math.floor(
+											stats.fastestWinTime / 60
+									  )}:${(stats.fastestWinTime % 60)
+											.toString()
+											.padStart(2, '0')}`
+									: '--:--'}
+							</b>
+						</div>
+						<div>
+							Avg. Time:{' '}
+							<b>
+								{stats.averageMatchTime
+									? `${Math.floor(
+											stats.averageMatchTime / 60
+									  )}:${(
+											Math.round(stats.averageMatchTime) %
+											60
+									  )
+											.toString()
+											.padStart(2, '0')}`
+									: '--:--'}
+							</b>
+						</div>
+					</div>
+				)}
 			</div>
 		);
-	}
+	};
 
 	return (
 		<div className='fullscreen-bg'>
@@ -525,7 +834,8 @@ const VSBotGame: React.FC<any> = ({
 					/>
 					<div className='gridRoyale-header-heading'>
 						<h1 className='gridRoyale-title'>
-							{activePuzzle.title || 'Grid Royale VS Bot'}
+							{(activePuzzle && activePuzzle.title) ||
+								'Grid Royale VS Bot'}
 						</h1>
 						<div className='gridRoyale-subtitle'>
 							VS Bot
@@ -570,6 +880,23 @@ const VSBotGame: React.FC<any> = ({
 						</button>
 					</div>
 				</div>
+				{/* Notification Banner */}
+				<div className='notification'>
+					{notification && (
+						<NotificationBanner
+							type={
+								notificationType === 'positive'
+									? 'achievement'
+									: notificationType === 'negative'
+									? 'burn'
+									: 'system'
+							}
+							message={notification}
+							onClose={() => setNotification(null)}
+							index={0}
+						/>
+					)}
+				</div>
 				{/* Main grid and overlays */}
 				{!showPreGameModal && (
 					<div
@@ -605,17 +932,18 @@ const VSBotGame: React.FC<any> = ({
 										word={word}
 										isSelected={selected.includes(word)}
 										isLocked={locked.includes(word)}
-										isBurned={burnedWildcards.includes(
-											word
-										)}
-										onClick={() =>
-											!showCountdown && handleWordTap(word)
+										onClick={() => handleWordTap(word)}
+										className={
+											selected.includes(word) &&
+											shakeSelected
+												? 'word-btn shake'
+												: selected.includes(word) &&
+												  correctPulse
+												? 'word-btn correct-pulse'
+												: selected.includes(word)
+												? 'word-btn selected'
+												: 'word-btn'
 										}
-										onContextMenu={(e: React.MouseEvent) =>
-											!showCountdown &&
-											handleWordRightClick(word, e)
-										}
-										burnSuspect={burnSuspect === word}
 									/>
 								))}
 								{animatingGroup &&
@@ -748,7 +1076,7 @@ const VSBotGame: React.FC<any> = ({
 							alignItems: 'center',
 							gap: 8,
 						}}
-						onClick={handleShare}
+						onClick={() => setShowShare(true)}
 					>
 						<span className='share-icon'>🔗</span>Share
 					</PrimaryButton>
@@ -776,9 +1104,11 @@ const VSBotGame: React.FC<any> = ({
 						{/* Bot avatar */}
 						<div
 							style={{
+								margin: 20,
 								width: 64,
 								height: 64,
 								borderRadius: '50%',
+								backgroundColor: '#38bdf8',
 								background:
 									'linear-gradient(90deg,#fbbf24 0%,#38bdf8 100%)',
 								display: 'flex',
@@ -788,11 +1118,17 @@ const VSBotGame: React.FC<any> = ({
 								fontWeight: 700,
 								color: '#fff',
 								boxShadow: '0 2px 12px #bae6fd55',
-								border: '3px solid #fff',
-								position: 'relative',
 							}}
 						>
-							🤖
+							<img
+								src='https://i.imgur.com/aSdxSOF.png'
+								alt='Bot Avatar'
+								style={{
+									width: 44,
+									height: 44,
+									borderRadius: '50%',
+								}}
+							/>
 						</div>
 						{/* Bot thinking indicator */}
 						{botThinking && (
@@ -879,80 +1215,18 @@ const VSBotGame: React.FC<any> = ({
 							}
 						/>
 					)}
-				<Modal
+				<ShareModalContent
 					open={showShare}
 					onClose={() => setShowShare(false)}
+					title='Share your Grid Royale result!'
+					logoUrl='https://i.imgur.com/1jPtNmW.png'
+					score={getFinalScore()}
+					finishTime={finishTime}
+					formatTimer={formatTimer}
+					minimal={!gameOver}
 				>
-					<div
-						className='share-modal-content'
-						style={{ textAlign: 'center' }}
-					>
-						<img
-							src='https://i.imgur.com/1jPtNmW.png'
-							alt='Grid Royale Logo'
-							style={{
-								width: 180,
-								height: 180,
-								margin: '10px auto 0',
-								borderRadius: 16,
-							}}
-						/>
-						<h2>Share your Grid Royale result!</h2>
-						<div
-							style={{
-								margin: '10px 0 18px',
-								fontSize: '1.1em',
-							}}
-						>
-							<div
-								style={{
-									fontWeight: 600,
-									fontSize: '1.2em',
-								}}
-							>
-								I scored <b>{getFinalScore()}</b> on Grid
-								Royale!
-							</div>
-							<div
-								style={{
-									marginTop: 8,
-									color: '#2563eb',
-									fontSize: '1em',
-								}}
-							>
-								Finished in:{' '}
-								<b>
-									{finishTime !== null
-										? formatTimer(finishTime)
-										: ''}
-								</b>
-							</div>
-							<div
-								style={{
-									marginTop: 8,
-									color: '#2563eb',
-									fontSize: '1em',
-								}}
-							>
-								Can you beat my score? Try the daily puzzle:
-								<br />
-								<a
-									href='https://gridRoyale.app'
-									target='_blank'
-									rel='noopener noreferrer'
-									style={{
-										color: '#2563eb',
-										fontWeight: 600,
-										wordBreak: 'break-all',
-									}}
-								>
-									https://gridRoyale.app
-								</a>
-							</div>
-						</div>
-						<CopyLinkButton />
-					</div>
-				</Modal>
+					<CopyLinkButton key='copy-link' />
+				</ShareModalContent>
 				<StatisticsModal
 					open={showStats}
 					onClose={() => setShowStats(false)}
@@ -988,19 +1262,61 @@ const VSBotGame: React.FC<any> = ({
 						>
 							{floatingEmote}
 						</span>
-						<style>{`
-						@keyframes floatEmote {
-							0% { opacity: 0; transform: translateY(0) scale(0.7); }
-							10% { opacity: 1; transform: translateY(-10px) scale(1.1); }
-							60% { opacity: 1; transform: translateY(-40px) scale(1); }
-							100% { opacity: 0; transform: translateY(-80px) scale(0.8); }
-						}
-						@keyframes popEmote {
-							0% { transform: scale(0.7); }
-							60% { transform: scale(1.22); }
-							100% { transform: scale(1); }
-						}
-						`}</style>
+					</div>
+				)}
+				{/* Points animation (floating number) */}
+				{showStatsBanner && postMatchStats && (
+					<div
+						style={{
+							position: 'fixed',
+							top: 80,
+							left: '50%',
+							transform: 'translateX(-50%)',
+							zIndex: 60,
+							background: '#fff',
+							border: '2px solid #2563eb',
+							borderRadius: 18,
+							boxShadow: '0 4px 24px #2563eb22',
+							padding: 24,
+							minWidth: 220,
+							maxWidth: 420,
+							fontSize: 17,
+							color: '#222',
+							fontWeight: 600,
+							animation:
+								'fadeInScale 0.7s cubic-bezier(.4,2,.6,1)',
+						}}
+					>
+						<div style={{ marginBottom: 8 }}>
+							Stats Updated!
+						</div>
+						<div
+							style={{
+								display: 'flex',
+								flexWrap: 'wrap',
+								gap: 12,
+							}}
+						>
+							{Object.entries(
+								getStatsDelta(botStats, postMatchStats)
+							).map(
+								([k, v]) =>
+									v !== 0 && (
+										<div key={k}>
+											{k}:{' '}
+											<b
+												style={{
+													color:
+														v > 0 ? '#2563eb' : '#ef4444',
+												}}
+											>
+												{v > 0 ? '+' : ''}
+												{v}
+											</b>
+										</div>
+									)
+							)}
+						</div>
 					</div>
 				)}
 			</div>

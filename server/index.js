@@ -18,6 +18,7 @@ const notificationsRouter = require('./routes/notifications');
 const adminRouter = require('./routes/admin');
 const healthRouter = require('./routes/health');
 const customizationRouter = require('./routes/customization');
+const botStatsRouter = require('./routes/botStats');
 require('dotenv').config();
 
 const dev = process.env.NODE_ENV !== 'production';
@@ -58,6 +59,8 @@ app.prepare().then(async () => {
 	server.use('/api/health', healthRouter);
 	// Customization API routes
 	server.use('/api/customization', customizationRouter);
+	// BotStats API routes
+	server.use('/api/bot-stats', botStatsRouter);
 
 	// Next.js page handling
 	server.all('*', (req, res) => handle(req, res));

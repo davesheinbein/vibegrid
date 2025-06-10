@@ -50,6 +50,7 @@ model User {
   premiumCurrency    Int      @default(0)
   userCustomizations UserCustomization[]
   userLoadouts       UserLoadout[]
+  botStats          BotStats[]
 }
 
 model Friend {
@@ -291,4 +292,40 @@ model UserLoadout {
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
   user       User     @relation(fields: [userId], references: [id])
+}
+
+model BotStats {
+  id                String   @id @default(uuid())
+  user              User     @relation(fields: [userId], references: [id])
+  userId            String
+  botDifficulty     String   // e.g. 'easy', 'medium', 'hard', 'legendary'
+  // --- Core Stats ---
+  completed         Int      @default(0)
+  winCount          Int      @default(0)
+  lossCount         Int      @default(0)
+  winPercentage     Float    @default(0)
+  currentStreak     Int      @default(0)
+  maxStreak         Int      @default(0)
+  perfectPuzzles    Int      @default(0)
+  totalPoints       Int      @default(0)
+  fastestWinTime    Int?     // seconds (for MM:SS display)
+  averageMatchTime  Float?   // seconds
+  groupsSolvedFirst Int      @default(0)
+  botOutsolvedFirst Int      @default(0)
+  threeMistakeFails Int      @default(0)
+  // --- Advanced Stats ---
+  totalWordsGuessed     Int    @default(0)
+  totalMistakes         Int    @default(0)
+  accuracyPercentage    Float  @default(0)
+  mostGuessedWord       String?
+  mostCommonTheme       String?
+  dramaticComebacks     Int    @default(0)
+  clutchWins            Int    @default(0)
+  cleanSweeps           Int    @default(0)
+  multiPerfects         Int    @default(0)
+  averageMistakesPerMatch Float @default(0)
+  // --- Timestamps ---
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+  @@unique([userId, botDifficulty])
 }

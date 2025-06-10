@@ -348,7 +348,7 @@
 	background: linear-gradient(
 		90deg,
 		#38bdf8 0%,
-		#fbbf24 100%
+		#0ea5e9 100%
 	);
 	color: #fff;
 	font-size: 1.1rem;
@@ -489,4 +489,33 @@
 .startup-btn-achievements,
 .startup-share-btn {
 	margin: 0;
+}
+
+// --- Shake animation for incorrect guess ---
+.shake {
+	animation: shake-word 0.6s
+		cubic-bezier(0.36, 0.07, 0.19, 0.97) both;
+}
+
+@keyframes shake-word {
+	10%,
+	90% {
+		transform: translateX(-2px);
+	}
+	20%,
+	80% {
+		transform: translateX(4px);
+	}
+	30%,
+	50%,
+	70% {
+		transform: translateX(-8px);
+	}
+	40%,
+	60% {
+		transform: translateX(8px);
+	}
+	100% {
+		transform: none;
+	}
 }

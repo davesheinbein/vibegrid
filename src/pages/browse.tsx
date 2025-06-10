@@ -260,7 +260,7 @@ export default function Browse() {
 									<span
 										style={{
 											marginLeft: 8,
-											color: '#fbbf24',
+											color: '#0ea5e9',
 											fontSize: 18,
 										}}
 										title='Rating (coming soon)'

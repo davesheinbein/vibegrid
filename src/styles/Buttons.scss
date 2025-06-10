@@ -48,3 +48,170 @@ button:active,
 	box-shadow: 0 1px 4px 0 #e3eaff33;
 	transform: scale(0.98);
 }
+
+// --- VS Mode Bot Difficulty Buttons ---
+.vs-mode-bot-easy {
+	background: linear-gradient(
+		90deg,
+		#22d3ee 0%,
+		#34d399 100%
+	);
+	color: #fff;
+	box-shadow: 0 2px 8px 0 #22d3ee33;
+}
+.vs-mode-bot-easy:hover {
+	background: linear-gradient(
+		90deg,
+		#2dd4bf 0%,
+		#10b981 100%
+	);
+}
+.vs-mode-bot-easy:active {
+	background: linear-gradient(
+		90deg,
+		#14b8a6 0%,
+		#059669 100%
+	);
+}
+
+.vs-mode-bot-medium {
+	background: linear-gradient(
+		90deg,
+		#2563eb 0%,
+		#38bdf8 100%
+	);
+	color: #fff;
+	box-shadow: 0 2px 8px 0 #2563eb33;
+}
+.vs-mode-bot-medium:hover {
+	background: linear-gradient(
+		90deg,
+		#1d4ed8 0%,
+		#0ea5e9 100%
+	);
+}
+.vs-mode-bot-medium:active {
+	background: linear-gradient(
+		90deg,
+		#1e40af 0%,
+		#0369a1 100%
+	);
+}
+
+.vs-mode-bot-hard {
+	background: linear-gradient(
+		90deg,
+		#fbbf24 0%,
+		#f59e42 100%
+	);
+	color: #fff;
+	box-shadow: 0 2px 8px 0 #fbbf2433;
+}
+.vs-mode-bot-hard:hover {
+	background: linear-gradient(
+		90deg,
+		#f59e42 0%,
+		#fbbf24 100%
+	);
+}
+.vs-mode-bot-hard:active {
+	background: linear-gradient(
+		90deg,
+		#f59e42 0%,
+		#f59e42 100%
+	);
+}
+
+.vs-mode-bot-legendary {
+	background: linear-gradient(
+		90deg,
+		#a78bfa 0%,
+		#f472b6 100%
+	);
+	color: #fff;
+	box-shadow: 0 2px 8px 0 #a78bfa33;
+}
+.vs-mode-bot-legendary:hover {
+	background: linear-gradient(
+		90deg,
+		#c084fc 0%,
+		#ec4899 100%
+	);
+}
+.vs-mode-bot-legendary:active {
+	background: linear-gradient(
+		90deg,
+		#a21caf 0%,
+		#be185d 100%
+	);
+}
+
+// --- Notification Banner Styles ---
+.notification {
+	position: relative;
+	width: 100%;
+	padding: 20px 0;
+}
+.notification-fade-in {
+	animation: notificationFadeIn 0.33s
+		cubic-bezier(0.4, 2, 0.6, 1) forwards;
+}
+
+.notification-banner {
+	position: relative;
+	margin: 0 auto;
+	z-index: 1200;
+	min-width: 260px;
+	max-width: 420px;
+	padding: 0.85rem 1.6rem;
+	border-radius: 1.2rem;
+	font-size: 1.13rem;
+	font-weight: 600;
+	box-shadow: 0 4px 24px 0 #0002, 0 1.5px 0 #fff8;
+	color: #222;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	animation: notificationFadeIn 0.33s
+		cubic-bezier(0.4, 2, 0.6, 1) forwards;
+	transition: opacity 0.3s, transform 0.3s;
+	pointer-events: auto;
+	user-select: none;
+}
+
+// .notification-banner--burn {
+// 	background: linear-gradient(
+// 		90deg,
+// 		#ff7043 0%,
+// 		#ffd1c1 100%
+// 	);
+// 	color: #fff;
+// 	border: 2px solid #ff7043;
+// }
+// .notification-banner--achievement {
+// 	background: linear-gradient(
+// 		90deg,
+// 		#ffd700 0%,
+// 		#fffbe6 100%
+// 	);
+// 	color: #7c5c00;
+// 	border: 2px solid #ffd700;
+// }
+// .notification-banner--system {
+// 	background: linear-gradient(
+// 		90deg,
+// 		#2196f3 0%,
+// 		#e3f0ff 100%
+// 	);
+// 	color: #174a7c;
+// 	border: 2px solid #2196f3;
+// }
+// .notification-banner--taunt {
+// 	background: linear-gradient(
+// 		90deg,
+// 		#a259f7 0%,
+// 		#f3e8ff 100%
+// 	);
+// 	color: #4b206e;
+// 	border: 2px solid #a259f7;
+// }

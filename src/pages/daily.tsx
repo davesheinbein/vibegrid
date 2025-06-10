@@ -7,9 +7,6 @@ import { useRouter } from 'next/router';
 import {
 	dailyPuzzle,
 	shuffle,
-	getShareUrl,
-	getShareTitle,
-	getShareText,
 	copyToClipboard,
 	getAllWordsFromGroupsAndWildcards,
 } from '../utils/helpers';
@@ -76,8 +73,8 @@ import {
 	saveDailyPuzzleProgress,
 	clearDailyPuzzleProgress,
 } from '../utils/dailyCompletion';
-import { getShareLinks } from '../utils/shareLinks';
 import { useSession } from 'next-auth/react';
+import ShareModalContent from '../components/ui-kit/modals/ShareModalContent';
 
 // --- Helper functions for updating arrays in Redux state ---
 // (Now imported from src/utils/helpers.ts)
@@ -179,7 +176,7 @@ export default function Daily(props: DailyPageProps) {
 		clearSelectedWords(dispatch);
 		addLockedWords(dispatch, [], []); // reset lockedWords to []
 		setFeedbackMsg(dispatch, '');
-		setAttemptsValue(dispatch, 4);
+		setAttemptsValue(dispatch, 4); // Always 4 attempts
 		addSolvedGroup(dispatch, [], []); // reset solvedGroups to []
 		setBurnSuspect(null);
 		setBurnedWildcards([]);
@@ -343,20 +340,14 @@ export default function Daily(props: DailyPageProps) {
 	};
 
 	const handleRandomize = () => {
-		setShuffledWords(shuffle(activePuzzle.words));
-	};
-
-	const handleShare = async () => {
-		const text = getShareText();
-		const url = getShareUrl();
-		const title = getShareTitle();
-		if (navigator.share) {
-			try {
-				await navigator.share({ title, text, url });
-				return;
-			} catch {}
-		}
-		setShowShare(true);
+		setShuffledWords(
+			shuffle(
+				getAllWordsFromGroupsAndWildcards(
+					activePuzzle.groups || [],
+					activePuzzle.wildcards || []
+				)
+			)
+		);
 	};
 
 	// Helper to check if all groups are solved (excluding wildcards)
@@ -391,15 +382,13 @@ export default function Daily(props: DailyPageProps) {
 	const getShareText = () => {
 		const solved = pendingSolvedGroups.length; // Use actual solved groups
 		const attempts = 4 - attemptsLeft;
-		const words = lockedWords.length;
-		const total = gridWordCount;
 		const score = getFinalScore();
 		const url = getShareUrl();
 		let timeStr = '';
 		if (finishTime !== null) {
 			timeStr = ` in ${formatTimer(finishTime)}`;
 		}
-		return `I scored ${score} in ${solved}/${groupCount} groups solved in ${attempts} attempts${timeStr}! on Grid Royale!\nCan you beat my score? Try the daily puzzle:\n${url}`;
+		return `I scored ${score} from ${solved}/${groupCount} groups solved in ${attempts} attempts on Grid Royale!\n\nCan you beat my score?\nTry the daily puzzle: ${url}`;
 	};
 	const getShareUrl = () => 'https://gridRoyale.app';
 	const getShareTitle = () =>
@@ -411,12 +400,6 @@ export default function Daily(props: DailyPageProps) {
 	}! on Grid Royale!\nCan you beat my score? Try the daily puzzle:`;
 	const shareUrl = getShareUrl();
 	const shareTitle = getShareTitle();
-	const shareLinks = getShareLinks(
-		'result',
-		shareText,
-		shareUrl,
-		shareTitle
-	);
 
 	useEffect(() => {
 		if (!gameOver) {
@@ -852,7 +835,7 @@ export default function Daily(props: DailyPageProps) {
 					</div>
 					<button
 						className='share-btn'
-						onClick={handleShare}
+						onClick={() => setShowShare(true)}
 					>
 						<FontAwesomeIcon
 							icon={faShareAlt}
@@ -907,124 +890,19 @@ export default function Daily(props: DailyPageProps) {
 							}
 						/>
 					)}
-				<Modal
-					open={showShare}
-					onClose={() => setShowShare(false)}
-				>
-					<div
-						className='share-modal-content'
-						style={{ textAlign: 'center' }}
+				{showShare && (
+					<ShareModalContent
+						open={showShare}
+						onClose={() => setShowShare(false)}
+						title='Share your Grid Royale result!'
+						logoUrl='https://i.imgur.com/1jPtNmW.png'
+						score={getFinalScore()}
+						finishTime={finishTime}
+						formatTimer={formatTimer}
 					>
-						<img
-							src='https://i.imgur.com/1jPtNmW.png'
-							alt='Grid Royale Logo'
-							style={{
-								width: 180,
-								height: 180,
-								margin: '10px auto 0',
-								borderRadius: 16,
-							}}
-						/>
-						<h2>Share your Grid Royale result!</h2>
-						<div
-							style={{
-								margin: '10px 0 18px',
-								fontSize: '1.1em',
-							}}
-						>
-							<div
-								style={{
-									fontWeight: 600,
-									fontSize: '1.2em',
-								}}
-							>
-								I scored <b>{getFinalScore()}</b> on Grid
-								Royale!
-							</div>
-							<div
-								style={{
-									marginTop: 8,
-									color: '#2563eb',
-									fontSize: '1em',
-								}}
-							>
-								Finished in:{' '}
-								<b>
-									{finishTime !== null
-										? formatTimer(finishTime)
-										: ''}
-								</b>
-							</div>
-							<div
-								style={{
-									marginTop: 8,
-									color: '#2563eb',
-									fontSize: '1em',
-								}}
-							>
-								Can you beat my score? Try the daily puzzle:
-								<br />
-								<a
-									href={getShareUrl()}
-									target='_blank'
-									rel='noopener noreferrer'
-									style={{
-										color: '#2563eb',
-										fontWeight: 600,
-										wordBreak: 'break-all',
-									}}
-								>
-									{getShareUrl()}
-								</a>
-							</div>
-						</div>
-						<div className='share-links-grid'>
-							{(() => {
-								const rows = [];
-								for (
-									let i = 0;
-									i < shareLinks.length;
-									i += 3
-								) {
-									rows.push(
-										<div
-											className='share-links-row'
-											key={i}
-										>
-											{shareLinks
-												.slice(i, i + 3)
-												.map((link) => (
-													<a
-														href={link.url}
-														target='_blank'
-														rel='noopener noreferrer'
-														className={`share-link share-link--${link.name.toLowerCase()}`}
-														data-platform={link.name}
-														key={link.name}
-														style={{ color: link.color }}
-													>
-														<span className='share-link-icon'>
-															<FontAwesomeIcon
-																icon={link.icon}
-															/>
-														</span>
-														<span className='share-link-text'>
-															{link.name}
-														</span>
-													</a>
-												))}
-										</div>
-									);
-								}
-								// Always include CopyLinkButton at the end
-								return [
-									...rows,
-									<CopyLinkButton key='copy-link' />,
-								];
-							})()}
-						</div>
-					</div>
-				</Modal>
+						<CopyLinkButton key='copy-link' />
+					</ShareModalContent>
+				)}
 				<StatisticsModal
 					open={showStats}
 					onClose={() => setShowStats(false)}

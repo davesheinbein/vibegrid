@@ -107,6 +107,9 @@ const VSMultiplayerGame: React.FC = (props) => {
 	const [qaFeedback, setQaFeedback] = useState<
 		string | null
 	>(null);
+	const [attemptsLeft, setAttemptsLeft] = useState(
+		gridSize.cols
+	);
 	const matchId = 'demo-match'; // TODO: use real matchId from multiplayer state
 	const userId = 'player1'; // TODO: use real userId from session
 
@@ -168,6 +171,10 @@ const VSMultiplayerGame: React.FC = (props) => {
 			s.disconnect();
 		};
 	}, [isQAMode, matchId]);
+
+	useEffect(() => {
+		setAttemptsLeft(gridSize.cols);
+	}, [gridSize.cols]);
 
 	return (
 		<div
@@ -315,7 +322,7 @@ const VSMultiplayerGame: React.FC = (props) => {
 						<span className='gridRoyale-attempt-dot used'></span>
 					</div>
 					<div className='gridRoyale-attempts'>
-						Attempts Left: 3
+						Attempts Left: {attemptsLeft}
 					</div>
 				</div>
 				<PrimaryButton

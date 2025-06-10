@@ -1,17 +1,12 @@
 import { useRouter } from 'next/router';
 import React from 'react';
 import {
-	getShareUrl,
-	copyToClipboard,
-} from '../utils/helpers';
-import { getShareLinks } from '../utils/shareLinks';
-import {
 	StartupPage,
 	Modal,
 	CopyLinkButton,
 	CustomPuzzleModal,
 } from '../components/ui-kit';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import ShareModalContent from '../components/ui-kit/modals/ShareModalContent';
 
 export default function Home() {
 	const router = useRouter();
@@ -21,17 +16,6 @@ export default function Home() {
 		React.useState<any>(null);
 	const [showShareModal, setShowShareModal] =
 		React.useState(false);
-
-	const shareText = 'Check out my Grid Royale result!';
-	const shareUrl = 'https://gridRoyale.app';
-	const shareTitle =
-		"Grid Royale: Can you solve today's grid?";
-	const shareLinks = getShareLinks(
-		'url',
-		shareText,
-		shareUrl,
-		shareTitle
-	);
 
 	return (
 		<>
@@ -53,58 +37,14 @@ export default function Home() {
 				/>
 			)}
 			{showShareModal && (
-				<Modal
+				<ShareModalContent
 					open={showShareModal}
 					onClose={() => setShowShareModal(false)}
+					title='Share your Grid Royale result!'
+					logoUrl='https://i.imgur.com/1jPtNmW.png'
 				>
-					<div className='share-modal-content'>
-						<h2>Share your Grid Royale result!</h2>
-						<div className='share-links-grid'>
-							{(() => {
-								const rows = [];
-								for (
-									let i = 0;
-									i < shareLinks.length;
-									i += 3
-								) {
-									rows.push(
-										<div
-											className='share-links-row'
-											key={i}
-										>
-											{shareLinks
-												.slice(i, i + 3)
-												.map((link) => (
-													<a
-														href={link.url}
-														target='_blank'
-														rel='noopener noreferrer'
-														className={`share-link share-link--${link.name.toLowerCase()}`}
-														data-platform={link.name}
-														key={link.name}
-														style={{ color: link.color }}
-													>
-														<span className='share-link-icon'>
-															<FontAwesomeIcon
-																icon={link.icon}
-															/>
-														</span>
-														<span className='share-link-text'>
-															{link.name}
-														</span>
-													</a>
-												))}
-										</div>
-									);
-								}
-								return [
-									...rows,
-									<CopyLinkButton key='copy-link' />,
-								];
-							})()}
-						</div>
-					</div>
-				</Modal>
+					<CopyLinkButton key='copy-link' />
+				</ShareModalContent>
 			)}
 		</>
 	);

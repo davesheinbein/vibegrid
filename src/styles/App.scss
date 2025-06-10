@@ -86,7 +86,7 @@ body {
 .browse-copy-btn {
 	background: linear-gradient(
 		90deg,
-		#fbbf24 0%,
+		#0ea5e9 0%,
 		#38bdf8 100%
 	);
 	color: #fff;
@@ -94,7 +94,7 @@ body {
 
 .browse-rating-icon {
 	margin-left: 8px;
-	color: #fbbf24;
+	color: #0ea5e9;
 	font-size: 18px;
 }
 
@@ -1235,20 +1235,20 @@ select:focus {
 	transform: translateX(100%);
 	transition: transform 0.32s cubic-bezier(0.4, 1.4, 0.6, 1);
 	pointer-events: none;
-	z-index: 1000;
-
-	.word-btn.selected {
-		background: color.adjust(#fbbf24, $lightness: 32%);
-		color: #1e293b;
-		border-color: #fde047;
-		box-shadow: 0 0 0 3px #fde04755;
-		transform: scale(1.04);
-		z-index: 2;
-	}
+	z-index: 10002;
 
 	&.open {
 		transform: translateX(0);
 		pointer-events: auto;
+	}
+
+	button {
+		cursor: pointer;
+		pointer-events: auto;
+
+		img {
+			pointer-events: auto;
+		}
 	}
 }
 
@@ -1267,7 +1267,7 @@ select:focus {
 	justify-content: center;
 	cursor: pointer;
 	outline: none;
-	z-index: 9999;
+	z-index: 1000;
 	transition: box-shadow 0.18s, transform 0.13s;
 }
 
@@ -1307,7 +1307,7 @@ select:focus {
 		user-select: none;
 		transition: color 0.18s;
 		&:hover {
-			color: #fbbf24;
+			color: #0ea5e9;
 		}
 	}
 
@@ -1351,7 +1351,7 @@ select:focus {
 .friends-add-btn {
 	background: linear-gradient(
 		90deg,
-		#fbbf24 0%,
+		#0ea5e9 0%,
 		#38bdf8 100%
 	);
 	color: #fff;
@@ -1367,7 +1367,7 @@ select:focus {
 		background: linear-gradient(
 			90deg,
 			#38bdf8 0%,
-			#fbbf24 100%
+			#0ea5e9 100%
 		);
 		transform: scale(1.06);
 	}
@@ -1423,7 +1423,7 @@ select:focus {
 	border-radius: 50%;
 	background: linear-gradient(
 		90deg,
-		#fbbf24 0%,
+		#0ea5e9 0%,
 		#38bdf8 100%
 	);
 	color: #fff;
@@ -1492,7 +1492,7 @@ select:focus {
 	padding: 4px 8px;
 	transition: background 0.15s, transform 0.13s;
 	&:hover {
-		background: #fbbf2422;
+		background: #0ea5e922;
 		transform: scale(1.15);
 	}
 
@@ -1541,7 +1541,7 @@ select:focus {
 .friend-hover-actions button {
 	background: linear-gradient(
 		90deg,
-		#fbbf24 0%,
+		#0ea5e9 0%,
 		#38bdf8 100%
 	);
 	color: #fff;
@@ -1556,7 +1556,7 @@ select:focus {
 		background: linear-gradient(
 			90deg,
 			#38bdf8 0%,
-			#fbbf24 100%
+			#0ea5e9 100%
 		);
 		transform: scale(1.08);
 	}
@@ -1614,7 +1614,7 @@ select:focus {
 	cursor: pointer;
 	transition: background 0.15s, color 0.13s;
 	&:hover {
-		background: #fbbf2422;
+		background: #0ea5e922;
 		color: #f43f5e;
 	}
 }
@@ -1653,7 +1653,7 @@ select:focus {
 .friend-chat-message.outbound {
 	background: linear-gradient(
 		90deg,
-		#fbbf24 0%,
+		#0ea5e9 0%,
 		#38bdf8 100%
 	);
 	color: #fff;
@@ -1696,7 +1696,7 @@ select:focus {
 .friend-chat-send-btn {
 	background: linear-gradient(
 		90deg,
-		#fbbf24 0%,
+		#0ea5e9 0%,
 		#38bdf8 100%
 	);
 	color: #fff;
@@ -1712,7 +1712,7 @@ select:focus {
 		background: linear-gradient(
 			90deg,
 			#38bdf8 0%,
-			#fbbf24 100%
+			#0ea5e9 100%
 		);
 		transform: scale(1.06);
 	}
@@ -1735,13 +1735,13 @@ select:focus {
 /* --- Pregame Modal for Daily Puzzle --- */
 .pregame-modal-overlay {
 	position: fixed;
-	z-index: 2000;
+	z-index: 100;
 	inset: 0;
 	background: rgba(30, 41, 59, 0.38);
 	display: flex;
 	align-items: center;
 	justify-content: center;
-	pointer-events: all;
+	pointer-events: none;
 	animation: fadeIn 0.22s;
 }
 
@@ -1761,6 +1761,7 @@ select:focus {
 	position: relative;
 	animation: fadeInUp 0.32s
 		cubic-bezier(0.23, 1.01, 0.32, 1);
+	pointer-events: auto;
 }
 
 .pregame-modal-title {
