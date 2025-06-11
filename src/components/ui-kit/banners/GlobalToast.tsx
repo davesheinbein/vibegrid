@@ -4,7 +4,7 @@ import { useSelector, useDispatch } from 'react-redux';
 import { RootState } from '../../../store';
 import { removeNotification } from '../../../store/notificationsSlice';
 import { ToastBanner } from './ToastBanner';
-// import { AnimatePresence, motion } from 'framer-motion'; // Uncomment if using Framer Motion
+import { AnimatePresence, motion } from 'framer-motion';
 
 const AUTO_DISMISS = 3200;
 
@@ -37,20 +37,26 @@ const GlobalToast: React.FC = () => {
 				pointerEvents: 'none',
 			}}
 		>
-			{/* <AnimatePresence initial={false}> */}
-			{notifications.slice(0, 2).map((notif) => (
-				// <motion.div key={notif.id} ...animationProps>
-				<ToastBanner
-					key={notif.id}
-					message={notif.message}
-					type={notif.type}
-					onClose={() =>
-						dispatch(removeNotification(notif.id))
-					}
-				/>
-				// </motion.div>
-			))}
-			{/* </AnimatePresence> */}
+			<AnimatePresence initial={false}>
+				{notifications.slice(0, 2).map((notif) => (
+					<motion.div
+						key={notif.id}
+						initial={{ opacity: 0, y: -30 }}
+						animate={{ opacity: 1, y: 0 }}
+						exit={{ opacity: 0, y: -30 }}
+						transition={{ duration: 0.32 }}
+						style={{ pointerEvents: 'auto' }}
+					>
+						<ToastBanner
+							message={notif.message}
+							type={notif.type}
+							onClose={() =>
+								dispatch(removeNotification(notif.id))
+							}
+						/>
+					</motion.div>
+				))}
+			</AnimatePresence>
 		</div>
 	);
 };
