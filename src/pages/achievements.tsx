@@ -1,62 +1,61 @@
 import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/router';
-import { PrimaryButton } from '../components/ui-kit/buttons';
-
-interface Achievement {
-	id: string;
-	label: string;
-	description: string;
-	icon?: string;
-	unlockedAt?: string;
-}
+import { useDispatch } from 'react-redux';
+import {
+	PrimaryButton,
+	GoBackButton,
+} from '../components/ui-kit/buttons';
+import { addNotification } from '../store/notificationsSlice';
+import { ACHIEVEMENTS } from '../data/achievementsConfig';
 
 const AchievementsPage: React.FC = () => {
 	const router = useRouter();
-	const [userAchievements, setUserAchievements] = useState<
-		Record<string, boolean>
-	>({});
-	const [justUnlocked, setJustUnlocked] = useState<
-		string | null
-	>(null);
-	const [achievements, setAchievements] = useState<
-		Achievement[]
-	>([]);
+	const dispatch = useDispatch();
 	const [unlocked, setUnlocked] = useState<Set<string>>(
 		new Set()
 	);
+	const [unlockDates, setUnlockDates] = useState<
+		Record<string, string>
+	>({});
 	const [loading, setLoading] = useState(true);
+	const [category, setCategory] = useState<string>('All');
 	const [resetting, setResetting] = useState(false);
 
-	// TODO: Replace real-time achievement unlocks with Redux-based notification if needed
-
-	// Simulate earning an achievement (for demo/testing)
-	const handleEarn = (id: string, label: string) => {
-		if (!userAchievements[id]) {
-			setUserAchievements((prev) => ({
-				...prev,
-				[id]: true,
-			}));
-			setJustUnlocked(label);
-			// TODO: Replace with Redux-based notification
-			setTimeout(() => setJustUnlocked(null), 3200);
-		}
-	};
-
+	// Only fetch user's unlocked achievements
 	useEffect(() => {
-		async function fetchAchievements() {
-			setLoading(true);
-			const all = await fetch('/api/achievements').then(
-				(r) => r.json()
-			);
-			const mine = await fetch(
-				'/api/users/me/achievements'
-			).then((r) => r.json());
-			setAchievements(all);
-			setUnlocked(new Set(mine.map((a: any) => a.label)));
+		async function fetchUnlocked() {
+			try {
+				const mine = await fetch(
+					'/api/users/me/achievements'
+				).then((r) => r.json());
+				setUnlocked(new Set(mine.map((a: any) => a.label)));
+				const dates: Record<string, string> = {};
+				mine.forEach((a: any) => {
+					if (a.label && a.unlockedAt)
+						dates[a.label] = a.unlockedAt;
+				});
+				setUnlockDates(dates);
+			} catch (e) {
+				setUnlocked(new Set());
+				setUnlockDates({});
+			}
 			setLoading(false);
 		}
-		fetchAchievements();
-	}, [resetting]);
+		fetchUnlocked();
+	}, []);
+
+	const categories = React.useMemo(() => {
+		const cats = new Set<string>();
+		ACHIEVEMENTS.forEach(
+			(a) => a.category && cats.add(a.category)
+		);
+		return ['All', ...Array.from(cats)];
+	}, []);
+
+	const filteredAchievements =
+		category === 'All'
+			? ACHIEVEMENTS
+			: ACHIEVEMENTS.filter((a) => a.category === category);
 
 	const handleReset = async () => {
 		if (
@@ -69,6 +68,22 @@ const AchievementsPage: React.FC = () => {
 		await fetch('/api/users/me/achievements', {
 			method: 'DELETE',
 		});
+		// Re-fetch unlocked achievements after reset
+		try {
+			const mine = await fetch(
+				'/api/users/me/achievements'
+			).then((r) => r.json());
+			setUnlocked(new Set(mine.map((a: any) => a.label)));
+			const dates: Record<string, string> = {};
+			mine.forEach((a: any) => {
+				if (a.label && a.unlockedAt)
+					dates[a.label] = a.unlockedAt;
+			});
+			setUnlockDates(dates);
+		} catch (e) {
+			setUnlocked(new Set());
+			setUnlockDates({});
+		}
 		setResetting(false);
 	};
 
@@ -80,8 +95,19 @@ const AchievementsPage: React.FC = () => {
 				padding: 24,
 				maxWidth: 600,
 				margin: '0 auto',
+				position: 'relative',
 			}}
 		>
+			<GoBackButton
+				onClick={() => router.push('/')}
+				style={{
+					position: 'absolute',
+					top: 16,
+					left: 16,
+					right: 'auto',
+					zIndex: 20,
+				}}
+			/>
 			<h1
 				style={{
 					fontSize: '2rem',
@@ -103,6 +129,38 @@ const AchievementsPage: React.FC = () => {
 				Unlock milestones as you play, solve, and connect
 				with the Grid Royale community!
 			</p>
+			<div
+				style={{
+					display: 'flex',
+					justifyContent: 'center',
+					marginBottom: 24,
+				}}
+			>
+				<label
+					style={{
+						fontWeight: 600,
+						marginRight: 8,
+					}}
+				>
+					Category:
+				</label>
+				<select
+					value={category}
+					onChange={(e) => setCategory(e.target.value)}
+					style={{
+						padding: '6px 12px',
+						borderRadius: 6,
+						border: '1px solid #e0e7ef',
+						fontWeight: 500,
+					}}
+				>
+					{categories.map((cat) => (
+						<option key={cat} value={cat}>
+							{cat}
+						</option>
+					))}
+				</select>
+			</div>
 			<button
 				onClick={handleReset}
 				disabled={resetting}
@@ -136,84 +194,84 @@ const AchievementsPage: React.FC = () => {
 						gap: 18,
 					}}
 				>
-					{achievements.map((ach) => (
-						<div
-							key={ach.label}
-							style={{
-								background: unlocked.has(ach.label)
-									? '#fbbf24'
-									: '#f1f5f9',
-								color: unlocked.has(ach.label)
-									? '#1e293b'
-									: '#64748b',
-								borderRadius: 10,
-								padding: 18,
-								boxShadow: unlocked.has(ach.label)
-									? '0 2px 12px 0 #fbbf2440'
-									: '0 1px 4px 0 #e0e7ef',
-								opacity: unlocked.has(ach.label) ? 1 : 0.7,
-								border: unlocked.has(ach.label)
-									? '2px solid #fde047'
-									: '1.5px solid #e0e7ef',
-								display: 'flex',
-								alignItems: 'center',
-								gap: 18,
-							}}
-						>
-							<span style={{ fontSize: 28, minWidth: 36 }}>
-								{ach.icon ? (
-									<i className={`fa fa-${ach.icon}`}></i>
-								) : (
-									'🏆'
-								)}
-							</span>
-							<div>
-								<div
-									style={{
-										fontWeight: 700,
-										fontSize: 18,
-									}}
+					{filteredAchievements.map((ach) => {
+						const isUnlocked = unlocked.has(ach.label);
+						const isSecret = ach.secret && !isUnlocked;
+						return (
+							<div
+								key={ach.label}
+								style={{
+									background: isUnlocked
+										? '#fbbf24'
+										: '#f1f5f9',
+									color: isUnlocked ? '#1e293b' : '#64748b',
+									borderRadius: 10,
+									padding: 18,
+									boxShadow: isUnlocked
+										? '0 2px 12px 0 #fbbf2440'
+										: '0 1px 4px 0 #e0e7ef',
+									opacity: isUnlocked ? 1 : 0.7,
+									border: isUnlocked
+										? '2px solid #fde047'
+										: '1.5px solid #e0e7ef',
+									display: 'flex',
+									alignItems: 'center',
+									gap: 18,
+									filter: isUnlocked
+										? undefined
+										: 'blur(0.5px) grayscale(0.7)',
+								}}
+							>
+								<span
+									style={{ fontSize: 28, minWidth: 36 }}
 								>
-									{ach.label}
-								</div>
-								<div style={{ fontSize: 14 }}>
-									{ach.description}
-								</div>
-								{unlocked.has(ach.label) && (
+									{isSecret ? (
+										'❓'
+									) : ach.icon ? (
+										<img
+											src={ach.icon}
+											alt=''
+											style={{ width: 32, height: 32 }}
+										/>
+									) : (
+										'🏆'
+									)}
+								</span>
+								<div>
 									<div
 										style={{
-											fontSize: 12,
-											color: '#16a34a',
-											marginTop: 2,
+											fontWeight: 700,
+											fontSize: 18,
 										}}
 									>
-										Unlocked!
+										{isSecret ? '???' : ach.label}
 									</div>
-								)}
+									<div style={{ fontSize: 14 }}>
+										{isSecret
+											? 'Unlock to reveal this secret achievement.'
+											: ach.description}
+									</div>
+									{isUnlocked && (
+										<div
+											style={{
+												fontSize: 12,
+												color: '#16a34a',
+												marginTop: 2,
+											}}
+										>
+											Unlocked
+											{unlockDates[ach.label]
+												? ` on ${new Date(
+														unlockDates[ach.label]
+												  ).toLocaleDateString()}`
+												: ''}
+											!
+										</div>
+									)}
+								</div>
 							</div>
-						</div>
-					))}
-				</div>
-			)}
-			<div style={{ marginTop: 36, textAlign: 'center' }}>
-				<PrimaryButton onClick={() => router.push('/')}>
-					Back to Home
-				</PrimaryButton>
-			</div>
-			{justUnlocked && (
-				<div
-					className='notification-toast'
-					style={{
-						position: 'fixed',
-						right: 32,
-						bottom: 32,
-						zIndex: 9999,
-					}}
-				>
-					<span style={{ fontSize: 22, marginRight: 10 }}>
-						🎉
-					</span>
-					Achievement unlocked: <b>{justUnlocked}</b>
+						);
+					})}
 				</div>
 			)}
 		</div>

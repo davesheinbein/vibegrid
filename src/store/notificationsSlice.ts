@@ -6,7 +6,15 @@ import {
 export interface Notification {
 	id: string;
 	message: string;
-	type: 'info' | 'success' | 'error' | 'warning';
+	type:
+		| 'info'
+		| 'success'
+		| 'error'
+		| 'warning'
+		| 'achievement'
+		| 'system'
+		| 'burn'
+		| 'taunt';
 	createdAt: string;
 	read: boolean;
 }

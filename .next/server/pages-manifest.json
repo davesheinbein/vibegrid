@@ -4,5 +4,7 @@
   "/_document": "pages/_document.js",
   "/": "pages/index.js",
   "/achievements": "pages/achievements.js",
-  "/api/auth/[...nextauth]": "pages/api/auth/[...nextauth].js"
+  "/daily": "pages/daily.js",
+  "/api/auth/[...nextauth]": "pages/api/auth/[...nextauth].js",
+  "/customization": "pages/customization.js"
 }

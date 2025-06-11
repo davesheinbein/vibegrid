@@ -8,6 +8,8 @@ import { UserSettingsProvider } from '../components/ui-kit';
 import { Provider as ReduxProvider } from 'react-redux';
 import { store } from '../store';
 import React, { useState } from 'react';
+import { GlobalToast } from '../components/ui-kit/banners';
+import AchievementSocketListener from '../components/ui-kit/AchievementSocketListener';
 
 export default function App({
 	Component,
@@ -15,10 +17,13 @@ export default function App({
 }: AppProps) {
 	const [isFriendsSidebarOpen, setFriendsSidebarOpen] =
 		useState(false);
+
 	return (
 		<ReduxProvider store={store}>
 			<SessionProvider session={pageProps.session}>
 				<UserSettingsProvider>
+					<AchievementSocketListener />
+					<GlobalToast />
 					<FriendsToggleButton
 						onClick={() => setFriendsSidebarOpen(true)}
 					/>
