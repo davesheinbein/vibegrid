@@ -75,6 +75,8 @@ import {
 } from '../utils/dailyCompletion';
 import { useSession } from 'next-auth/react';
 import ShareModalContent from '../components/ui-kit/modals/ShareModalContent';
+import SolvedGroupsDisplay from '../components/ui-kit/grids/SolvedGroupsDisplay';
+import PregameGridLockout from '../components/ui-kit/grids/PregameGridLockout';
 
 // --- Helper functions for updating arrays in Redux state ---
 // (Now imported from src/utils/helpers.ts)
@@ -177,7 +179,10 @@ export default function Daily(props: DailyPageProps) {
 		addLockedWords(dispatch, [], []); // reset lockedWords to []
 		setFeedbackMsg(dispatch, '');
 		setAttemptsValue(dispatch, 4); // Always 4 attempts
-		addSolvedGroup(dispatch, [], []); // reset solvedGroups to []
+		addSolvedGroup(dispatch, [], {
+			groupIdx: -1,
+			words: [],
+		}); // reset solvedGroups to []
 		setBurnSuspect(null);
 		setBurnedWildcards([]);
 		setBurnBonus(0);
@@ -189,7 +194,7 @@ export default function Daily(props: DailyPageProps) {
 		string[] | null
 	>(null);
 	const [pendingSolvedGroups, setPendingSolvedGroups] =
-		useState<string[][]>([]);
+		useState<{ groupIdx: number; words: string[] }[]>([]);
 	useEffect(() => {
 		if (
 			solvedGroups.length > 0 &&
@@ -197,18 +202,31 @@ export default function Daily(props: DailyPageProps) {
 		) {
 			const newGroup =
 				solvedGroups[solvedGroups.length - 1];
-			setAnimatingGroup(newGroup);
-			setTimeout(() => {
-				setPendingSolvedGroups((prev) => [
-					...prev,
-					newGroup,
-				]);
-				setAnimatingGroup(null);
-			}, 700);
+			const groupIdx = activePuzzle.groups.findIndex(
+				(g: string[]) =>
+					g.every((w) => newGroup.words.includes(w))
+			);
+			if (
+				groupIdx !== -1 &&
+				!pendingSolvedGroups.some(
+					(g) => g.groupIdx === groupIdx
+				)
+			) {
+				setAnimatingGroup(newGroup.words);
+				setTimeout(() => {
+					setPendingSolvedGroups((prev) => [
+						...prev,
+						{ groupIdx, words: newGroup.words },
+					]);
+					setAnimatingGroup(null);
+				}, 700);
+			}
 		}
 	}, [solvedGroups]);
 
-	const solvedWords = pendingSolvedGroups.flat();
+	const solvedWords = pendingSolvedGroups.flatMap(
+		(g) => g.words
+	);
 	const animatingWords = animatingGroup || [];
 	const gridWords = shuffledWords.filter(
 		(word) =>
@@ -291,18 +309,29 @@ export default function Daily(props: DailyPageProps) {
 			);
 			return;
 		}
-		const groupMatch = activePuzzle.groups.find(
+		const groupMatchIdx = activePuzzle.groups.findIndex(
 			(group: string[]) =>
 				selectedWords.every((word) => group.includes(word))
 		);
+		const groupMatch =
+			groupMatchIdx !== -1
+				? activePuzzle.groups[groupMatchIdx]
+				: null;
 		if (
 			groupMatch &&
-			!solvedGroups.some((g: string[]) =>
-				g.every((word) => groupMatch.includes(word))
+			!solvedGroups.some((g: any) =>
+				typeof g.groupIdx === 'number'
+					? g.groupIdx === groupMatchIdx
+					: Array.isArray(g) &&
+					  g.length === groupMatch.length &&
+					  g.every((w: string) => groupMatch.includes(w))
 			)
 		) {
 			addLockedWords(dispatch, lockedWords, selectedWords);
-			addSolvedGroup(dispatch, solvedGroups, groupMatch);
+			addSolvedGroup(dispatch, solvedGroups, {
+				groupIdx: groupMatchIdx,
+				words: groupMatch,
+			});
 			setFeedbackMsg(dispatch, 'Group locked in!');
 			clearSelectedWords(dispatch);
 		} else if (groupMatch) {
@@ -335,7 +364,10 @@ export default function Daily(props: DailyPageProps) {
 		addLockedWords(dispatch, [], []); // reset lockedWords to []
 		setFeedbackMsg(dispatch, '');
 		setAttemptsValue(dispatch, 4);
-		addSolvedGroup(dispatch, [], []); // reset solvedGroups to []
+		addSolvedGroup(dispatch, [], {
+			groupIdx: -1,
+			words: [],
+		}); // reset solvedGroups to []
 		setPendingSolvedGroups([]); // <-- always reset solved groups for share modal
 	};
 
@@ -353,7 +385,6 @@ export default function Daily(props: DailyPageProps) {
 	// Helper to check if all groups are solved (excluding wildcards)
 	const allGroupsSolved = () => {
 		// Only count groups, not wildcards
-		const solvedWords = pendingSolvedGroups.flat();
 		const groupWords = activePuzzle.groups.flat();
 		return groupWords.every((w: string) =>
 			solvedWords.includes(w)
@@ -534,7 +565,34 @@ export default function Daily(props: DailyPageProps) {
 			progress.puzzleDate === todayStr &&
 			!progress.completed
 		) {
-			setPendingSolvedGroups(progress.matchedGroups || []);
+			let restoredGroups: {
+				groupIdx: number;
+				words: string[];
+			}[] = [];
+			if (Array.isArray(progress.matchedGroups)) {
+				restoredGroups = progress.matchedGroups
+					.map((g: any) => {
+						if (
+							typeof g.groupIdx === 'number' &&
+							Array.isArray(g.words)
+						) {
+							return g;
+						} else if (Array.isArray(g)) {
+							const idx = activePuzzle.groups.findIndex(
+								(group: string[]) =>
+									group.length === g.length &&
+									group.every((w: string) => g.includes(w))
+							);
+							return { groupIdx: idx, words: g };
+						}
+						return null;
+					})
+					.filter(Boolean) as {
+					groupIdx: number;
+					words: string[];
+				}[];
+			}
+			setPendingSolvedGroups(restoredGroups);
 			setAttemptsValue(
 				dispatch,
 				progress.remainingAttempts ?? 4
@@ -680,170 +738,167 @@ export default function Daily(props: DailyPageProps) {
 								)}
 							</div>
 						)}
-						{showGrid && (
-							<div
-								className='gridRoyale-grid daily-grid'
-								data-cols={gridCols}
-								data-rows={gridRows}
-								style={{
-									gridTemplateColumns: `repeat(${gridCols}, 1fr)`,
-								}}
-							>
-								{gridWords.map((word: string) => (
-									<WordButton
-										key={word}
-										word={word}
-										isSelected={selectedWords.includes(
-											word
-										)}
-										isLocked={lockedWords.includes(word)}
-										isBurned={burnedWildcards.includes(
-											word
-										)}
-										onClick={() =>
-											!showCountdown && handleWordTap(word)
-										}
-										onContextMenu={(e: React.MouseEvent) =>
-											!showCountdown &&
-											handleWordRightClick(word, e)
-										}
-										burnSuspect={burnSuspect === word}
-									/>
-								))}
-								{animatingGroup &&
-									animatingGroup.map((word: string) => (
-										<WordButton
-											key={word + '-animating'}
-											word={word}
-											isSelected={false}
-											isLocked={true}
-											onClick={() => {}}
-											className='word-btn animating-to-solved'
-										/>
-									))}
-							</div>
-						)}
 					</div>
 				)}
 				{/* --- Pregame Modal Grid Lockout --- */}
-				{(showPreGameModal || !showGrid) && (
-					<div className='daily-center-flex-row pregame-grid-lockout'>
-						<div
-							className='gridRoyale-grid daily-grid pregame-grid-blur'
-							data-cols={gridCols}
-							data-rows={gridRows}
-							style={{
-								gridTemplateColumns: `repeat(${gridCols}, 1fr)`,
-							}}
-						>
-							{gridWords.map((_, idx) => (
+				{showPreGameModal && !showGrid && (
+					<PregameGridLockout
+						gridWords={gridWords}
+						gridCols={gridCols}
+						gridRows={gridRows}
+					/>
+				)}
+				{/* Render grid and controls only if not all groups are solved */}
+				{!allGroupsSolved() && (
+					<>
+						<div className='daily-center-flex-row'>
+							{showGrid &&
+								pendingSolvedGroups.filter(
+									(g) =>
+										Array.isArray(g.words) &&
+										g.words.length > 0 &&
+										typeof g.groupIdx === 'number' &&
+										!isNaN(g.groupIdx)
+								).length > 0 && (
+									<SolvedGroupsDisplay
+										pendingSolvedGroups={pendingSolvedGroups.filter(
+											(g) =>
+												Array.isArray(g.words) &&
+												g.words.length > 0 &&
+												typeof g.groupIdx === 'number' &&
+												!isNaN(g.groupIdx)
+										)}
+										activePuzzle={activePuzzle}
+									/>
+								)}
+							{showGrid && (
 								<div
-									key={idx}
-									className='word-btn pregame-grid-cell-lockout'
+									className='gridRoyale-grid daily-grid'
+									data-cols={gridCols}
+									data-rows={gridRows}
 									style={{
-										pointerEvents: 'none',
-										userSelect: 'none',
-										cursor: 'not-allowed',
-										display: 'flex',
-										alignItems: 'center',
-										justifyContent: 'center',
-										fontSize: 28,
-										fontWeight: 700,
-										color: '#64748b',
-										background: '#f1f5f9',
-										border: '1px solid #e5e7eb',
-										borderRadius: 8,
-										minHeight: 44,
+										gridTemplateColumns: `repeat(${gridCols}, 1fr)`,
 									}}
 								>
-									<span
-										style={{
-											fontSize: 32,
-											fontWeight: 800,
-										}}
-									>
-										×
-									</span>
+									{gridWords.map((word: string) => (
+										<WordButton
+											key={word}
+											word={word}
+											isSelected={selectedWords.includes(
+												word
+											)}
+											isLocked={lockedWords.includes(word)}
+											isBurned={burnedWildcards.includes(
+												word
+											)}
+											onClick={() =>
+												!showCountdown &&
+												handleWordTap(word)
+											}
+											onContextMenu={(
+												e: React.MouseEvent
+											) =>
+												!showCountdown &&
+												handleWordRightClick(word, e)
+											}
+											burnSuspect={burnSuspect === word}
+										/>
+									))}
+									{animatingGroup &&
+										animatingGroup.map((word: string) => (
+											<WordButton
+												key={word + '-animating'}
+												word={word}
+												isSelected={false}
+												isLocked={true}
+												onClick={() => {}}
+												className='word-btn animating-to-solved'
+											/>
+										))}
 								</div>
-							))}
-						</div>
-					</div>
-				)}
-				<div className='gridRoyale-controls'>
-					{!burnSuspect && (
-						<div
-							className='gridRoyale-submit-wrapper'
-							style={{ justifyContent: 'center' }}
-						>
-							<button
-								className='gridRoyale-submit'
-								onClick={handleSubmit}
-								disabled={attemptsLeft === 0 || gameOver}
-								style={{ margin: '0 auto' }}
-							>
-								Submit
-							</button>
-						</div>
-					)}
-					{burnSuspect && (
-						<div className='burn-status-bar'>
-							🔥 Burn active 🔥 <b>{burnSuspect}</b>
-							<button
-								className='burn-btn'
-								onClick={confirmBurn}
-							>
-								Confirm Burn
-							</button>
-						</div>
-					)}
-					<div className='daily-controls-flex-col'>
-						<FeedbackBanner message={feedback[0] || ''} />
-						<div className='gridRoyale-attempts-bar'>
-							{[...Array(attemptsLeft > 4 ? 5 : 4)].map(
-								(_, i) => (
-									<span
-										key={i}
-										className={
-											'gridRoyale-attempt-dot' +
-											(i >= attemptsLeft ? ' used' : '')
-										}
-									></span>
-								)
 							)}
 						</div>
-						<div className='gridRoyale-attempts'>
-							Attempts Left: {attemptsLeft}
-						</div>
-						<div className='gridRoyale-attempts'>
+						<div className='gridRoyale-controls'>
+							{!burnSuspect && (
+								<div
+									className='gridRoyale-submit-wrapper'
+									style={{ justifyContent: 'center' }}
+								>
+									<button
+										className='gridRoyale-submit'
+										onClick={handleSubmit}
+										disabled={
+											attemptsLeft === 0 || gameOver
+										}
+										style={{ margin: '0 auto' }}
+									>
+										Submit
+									</button>
+								</div>
+							)}
+							{burnSuspect && (
+								<div className='burn-status-bar'>
+									🔥 Burn active 🔥 <b>{burnSuspect}</b>
+									<button
+										className='burn-btn'
+										onClick={confirmBurn}
+									>
+										Confirm Burn
+									</button>
+								</div>
+							)}
+							<div className='daily-controls-flex-col'>
+								<FeedbackBanner
+									message={feedback[0] || ''}
+								/>
+								<div className='gridRoyale-attempts-bar'>
+									{[...Array(attemptsLeft > 4 ? 5 : 4)].map(
+										(_, i) => (
+											<span
+												key={i}
+												className={
+													'gridRoyale-attempt-dot' +
+													(i >= attemptsLeft ? ' used' : '')
+												}
+											></span>
+										)
+									)}
+								</div>
+								<div className='gridRoyale-attempts'>
+									Attempts Left: {attemptsLeft}
+								</div>
+								<div className='gridRoyale-attempts'>
+									<button
+										className='randomize-btn'
+										aria-label='Randomize word order'
+										onClick={handleRandomize}
+									>
+										Mix It Up!
+									</button>
+									<button
+										className='deselect-btn'
+										aria-label='Deselect all'
+										onClick={() =>
+											dispatch(setSelectedWords([]))
+										}
+									>
+										Deselect All
+									</button>
+								</div>
+							</div>
 							<button
-								className='randomize-btn'
-								aria-label='Randomize word order'
-								onClick={handleRandomize}
+								className='share-btn'
+								onClick={() => setShowShare(true)}
 							>
-								Mix It Up!
-							</button>
-							<button
-								className='deselect-btn'
-								aria-label='Deselect all'
-								onClick={() =>
-									dispatch(setSelectedWords([]))
-								}
-							>
-								Deselect All
+								<FontAwesomeIcon
+									icon={faShareAlt}
+									className='share-icon'
+								/>
+								Share
 							</button>
 						</div>
-					</div>
-					<button
-						className='share-btn'
-						onClick={() => setShowShare(true)}
-					>
-						<FontAwesomeIcon
-							icon={faShareAlt}
-							className='share-icon'
-						/>
-						Share
-					</button>
-				</div>
+					</>
+				)}
 				{!showPreGameModal &&
 					!showCountdown &&
 					(alreadyCompleted || gameOver) && (

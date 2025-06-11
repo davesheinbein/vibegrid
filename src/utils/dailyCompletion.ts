@@ -65,7 +65,7 @@ const PROGRESS_KEY = 'dailyPuzzleProgress';
 export interface DailyPuzzleProgress {
 	puzzleDate: string; // 'YYYY-MM-DD'
 	createdAt: string; // ISO string
-	matchedGroups: string[][];
+	matchedGroups: { groupIdx: number; words: string[] }[];
 	remainingAttempts: number;
 	burnedWords: string[];
 	elapsedTime: number; // seconds

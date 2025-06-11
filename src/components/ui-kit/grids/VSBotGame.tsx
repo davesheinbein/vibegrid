@@ -36,6 +36,7 @@ import io from 'socket.io-client';
 import { NotificationBanner } from '../banners';
 import ShareModalContent from '../modals/ShareModalContent';
 import axios from 'axios';
+import SolvedGroupsDisplay from './SolvedGroupsDisplay';
 
 // VSBotGame: VS Mode board vs Bot, visually identical to Daily Puzzle with VS overlays
 const VSBotGame: React.FC<any> = ({
@@ -70,13 +71,13 @@ const VSBotGame: React.FC<any> = ({
 		string[]
 	>([]); // Bot's current selection
 	const [solvedGroups, setSolvedGroups] = useState<
-		string[][]
+		{ groupIdx: number; words: string[] }[]
 	>([]);
 	const [animatingGroup, setAnimatingGroup] = useState<
 		string[] | null
 	>(null);
 	const [pendingSolvedGroups, setPendingSolvedGroups] =
-		useState<string[][]>([]);
+		useState<{ groupIdx: number; words: string[] }[]>([]);
 	const [burnSuspect, setBurnSuspect] = useState<
 		string | null
 	>(null);
@@ -137,10 +138,6 @@ const VSBotGame: React.FC<any> = ({
 		typeof window !== 'undefined'
 			? require('next/router').useRouter()
 			: { query: {} };
-	const isQAMode =
-		router?.query?.qa === 'true' ||
-		(typeof window !== 'undefined' &&
-			window.location.search.includes('qa=true'));
 
 	// Select a random puzzle by difficulty
 	useEffect(() => {
@@ -173,6 +170,21 @@ const VSBotGame: React.FC<any> = ({
 			)
 		);
 	}, [activePuzzle]);
+
+	// When puzzle loads, set pendingSolvedGroups to any already-solved groups
+	useEffect(() => {
+		if (!activePuzzle) return;
+		// Find groups where all words are in locked
+		const solved = (activePuzzle.groups || [])
+			.map((group: string[], idx: number) => ({
+				groupIdx: idx,
+				words: group,
+			}))
+			.filter(({ words }) =>
+				words.every((w: string) => locked.includes(w))
+			);
+		setPendingSolvedGroups(solved);
+	}, [activePuzzle, locked]);
 
 	// Show grid after countdown
 	useEffect(() => {
@@ -213,18 +225,41 @@ const VSBotGame: React.FC<any> = ({
 		) {
 			const newGroup =
 				solvedGroups[solvedGroups.length - 1];
-			setAnimatingGroup(newGroup);
+			// Only add if not already present (by groupIdx)
+			setAnimatingGroup(newGroup.words);
 			setTimeout(() => {
-				setPendingSolvedGroups((prev) => [
-					...prev,
-					newGroup,
-				]);
+				setPendingSolvedGroups((prev) => {
+					if (
+						prev.some(
+							(g) => g.groupIdx === newGroup.groupIdx
+						)
+					)
+						return prev;
+					const updated = [...prev, newGroup];
+
+					// --- Endgame check: if all groups are solved, trigger endgame ---
+					if (activePuzzle && activePuzzle.groups) {
+						const solved = updated.flatMap((g) => g.words);
+						const groupWords = activePuzzle.groups.flat();
+						if (
+							groupWords.every((w) => solved.includes(w))
+						) {
+							setFinishTime((prev) => prev ?? timer);
+							setGameOver(true);
+						}
+					}
+
+					return updated;
+				});
 				setAnimatingGroup(null);
 			}, 700);
 		}
 	}, [solvedGroups]);
 
-	const solvedWords = pendingSolvedGroups.flat();
+	// Compute solved words from pendingSolvedGroups
+	const solvedWords = pendingSolvedGroups.flatMap(
+		(g) => g.words
+	);
 	const animatingWords = animatingGroup || [];
 	const gridWords = shuffledWords.filter(
 		(word) =>
@@ -300,16 +335,28 @@ const VSBotGame: React.FC<any> = ({
 			setFeedback(`Select exactly ${groupSize} words.`);
 			return;
 		}
-		const groupMatch = activePuzzle.groups.find(
+		const groupMatchIdx = activePuzzle.groups.findIndex(
 			(group: string[]) =>
 				selected.every((word) => group.includes(word))
 		);
+		const groupMatch =
+			groupMatchIdx !== -1
+				? activePuzzle.groups[groupMatchIdx]
+				: null;
 		if (
 			groupMatch &&
 			!locked.some((w) => groupMatch.includes(w))
 		) {
 			// Correct group
 			setLocked((prev) => [...prev, ...groupMatch]);
+			setSolvedGroups((prev) => {
+				if (prev.some((g) => g.groupIdx === groupMatchIdx))
+					return prev;
+				return [
+					...prev,
+					{ groupIdx: groupMatchIdx, words: groupMatch },
+				];
+			});
 			setNotification('✅ Nice! You earned 10 points.');
 			setNotificationType('positive');
 			setPointsAnim({ value: 10, key: Date.now() });
@@ -318,7 +365,7 @@ const VSBotGame: React.FC<any> = ({
 			if (soundEnabled) playSound('success');
 			setTimeout(() => setCorrectPulse(false), 700);
 			setTimeout(() => setNotification(null), 2000);
-			// Do NOT clear selected; user must deselect manually
+			setSelected([]); // <-- Clear selection after successful group submission
 		} else if (groupMatch) {
 			setFeedback('This group is already solved.');
 			setNotification('This group is already solved.');
@@ -478,7 +525,6 @@ const VSBotGame: React.FC<any> = ({
 	const [socket, setSocket] = useState<any>(null);
 
 	useEffect(() => {
-		if (!isQAMode) return;
 		// Connect to /game namespace for QA simulation
 		const s = io('/game');
 		setSocket(s);
@@ -512,7 +558,7 @@ const VSBotGame: React.FC<any> = ({
 		return () => {
 			s.disconnect();
 		};
-	}, [isQAMode, roomCode]);
+	}, [roomCode]);
 
 	const [botStats, setBotStats] = useState<any>(null);
 	const [botStatsLoading, setBotStatsLoading] =
@@ -521,10 +567,28 @@ const VSBotGame: React.FC<any> = ({
 		string | null
 	>(null);
 
-	// Fetch bot stats on mount or when botDifficulty changes
+	// --- Fetch bot stats on mount or when botDifficulty changes ---
 	useEffect(() => {
 		if (!botDifficulty) return;
 		setBotStatsLoading(true);
+		// MOCK: Replace API call with fake stats for local/dev
+		const mockStats = {
+			completed: 12,
+			winPercentage: 75,
+			currentStreak: 3,
+			maxStreak: 5,
+			perfectPuzzles: 2,
+			totalPoints: 1234,
+			fastestWinTime: 87,
+			averageMatchTime: 120,
+			// ...add any other fields needed for display
+		};
+		setTimeout(() => {
+			setBotStats(mockStats);
+			setBotStatsLoading(false);
+		}, 400);
+		// If you want to restore the API call, comment out above and uncomment below:
+		/*
 		axios
 			.get(`/api/bot-stats/${botDifficulty}`)
 			.then((res) => {
@@ -535,6 +599,7 @@ const VSBotGame: React.FC<any> = ({
 				setBotStatsError('Could not load stats');
 				setBotStatsLoading(false);
 			});
+		*/
 	}, [botDifficulty]);
 
 	// --- Animate and update stats after match ---
@@ -573,7 +638,6 @@ const VSBotGame: React.FC<any> = ({
 		mostGuessedWord: string;
 		mostCommonTheme: string;
 		dramaticComeback: boolean;
-		clutchWin: boolean;
 		cleanSweep: boolean;
 		multiPerfect: boolean;
 	}) => {
@@ -794,27 +858,6 @@ const VSBotGame: React.FC<any> = ({
 
 	return (
 		<div className='fullscreen-bg'>
-			{isQAMode && (
-				<div
-					style={{
-						position: 'fixed',
-						top: 12,
-						left: 12,
-						zIndex: 9999,
-						background: 'rgba(37,99,235,0.12)',
-						color: '#2563eb',
-						fontWeight: 700,
-						borderRadius: 8,
-						padding: '6px 16px',
-						boxShadow: '0 2px 8px 0 #2563eb22',
-						letterSpacing: 1,
-						fontSize: 15,
-						animation: 'fadeIn 0.4s',
-					}}
-				>
-					DEV QA MODE
-				</div>
-			)}
 			<div className='gridRoyale-container'>
 				{/* Pregame Modal Overlay */}
 				{showPreGameModal && (
@@ -889,6 +932,13 @@ const VSBotGame: React.FC<any> = ({
 						</button>
 					</div>
 				</div>
+				{/* Solved Groups Display (above grid) */}
+				{showGrid && pendingSolvedGroups.length > 0 && (
+					<SolvedGroupsDisplay
+						pendingSolvedGroups={pendingSolvedGroups}
+						activePuzzle={activePuzzle}
+					/>
+				)}
 				{/* Notification Banner */}
 				<div className='notification'>
 					{notification && (
@@ -1292,7 +1342,7 @@ const VSBotGame: React.FC<any> = ({
 							background: '#fff',
 							border: '2px solid #2563eb',
 							borderRadius: 18,
-							boxShadow: '0 4px 24px #2563eb22',
+							boxShadow: '0 4px 24px 0 #2563eb22',
 							padding: 24,
 							minWidth: 220,
 							maxWidth: 420,

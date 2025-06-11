@@ -1,7 +1,7 @@
 import React from 'react';
 import { useRouter } from 'next/router';
 import { Modal } from '../modals';
-import { CopyLinkButton } from '../buttons';
+import { CloseButton, CopyLinkButton } from '../buttons';
 
 interface EndGameModalProps {
 	message: string;
@@ -31,6 +31,7 @@ const EndGameModal: React.FC<EndGameModalProps> = ({
 			contentClassName='endgame-modal-content-hide-close'
 		>
 			<div className='modal-content endgame-modal-content'>
+				<CloseButton onClick={() => router.push('/')} />
 				<h2>{win ? 'Congratulations!' : 'Game Over'}</h2>
 				<p>{message}</p>
 				<div className='endgame-modal-score'>

@@ -178,12 +178,12 @@ export function addLockedWords(
  * Adds a group to the solvedGroups array and dispatches setSolvedGroups action.
  * @param dispatch - Redux dispatch
  * @param solvedGroups - current solvedGroups array
- * @param group - group to add
+ * @param group - group to add (should be { groupIdx, words })
  */
 export function addSolvedGroup(
 	dispatch: any,
-	solvedGroups: string[][],
-	group: string[]
+	solvedGroups: { groupIdx: number; words: string[] }[],
+	group: { groupIdx: number; words: string[] }
 ) {
 	dispatch(setSolvedGroups([...solvedGroups, group]));
 }

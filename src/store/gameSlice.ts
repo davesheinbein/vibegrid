@@ -8,7 +8,7 @@ export interface GameState {
 	lockedWords: string[];
 	feedback: string[];
 	attempts: number;
-	solvedGroups: string[][];
+	solvedGroups: { groupIdx: number; words: string[] }[];
 	currentGroup: string[];
 	isSolved: boolean;
 	// Add more as needed
@@ -45,7 +45,9 @@ const gameSlice = createSlice({
 		},
 		setSolvedGroups(
 			state,
-			action: PayloadAction<string[][]>
+			action: PayloadAction<
+				{ groupIdx: number; words: string[] }[]
+			>
 		) {
 			state.solvedGroups = action.payload;
 		},

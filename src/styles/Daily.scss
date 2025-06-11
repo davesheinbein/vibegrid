@@ -228,7 +228,7 @@
 
 	&.animating-to-solved {
 		z-index: 10;
-		animation: gridRoyale-word-fly-to-solved 0.7s
+		animation: word-fly-to-solved 0.7s
 			cubic-bezier(0.4, 0.2, 0.2, 1) forwards;
 		opacity: 1;
 		pointer-events: none;

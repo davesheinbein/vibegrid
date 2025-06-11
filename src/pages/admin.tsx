@@ -491,11 +491,6 @@ export default function Admin() {
 		alert(msg);
 	};
 
-	// --- DEV QA MODE badge (shows if ?qa=true) ---
-	const isQAMode =
-		typeof window !== 'undefined' &&
-		router.query.qa === 'true';
-
 	// --- Test data for debug panel ---
 	const debugData = {
 		mode: 'Bot Match — Easy',
@@ -564,27 +559,6 @@ export default function Admin() {
 			className='admin-dashboard-container'
 			style={{ position: 'relative' }}
 		>
-			{isQAMode && (
-				<div
-					style={{
-						position: 'fixed',
-						top: 12,
-						left: 12,
-						zIndex: 9999,
-						background: 'rgba(37,99,235,0.12)',
-						color: '#2563eb',
-						fontWeight: 700,
-						borderRadius: 8,
-						padding: '6px 16px',
-						boxShadow: '0 2px 8px 0 #2563eb22',
-						letterSpacing: 1,
-						fontSize: 15,
-						animation: 'fadeIn 0.4s',
-					}}
-				>
-					DEV QA MODE
-				</div>
-			)}
 			<h1 className='admin-header'>
 				Grid Royale Admin Dashboard
 			</h1>

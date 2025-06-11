@@ -135,13 +135,8 @@ const VSMultiplayerGame: React.FC = (props) => {
 		typeof window !== 'undefined'
 			? require('next/router').useRouter()
 			: { query: {} };
-	const isQAMode =
-		router?.query?.qa === 'true' ||
-		(typeof window !== 'undefined' &&
-			window.location.search.includes('qa=true'));
 
 	useEffect(() => {
-		if (!isQAMode) return;
 		// Connect to /game namespace for QA simulation
 		const s = io('/game');
 		setSocket(s);
@@ -170,7 +165,7 @@ const VSMultiplayerGame: React.FC = (props) => {
 		return () => {
 			s.disconnect();
 		};
-	}, [isQAMode, matchId]);
+	}, [matchId]);
 
 	useEffect(() => {
 		setAttemptsLeft(gridSize.cols);
@@ -181,27 +176,6 @@ const VSMultiplayerGame: React.FC = (props) => {
 			className='gridRoyale-container'
 			style={{ position: 'relative' }}
 		>
-			{isQAMode && (
-				<div
-					style={{
-						position: 'fixed',
-						top: 12,
-						left: 12,
-						zIndex: 9999,
-						background: 'rgba(37,99,235,0.12)',
-						color: '#2563eb',
-						fontWeight: 700,
-						borderRadius: 8,
-						padding: '6px 16px',
-						boxShadow: '0 2px 8px 0 #2563eb22',
-						letterSpacing: 1,
-						fontSize: 15,
-						animation: 'fadeIn 0.4s',
-					}}
-				>
-					DEV QA MODE
-				</div>
-			)}
 			{/* Opponent avatar area with floating emote animation */}
 			<div style={opponentAvatarAreaStyle}>
 				{/* Opponent avatar (placeholder) */}
