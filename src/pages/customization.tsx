@@ -417,10 +417,10 @@ const CustomizationPage: React.FC = () => {
 					<div style={{ minHeight: 240, width: '100%' }}>
 						{tab === 'themes' && (
 							<CustomizationCategory
-								title='Emote Packs'
-								items={inventory.emote}
+								title='Themes'
+								items={inventory.themes}
 								onEquip={handleEquip}
-								ariaLabelPrefix='emote pack'
+								ariaLabelPrefix='theme'
 							/>
 						)}
 						{tab === 'emote' && (
