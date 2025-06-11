@@ -1303,6 +1303,7 @@ const VSBotGame: React.FC<any> = ({
 					open={showRules}
 					onClose={() => setShowRules(false)}
 					mode='multiplayer'
+					wildcardsActive={wildcards.length > 0}
 				/>
 				{/* Floating Emote Animation */}
 				{floatingEmote && (

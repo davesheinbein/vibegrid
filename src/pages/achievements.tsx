@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/router';
-import { SubmitButton } from '../components/ui/Buttons';
+import { PrimaryButton } from '../components/ui-kit/buttons';
 
 interface Achievement {
 	id: string;
@@ -196,9 +196,9 @@ const AchievementsPage: React.FC = () => {
 				</div>
 			)}
 			<div style={{ marginTop: 36, textAlign: 'center' }}>
-				<SubmitButton onClick={() => router.push('/')}>
+				<PrimaryButton onClick={() => router.push('/')}>
 					Back to Home
-				</SubmitButton>
+				</PrimaryButton>
 			</div>
 			{justUnlocked && (
 				<div

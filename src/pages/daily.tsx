@@ -967,6 +967,9 @@ export default function Daily(props: DailyPageProps) {
 				<RulesModal
 					open={showRules}
 					onClose={() => setShowRules(false)}
+					wildcardsActive={
+						activePuzzle.wildcards.length > 0
+					}
 					mode='daily'
 				/>
 			</div>

@@ -25,10 +25,10 @@ globalThis.__BUILD_MANIFEST = {
       "static/chunks/main.js",
       "static/chunks/pages/_error.js"
     ],
-    "/daily": [
+    "/achievements": [
       "static/chunks/webpack.js",
       "static/chunks/main.js",
-      "static/chunks/pages/daily.js"
+      "static/chunks/pages/achievements.js"
     ]
   },
   "ampFirstPages": []
