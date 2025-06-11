@@ -258,6 +258,11 @@ const VSBotGame: React.FC<any> = ({
 
 	const handleWordTap = (word: string) => {
 		if (gameOver) return;
+		if (burnSuspect) {
+			setBurnSuspect(null);
+			setSelected([word]);
+			return;
+		}
 		if (selected.includes(word)) {
 			setSelected((prev) => prev.filter((w) => w !== word));
 		} else {
@@ -277,7 +282,11 @@ const VSBotGame: React.FC<any> = ({
 	) => {
 		e.preventDefault();
 		if (locked.includes(word) || gameOver) return;
-		setBurnSuspect((prev) => (prev === word ? null : word));
+		setBurnSuspect((prev) => {
+			// Always clear selection and burn suspect when toggling
+			setSelected([]);
+			return prev === word ? null : word;
+		});
 	};
 
 	// Submission handler
@@ -932,17 +941,24 @@ const VSBotGame: React.FC<any> = ({
 										word={word}
 										isSelected={selected.includes(word)}
 										isLocked={locked.includes(word)}
+										isBurned={burnedWildcards.includes(
+											word
+										)}
 										onClick={() => handleWordTap(word)}
-										className={
+										onContextMenu={(e: React.MouseEvent) =>
+											handleWordRightClick(word, e)
+										}
+										onDoubleClick={(e: React.MouseEvent) =>
+											handleWordRightClick(word, e)
+										}
+										burnSuspect={burnSuspect === word}
+										shake={
 											selected.includes(word) &&
 											shakeSelected
-												? 'word-btn shake'
-												: selected.includes(word) &&
-												  correctPulse
-												? 'word-btn correct-pulse'
-												: selected.includes(word)
-												? 'word-btn selected'
-												: 'word-btn'
+										}
+										correctPulse={
+											selected.includes(word) &&
+											correctPulse
 										}
 									/>
 								))}

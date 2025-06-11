@@ -1,0 +1,41 @@
+@use '../Variables.scss' as *;
+
+// === Background Customization Item ===
+.customization-item-btn.background-preview {
+	background: #f3f6fa;
+	border: 2px solid #e0e7ef;
+	width: 72px;
+	height: 72px;
+	border-radius: 12px;
+	overflow: hidden;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	padding: 0;
+}
+.customization-item-btn.background-preview.equipped {
+	border-color: #38bdf8;
+	box-shadow: 0 0 10px #38bdf8;
+}
+.customization-item-btn.background-preview img {
+	width: 60px;
+	height: 60px;
+	object-fit: cover;
+	border-radius: 8px;
+}
+
+.background-option {
+	.background-preview-sample {
+		width: 48px;
+		height: 24px;
+		border-radius: 8px;
+		margin-bottom: 8px;
+		background-size: cover;
+		background-position: center;
+		border: 2px solid $primary-blue-light;
+	}
+	&.equipped .background-preview-sample {
+		box-shadow: 0 0 8px 2px $primary-cyan-light;
+		border: 2.5px solid $primary-cyan;
+	}
+}

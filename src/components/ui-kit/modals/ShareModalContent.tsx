@@ -7,23 +7,6 @@ import {
 	getPersonalizedShareText,
 } from '../../../utils/shareLinks';
 import { CloseButton } from '../buttons';
-import { motion } from 'framer-motion';
-import clsx from 'clsx';
-import CountUp from 'react-countup';
-import {
-	BarChart,
-	Bar,
-	XAxis,
-	YAxis,
-	Tooltip,
-	ResponsiveContainer,
-} from 'recharts';
-import copy from 'copy-to-clipboard';
-import { format, formatDistanceToNow } from 'date-fns';
-import { v4 as uuidv4 } from 'uuid';
-import useSound from 'use-sound';
-import stats from 'stats-lite';
-import { useSession } from 'next-auth/react';
 
 export interface ShareModalContentProps {
 	title: string;
@@ -40,10 +23,6 @@ export interface ShareModalContentProps {
 	attempts?: number;
 	mode?: string;
 }
-
-const MOCK_SCORE_HISTORY = [
-	80, 90, 70, 100, 95, 85, 88, 92, 76, 99,
-];
 
 const ShareModalContent: React.FC<
 	ShareModalContentProps
@@ -85,23 +64,6 @@ const ShareModalContent: React.FC<
 		shareUrl,
 		title
 	);
-
-	// --- Toolkit Integrations ---
-	const [copied, setCopied] = React.useState(false);
-	const [playCopy] = useSound('/sounds/emote-pop.mp3', {
-		volume: 0.18,
-	});
-	const sessionId = React.useMemo(() => uuidv4(), []);
-	const avgScore = stats.mean(MOCK_SCORE_HISTORY);
-	const { data: session } = useSession();
-	const isAdmin = Boolean((session?.user as any)?.isAdmin);
-
-	const handleCopy = (text: string) => {
-		copy(text);
-		setCopied(true);
-		playCopy();
-		setTimeout(() => setCopied(false), 1200);
-	};
 
 	const renderGameInfo = () => {
 		if (minimal) {
@@ -183,144 +145,69 @@ const ShareModalContent: React.FC<
 
 	return (
 		<Modal open={open} onClose={onClose}>
-			<motion.div
-				initial={{ opacity: 0, y: 40 }}
-				animate={{ opacity: 1, y: 0 }}
-				exit={{ opacity: 0, y: 40 }}
-				transition={{ duration: 0.35 }}
-				className={clsx('share-modal-content', { minimal })}
+			<div
+				className='share-modal-content'
+				style={{ textAlign: 'center' }}
 			>
-				<CloseButton
-					onClick={onClose}
-					className='share-modal-close'
-				/>
+				<CloseButton onClick={onClose} />
 				{logoUrl && (
 					<img
+						alt='Grid Royale Logo'
 						src={logoUrl}
-						alt='Logo'
-						style={{ width: 48, marginBottom: 12 }}
+						style={{
+							width: 180,
+							height: 180,
+							margin: '10px auto 0',
+							borderRadius: 16,
+						}}
 					/>
 				)}
 				<h2>{title}</h2>
-				{score !== undefined && (
-					<div className='stat-row'>
-						<span>Score:</span>
-						<CountUp
-							end={score}
-							duration={1.2}
-							separator=','
-						/>
-					</div>
-				)}
-				{finishTime && (
-					<div className='stat-row'>
-						<span>Finish Time:</span>
-						<span>{format(finishTime, 'HH:mm:ss')}</span>
-						<span className='stat-date'>
-							(
-							{formatDistanceToNow(finishTime, {
-								addSuffix: true,
-							})}
-							)
-						</span>
-					</div>
-				)}
-				{/* Only show Session ID for admin users */}
-				{isAdmin && (
-					<div className='stat-row'>
-						<span>Session ID:</span>
-						<span
-							style={{
-								fontFamily: 'monospace',
-								fontSize: 13,
-							}}
-						>
-							{sessionId}
-						</span>
-						<button
-							className='copy-btn'
-							onClick={() => handleCopy(sessionId)}
-							aria-label='Copy session ID'
-						>
-							Copy
-						</button>
-						{copied && (
-							<motion.span
-								initial={{ opacity: 0 }}
-								animate={{ opacity: 1 }}
-								exit={{ opacity: 0 }}
-								className='copy-feedback'
-							>
-								Copied!
-							</motion.span>
-						)}
-					</div>
-				)}
-				<div className='stat-row'>
-					<span>Average Score:</span>
-					<CountUp
-						end={avgScore}
-						decimals={1}
-						duration={1.2}
-					/>
-				</div>
+				{/* Render game info and children (e.g., CopyLinkButton) */}
 				<div
 					style={{
-						width: '100%',
-						height: 120,
-						margin: '16px 0',
+						margin: '10px 0 18px',
+						fontSize: '1em',
 					}}
 				>
-					<ResponsiveContainer width='100%' height='100%'>
-						<BarChart
-							data={MOCK_SCORE_HISTORY.map((v, i) => ({
-								name: `#${i + 1}`,
-								score: v,
-							}))}
-						>
-							<XAxis dataKey='name' fontSize={12} />
-							<YAxis fontSize={12} />
-							<Tooltip />
-							<Bar
-								dataKey='score'
-								fill='#2563eb'
-								radius={[4, 4, 0, 0]}
-							/>
-						</BarChart>
-					</ResponsiveContainer>
+					{renderGameInfo()}
 				</div>
-				{/* Share links grid styled for Modal.scss compatibility */}
 				<div className='share-links-grid'>
-					{[0, 3].map((i) => (
-						<div className='share-links-row' key={i}>
-							{shareLinks.slice(i, i + 3).map((link) => (
-								<a
-									href={link.url}
-									target='_blank'
-									rel='noopener noreferrer'
-									className={`share-link share-link--${link.name.toLowerCase()}`}
-									data-platform={link.name}
-									key={link.name}
-								>
-									<span
-										className={`share-link-icon share-link--${link.name.toLowerCase()}`}
-									>
-										<FontAwesomeIcon
-											icon={link.icon as IconProp}
-										/>
-									</span>
-									<span
-										className={`share-link-text share-link--${link.name.toLowerCase()}`}
-									>
-										{link.name}
-									</span>
-								</a>
-							))}
-						</div>
-					))}
+					{(() => {
+						const rows = [];
+						for (let i = 0; i < shareLinks.length; i += 3) {
+							rows.push(
+								<div className='share-links-row' key={i}>
+									{shareLinks
+										.slice(i, i + 3)
+										.map((link) => (
+											<a
+												href={link.url}
+												target='_blank'
+												rel='noopener noreferrer'
+												className={`share-link share-link--${link.name.toLowerCase()}`}
+												data-platform={link.name}
+												key={link.name}
+												style={{ color: link.color }}
+											>
+												<span className='share-link-icon'>
+													<FontAwesomeIcon
+														icon={link.icon as IconProp}
+													/>
+												</span>
+												<span className='share-link-text'>
+													{link.name}
+												</span>
+											</a>
+										))}
+								</div>
+							);
+						}
+						return rows;
+					})()}
 				</div>
-				{children}
-			</motion.div>
+				<div>{children}</div>
+			</div>
 		</Modal>
 	);
 };

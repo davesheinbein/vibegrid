@@ -13,11 +13,7 @@ const Footer: React.FC = () => {
 			<div className='footer-left'>
 				<a
 					href='https://www.redbubble.com/people/dsdev/shop?artistUserName=dsdev&iaCode=u-prints'
-					style={{
-						display: 'flex',
-						justifyContent: 'center',
-						textDecoration: 'none',
-					}}
+					className='footer-link'
 				>
 					<span aria-hidden='true'>&copy;</span>
 					<span>
@@ -38,12 +34,12 @@ const Footer: React.FC = () => {
 							target='_blank'
 							rel='noopener noreferrer'
 							aria-label='Instagram'
-							className='instagram'
+							className='footer-social-link instagram'
 						>
 							<FontAwesomeIcon
 								icon={faInstagram}
 								size='lg'
-								className='instagram-icon'
+								className='footer-social-icon instagram-icon'
 							/>
 						</a>
 					</li>
@@ -53,12 +49,12 @@ const Footer: React.FC = () => {
 							target='_blank'
 							rel='noopener noreferrer'
 							aria-label='TikTok'
-							className='tiktok'
+							className='footer-social-link tiktok'
 						>
 							<FontAwesomeIcon
 								icon={faTiktok}
 								size='lg'
-								className='tiktok-icon'
+								className='footer-social-icon tiktok-icon'
 							/>
 						</a>
 					</li>
@@ -68,12 +64,12 @@ const Footer: React.FC = () => {
 							target='_blank'
 							rel='noopener noreferrer'
 							aria-label='X'
-							className='x'
+							className='footer-social-link x'
 						>
 							<FontAwesomeIcon
 								icon={faXTwitter}
 								size='lg'
-								className='x-icon'
+								className='footer-social-icon x-icon'
 							/>
 						</a>
 					</li>
@@ -83,12 +79,12 @@ const Footer: React.FC = () => {
 							target='_blank'
 							rel='noopener noreferrer'
 							aria-label='Amazon'
-							className='amazon'
+							className='footer-social-link amazon'
 						>
 							<FontAwesomeIcon
 								icon={faAmazon}
 								size='lg'
-								className='amazon-icon'
+								className='footer-social-icon amazon-icon'
 							/>
 						</a>
 					</li>
@@ -97,11 +93,7 @@ const Footer: React.FC = () => {
 					href='https://beastworld.vercel.app'
 					target='_blank'
 					rel='noopener noreferrer'
-					className='ml-auto text-gray-500 hover:underline'
-					style={{
-						cursor: 'pointer',
-						textDecoration: 'none',
-					}}
+					className='footer-link footer-link-beastworld'
 				>
 					Beast World
 				</a>

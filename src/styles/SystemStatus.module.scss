@@ -1,0 +1,108 @@
+@use './Variables.scss' as *;
+
+.systemStatusPage {
+  padding: 32px 0 64px 0;
+  max-width: 900px;
+  margin: 0 auto;
+}
+
+.systemStatusTitle {
+  font-size: 2.2rem;
+  font-weight: 800;
+  color: #2563eb;
+  margin-bottom: 24px;
+  text-align: center;
+}
+
+.statusControls {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  margin-bottom: 18px;
+  justify-content: flex-end;
+}
+.statusControlLabel {
+  font-size: 1.08rem;
+  color: #64748b;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.statusControlCheckbox {
+  accent-color: #38bdf8;
+  width: 18px;
+  height: 18px;
+}
+.statusControlInput {
+  width: 60px;
+  border-radius: 6px;
+  border: 1.5px solid #e0e7ef;
+  padding: 4px 8px;
+  font-size: 1rem;
+  color: #222;
+  background: #fafdff;
+}
+.statusControlUnit {
+  color: #64748b;
+  font-size: 1rem;
+}
+
+.statusTable {
+  width: 100%;
+  border-collapse: collapse;
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px 0 #e3eaff22;
+  overflow: hidden;
+}
+.statusTableHeaderRow {
+  background: #f3f6fa;
+}
+.statusTableHeader {
+  font-size: 1.08rem;
+  font-weight: 700;
+  color: #2563eb;
+  padding: 12px 8px;
+  border-bottom: 2px solid #e0e7ef;
+  text-align: left;
+}
+.statusTableRow {
+  transition: background 0.15s;
+}
+.statusRowFail {
+  background: #fff0f0;
+}
+.statusTableCell {
+  padding: 10px 8px;
+  font-size: 1rem;
+  color: #222;
+  border-bottom: 1px solid #e0e7ef;
+}
+
+.statusBadge {
+  display: inline-block;
+  min-width: 60px;
+  padding: 4px 12px;
+  border-radius: 16px;
+  font-weight: 700;
+  font-size: 1rem;
+  text-align: center;
+  letter-spacing: 0.01em;
+}
+.statusPass {
+  background: #e0ffd1;
+  color: #22c55e;
+}
+.statusFail {
+  background: #ffe4e6;
+  color: #ef4444;
+}
+.statusWarn {
+  background: #fef9c3;
+  color: #fbbf24;
+}
+.statusPending {
+  background: #e0e7ef;
+  color: #64748b;
+}

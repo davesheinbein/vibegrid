@@ -3,9 +3,6 @@ import React, { useContext, useState } from 'react';
 import { Modal } from '../modals';
 import { PrimaryButton, SecondaryButton } from '../buttons';
 import { UserSettingsContext } from '../providers';
-import { motion } from 'framer-motion';
-import clsx from 'clsx';
-import useSound from 'use-sound';
 
 interface VSModeModalProps {
 	open: boolean;
@@ -48,13 +45,6 @@ const VSModeModal: React.FC<VSModeModalProps> = ({
 }) => {
 	const { settings } = useContext(UserSettingsContext);
 	const [showBot, setShowBot] = useState(false);
-	const [playBotSelect] = useSound(
-		'/sounds/emote-pop.mp3',
-		{ volume: 0.18 }
-	);
-	const [selectedBot, setSelectedBot] = useState<
-		string | null
-	>(null);
 
 	return (
 		<Modal open={open} onClose={onClose}>
@@ -199,68 +189,40 @@ const VSModeModal: React.FC<VSModeModalProps> = ({
 										'linear-gradient(90deg, #2563eb 0%, #38bdf8 100%)';
 							}
 							return (
-								<motion.div
+								<PrimaryButton
 									key={bot.value}
-									whileHover={{ scale: 1.04 }}
-									whileTap={{ scale: 0.97 }}
-									initial={{ opacity: 0, y: 20 }}
-									animate={{ opacity: 1, y: 0 }}
-									transition={{
-										duration: 0.22,
-										delay: 0.05,
+									onClick={() =>
+										onSelect('bot', bot.value as any)
+									}
+									className={`vs-mode-btn vs-mode-bot-diff-btn vs-mode-bot-${bot.value}`}
+									style={{
+										textAlign: 'left',
+										justifyContent: 'flex-start',
+										fontWeight: 700,
+										fontSize: 16,
+										padding: '12px 18px',
+										background: gradient,
+										color: '#fff',
+										boxShadow: '0 2px 8px 0 #e3eaff33',
 									}}
 								>
-									<PrimaryButton
-										onClick={() => {
-											setSelectedBot(bot.value);
-											playBotSelect();
-											setTimeout(
-												() =>
-													onSelect('bot', bot.value as any),
-												120
-											);
-										}}
-										className={clsx(
-											'vs-mode-btn',
-											'vs-mode-bot-diff-btn',
-											`vs-mode-bot-${bot.value}`,
-											{
-												selected: selectedBot === bot.value,
-											}
-										)}
+									<span
 										style={{
-											textAlign: 'left',
-											justifyContent: 'flex-start',
 											fontWeight: 700,
-											fontSize: 16,
-											padding: '12px 18px',
-											background: gradient,
-											color: '#fff',
-											boxShadow: '0 2px 8px 0 #e3eaff33',
-											border:
-												selectedBot === bot.value
-													? '2px solid #fff'
-													: undefined,
+											marginRight: 8,
 										}}
 									>
-										<span
-											style={{
-												fontWeight: 700,
-												marginRight: 8,
-											}}
-										>
-											{bot.label}
-										</span>
-										<span
-											style={{
-												color: '#e0e7ef',
-												fontSize: 13,
-											}}
-										>
-											{bot.desc}
-										</span>
-									</PrimaryButton>
-								</motion.div>
+										{bot.label}
+									</span>
+									<span
+										style={{
+											color: '#e0e7ef',
+											fontSize: 13,
+										}}
+									>
+										{bot.desc}
+									</span>
+								</PrimaryButton>
 							);
 						})}
 						<SecondaryButton

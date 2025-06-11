@@ -1,4 +1,3 @@
-// Centralized SecondaryButton component for UI Kit
 import React from 'react';
 
 interface SecondaryButtonProps

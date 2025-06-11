@@ -8,7 +8,7 @@ import { faArrowLeft } from '@fortawesome/free-solid-svg-icons';
  * - onClick: function to call on click
  * - className: additional class names
  * - label: button label (default: 'Back')
- * - style: optional inline styles
+ * - style: optional inline styles (should be used only for layout, not color)
  */
 const GoBackButton: React.FC<{
 	onClick: () => void;
@@ -18,23 +18,18 @@ const GoBackButton: React.FC<{
 }> = ({ onClick, className = '', style, label }) => (
 	<button
 		type='button'
-		className={`go-back-btn ${className}`.trim()}
+		className={`icon-btn go-back-btn ${className}`.trim()}
 		onClick={onClick}
-		style={{
-			...style,
-		}}
+		style={style}
 		aria-label={label || 'Back'}
 	>
 		<FontAwesomeIcon
 			icon={faArrowLeft}
-			style={{
-				fontSize: 22,
-				color: '#fff',
-				filter: 'drop-shadow(0 1px 2px #2563eb33)',
-				transition: 'color 0.15s',
-				marginRight: label ? 8 : 0,
-			}}
+			className='go-back-icon'
 		/>
+		{label && (
+			<span className='go-back-label'>{label}</span>
+		)}
 	</button>
 );
 

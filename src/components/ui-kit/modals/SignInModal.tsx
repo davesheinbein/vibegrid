@@ -12,7 +12,11 @@ const SignInModal: React.FC<SignInModalProps> = ({
 	onClose,
 	onSignIn,
 }) => (
-	<Modal open={open} onClose={onClose}>
+	<Modal
+		open={open}
+		onClose={onClose}
+		className='signin-modal'
+	>
 		<div className='signin-modal-content'>
 			<h2 className='signin-modal-title'>
 				Sign in to Track Your Score

@@ -1,0 +1,87 @@
+.pregame-modal-overlay {
+	position: fixed;
+	z-index: 2100;
+	inset: 0;
+	background: rgba(30, 41, 59, 0.38);
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	pointer-events: all;
+	animation: fadeIn 0.18s;
+}
+.pregame-modal {
+	background: #fff;
+	border-radius: 18px;
+	box-shadow: 0 4px 32px 0 #00308733, 0 2px 8px 0 #e3eaff33;
+	padding: 2.2em 2.5em 2em 2.5em;
+	min-width: 320px;
+	max-width: 95vw;
+	width: 90vw;
+	max-width: 420px;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	text-align: center;
+	position: relative;
+	animation: fadeInUp 0.32s
+		cubic-bezier(0.23, 1.01, 0.32, 1);
+	pointer-events: auto;
+}
+.pregame-modal-title {
+	font-size: 2.1rem;
+	font-weight: 800;
+	color: #2563eb;
+	margin-bottom: 0.7em;
+	text-align: center;
+}
+.pregame-modal-subtext {
+	font-size: 1.15rem;
+	color: #64748b;
+	font-weight: 500;
+	margin-bottom: 2.2em;
+	text-align: center;
+}
+.pregame-modal-ready-btn {
+	width: 65%;
+	min-width: 160px;
+	max-width: 320px;
+	padding: 1.1em 0;
+	font-size: 1.25rem;
+	font-weight: 700;
+	border-radius: 12px;
+	background: #2563eb;
+	color: #fff;
+	border: none;
+	box-shadow: 0 2px 8px 0 #00308722;
+	margin: 0 auto;
+	display: block;
+	cursor: pointer;
+	transition: background 0.13s, box-shadow 0.08s,
+		transform 0.13s;
+	outline: none;
+	position: relative;
+}
+.pregame-modal-ready-btn.pulse {
+	animation: pulseBtn 1.2s infinite
+		cubic-bezier(0.4, 0.2, 0.2, 1);
+}
+.pregame-modal-go-home-btn {
+	width: 65%;
+	min-width: 160px;
+	max-width: 320px;
+	padding: 1.1em 0;
+	font-size: 1.25rem;
+	font-weight: 700;
+	border-radius: 12px;
+	background: #ef4444;
+	color: #fff;
+	border: none;
+	box-shadow: 0 2px 8px 0 #00308722;
+	margin: 20px auto 0;
+	display: block;
+	cursor: pointer;
+	transition: background 0.13s, box-shadow 0.08s,
+		transform 0.13s;
+	outline: none;
+	position: relative;
+}

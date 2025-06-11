@@ -1,4 +1,3 @@
-// Centralized PrimaryButton component for UI Kit
 import React from 'react';
 
 interface PrimaryButtonProps

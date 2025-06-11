@@ -123,30 +123,192 @@ const FriendsSidebar: React.FC<FriendsSidebarProps> = ({
 				</button>
 				<div className={styles.friendsSidebarContent}>
 					{!isAuthenticated ? (
-						<>
-							<div className={styles.signInTeaser}>
-								<h2>Welcome to the Friends Sidebar!</h2>
-								<p>
-									Connect with friends, chat, and enjoy
-									exclusive features.
+						<div className={styles.friendsSigninTeaser}>
+							<div
+								style={{
+									textAlign: 'center',
+									marginBottom: 24,
+								}}
+							>
+								<h2
+									style={{
+										fontWeight: 800,
+										fontSize: 22,
+										color: '#2563eb',
+										marginBottom: 8,
+									}}
+								>
+									Sign in to unlock Friends & Leaderboards
+								</h2>
+								<p
+									style={{
+										color: '#64748b',
+										fontSize: 16,
+										marginBottom: 18,
+									}}
+								>
+									Connect with friends, track your stats,
+									and see how you rank!
 								</p>
 								<button
-									className={styles.signInButton}
-									onClick={() => setShowSignIn(true)}
+									className='friends-signin-btn pulse'
+									// onClick={() => setShowSignIn(true)}
+									onClick={() => signIn('google')}
+									style={{
+										background:
+											'linear-gradient(90deg,#fbbf24 0%,#38bdf8 100%)',
+										color: '#1e293b',
+										fontWeight: 700,
+										fontSize: 18,
+										borderRadius: 16,
+										padding: '12px 32px',
+										boxShadow: '0 2px 8px 0 #e3eaff33',
+										marginBottom: 18,
+										animation:
+											'pulseBtn 1.2s infinite cubic-bezier(0.4,0.2,0.2,1)',
+									}}
 								>
-									Sign In
+									Sign in with Google
 								</button>
 							</div>
-							<SignInModal
-								open={showSignIn}
-								onClose={() => setShowSignIn(false)}
-								onSignIn={() => {
-									setShowSignIn(false);
-									signIn();
+							{/* Blurred/dimmed friends list preview */}
+							<div
+								className='friends-list-preview'
+								style={{
+									filter: 'blur(3px) grayscale(0.5)',
+									opacity: 0.7,
+									pointerEvents: 'none',
+									marginBottom: 18,
 								}}
-							/>
+							>
+								<div
+									style={{
+										fontWeight: 600,
+										color: '#2563eb',
+										marginBottom: 6,
+									}}
+								>
+									Online (2)
+								</div>
+								<div
+									style={{
+										display: 'flex',
+										flexDirection: 'column',
+										gap: 8,
+									}}
+								>
+									<div
+										className='friend-card'
+										style={{
+											background: '#f0f9ff',
+											borderRadius: 12,
+											padding: 10,
+											display: 'flex',
+											alignItems: 'center',
+											gap: 10,
+										}}
+									>
+										<div
+											className='avatar-circle'
+											style={{
+												background:
+													'linear-gradient(90deg,#fbbf24 0%,#38bdf8 100%)',
+												width: 34,
+												height: 34,
+												display: 'flex',
+												alignItems: 'center',
+												justifyContent: 'center',
+												color: '#fff',
+												fontWeight: 700,
+											}}
+										>
+											A
+										</div>
+										<span
+											style={{
+												fontWeight: 600,
+												color: '#2563eb',
+											}}
+										>
+											Alice
+										</span>
+									</div>
+									<div
+										className='friend-card'
+										style={{
+											background: '#f0f9ff',
+											borderRadius: 12,
+											padding: 10,
+											display: 'flex',
+											alignItems: 'center',
+											gap: 10,
+										}}
+									>
+										<div
+											className='avatar-circle'
+											style={{
+												background:
+													'linear-gradient(90deg,#fbbf24 0%,#38bdf8 100%)',
+												width: 34,
+												height: 34,
+												display: 'flex',
+												alignItems: 'center',
+												justifyContent: 'center',
+												color: '#fff',
+												fontWeight: 700,
+											}}
+										>
+											B
+										</div>
+										<span
+											style={{
+												fontWeight: 600,
+												color: '#2563eb',
+											}}
+										>
+											Bob
+										</span>
+									</div>
+								</div>
+							</div>
+							{/* Dynamic call-to-action banner */}
+							<div
+								className='friends-cta-banner'
+								style={{
+									background:
+										'linear-gradient(90deg,#38bdf8 0%,#fbbf24 100%)',
+									color: '#fff',
+									borderRadius: 12,
+									padding: '10px 18px',
+									fontWeight: 700,
+									fontSize: 16,
+									marginBottom: 16,
+									textAlign: 'center',
+									animation: 'fadeIn 0.7s',
+								}}
+							>
+								Unlock multiplayer, chat, and more!
+							</div>
+							{/* Leaderboard tease */}
+							<div
+								className='friends-leaderboard-tease'
+								style={{
+									background: '#fffbe6',
+									borderRadius: 12,
+									padding: '10px 18px',
+									color: '#b45309',
+									fontWeight: 600,
+									fontSize: 15,
+									marginBottom: 14,
+									textAlign: 'center',
+									boxShadow: '0 1px 4px 0 #fbbf2433',
+								}}
+							>
+								See how you rank on the global leaderboard!
+							</div>
+							{/* Rotating engagement messages */}
 							<RotatingMessages />
-						</>
+						</div>
 					) : (
 						<>
 							{/* Profile Header */}

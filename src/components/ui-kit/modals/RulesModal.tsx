@@ -66,10 +66,7 @@ const RulesModal: React.FC<RulesModalProps> = ({
 	}
 	return (
 		<Modal open={open} onClose={onClose}>
-			<div
-				className='rules-modal-content'
-				style={{ position: 'relative' }}
-			>
+			<div className='rules-modal-content'>
 				<CloseButton
 					onClick={onClose}
 					className='modal-close-absolute'

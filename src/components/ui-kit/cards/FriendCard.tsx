@@ -26,6 +26,13 @@ const getStatus = (friend: any) => {
 	return { text: 'Offline', color: '#64748b' };
 };
 
+const STATUS_CLASS_MAP: Record<string, string> = {
+	'In match': 'status-inmatch',
+	'Idle': 'status-idle',
+	'Online': 'status-online',
+	'Offline': 'status-offline',
+};
+
 const FriendCard: React.FC<FriendCardProps> = ({
 	friend,
 	onChallenge,
@@ -35,6 +42,8 @@ const FriendCard: React.FC<FriendCardProps> = ({
 }) => {
 	const [hover, setHover] = useState(false);
 	const status = getStatus(friend);
+	const statusClass =
+		STATUS_CLASS_MAP[status.text] || 'status-offline';
 
 	return (
 		<div
@@ -46,14 +55,8 @@ const FriendCard: React.FC<FriendCardProps> = ({
 		>
 			<div className='friend-card-header'>
 				<span
-					className='friend-status-dot'
-					style={{
-						background: status.color,
-						boxShadow: `0 0 0 2px ${status.color}44`,
-						transition: 'background 0.18s',
-					}}
-					aria-label={status.text}
-				></span>
+					className={`friend-status-dot ${statusClass}`}
+				/>
 				<span className='friend-username'>
 					{friend.username}
 				</span>
@@ -63,62 +66,28 @@ const FriendCard: React.FC<FriendCardProps> = ({
 					</span>
 				)}
 			</div>
-			<div
-				className='friend-card-status-text'
-				style={{
-					color: status.color,
-					fontSize: 13,
-					fontWeight: 500,
-					marginLeft: 24,
-					marginBottom: 2,
-					transition: 'color 0.18s',
-				}}
-			>
+			<div className='friend-card-status-text'>
 				{status.text}
 			</div>
 			<div className='friend-card-actions'>
 				<button
-					className='friend-card-btn challenge-btn'
+					className='friend-card-btn challenge-btn primary-btn'
 					onClick={() => onChallenge(friend.id)}
-					aria-label='Challenge friend'
-					style={{
-						display: 'flex',
-						alignItems: 'center',
-						gap: 6,
-						fontWeight: 700,
-						background:
-							'linear-gradient(90deg,#fbbf24 0%,#38bdf8 100%)',
-						color: '#fff',
-						borderRadius: 8,
-						boxShadow: '0 2px 8px #e3eaff33',
-						transition: 'background 0.18s, transform 0.13s',
-					}}
 				>
-					<span
-						style={{
-							fontSize: 18,
-							filter: 'drop-shadow(0 1px 2px #fffbe6)',
-						}}
-						role='img'
-						aria-label='Sword'
-					>
-						🗡️
-					</span>
-					<span>Challenge</span>
+					Challenge
 				</button>
 				<button
-					className='friend-card-btn'
+					className='friend-card-btn secondary-btn'
 					onClick={() => onMessage(friend.id)}
-					aria-label='Message friend'
 				>
 					Message
 				</button>
 				<button
-					className='friend-card-btn'
+					className='friend-card-btn icon-btn'
 					onClick={() => onRemove(friend.id)}
 					aria-label='Remove friend'
 				>
-					Remove
+					&times;
 				</button>
 			</div>
 		</div>

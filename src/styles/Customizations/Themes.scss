@@ -1,0 +1,61 @@
+@use '../Variables.scss' as *;
+
+// === Theme Customization Item ===
+.customization-item-btn.theme-preview {
+	width: 72px;
+	height: 72px;
+	border-radius: 12px;
+	border: 2px solid #e0e7ef;
+	background: #fff;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	padding: 0;
+	position: relative;
+	overflow: hidden;
+	transition: all 0.18s;
+}
+.customization-item-btn.theme-preview.equipped {
+	border-color: #38bdf8;
+	box-shadow: 0 0 10px #38bdf8;
+}
+.theme-swatch-bar {
+	width: 80%;
+	height: 18px;
+	border-radius: 6px;
+	margin: 8px 0 0 0;
+	background: linear-gradient(
+		90deg,
+		var(--theme-primary, #2563eb) 0%,
+		var(--theme-accent, #38bdf8) 100%
+	);
+}
+.theme-option {
+	border: 2px solid $primary-blue;
+	&.equipped {
+		box-shadow: 0 0 12px 2px $primary-blue-light;
+		border: 2.5px solid $primary-cyan;
+	}
+	.theme-preview-swatch {
+		width: 48px;
+		height: 24px;
+		border-radius: 8px;
+		margin-bottom: 8px;
+		background: $primary-blue-light;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		position: relative;
+	}
+	.theme-preview-dot {
+		width: 16px;
+		height: 16px;
+		border-radius: 50%;
+		position: absolute;
+		right: 4px;
+		top: 4px;
+		border: 2px solid #fff;
+		background: $primary-cyan;
+	}
+}

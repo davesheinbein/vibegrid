@@ -1,0 +1,17 @@
+.share-modal-content {
+	background: #fff;
+	color: #222;
+	border-radius: 1.2rem;
+	text-align: center;
+	min-width: 200px;
+	max-width: 95vw;
+	width: 100%;
+	position: relative;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: 1.2rem;
+	max-width: 600px;
+	box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.28);
+	padding: 20px;
+}
