@@ -1,6 +1,13 @@
 import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/router';
-import { SubmitButton } from '../components/ui-kit/buttons';
+import { PrimaryButton } from '../components/ui-kit/buttons';
+import {
+	fetchAchievements,
+	resetAchievements,
+} from '../services/achievementsService';
+import GoBackButton from '../components/ui-kit/buttons/GoBackButton';
+import { useSession, signIn } from 'next-auth/react';
+import SignInModal from '../components/ui-kit/modals/SignInModal';
 
 interface Achievement {
 	id: string;
@@ -8,54 +15,29 @@ interface Achievement {
 	description: string;
 	icon?: string;
 	unlockedAt?: string;
+	unlocked?: boolean;
 }
 
 const AchievementsPage: React.FC = () => {
 	const router = useRouter();
-	const [userAchievements, setUserAchievements] = useState<
-		Record<string, boolean>
-	>({});
-	const [justUnlocked, setJustUnlocked] = useState<
-		string | null
-	>(null);
+	const { data: session } = useSession();
 	const [achievements, setAchievements] = useState<
 		Achievement[]
 	>([]);
-	const [unlocked, setUnlocked] = useState<Set<string>>(
-		new Set()
-	);
 	const [loading, setLoading] = useState(true);
 	const [resetting, setResetting] = useState(false);
-
-	// TODO: Replace real-time achievement unlocks with Redux-based notification if needed
-
-	// Simulate earning an achievement (for demo/testing)
-	const handleEarn = (id: string, label: string) => {
-		if (!userAchievements[id]) {
-			setUserAchievements((prev) => ({
-				...prev,
-				[id]: true,
-			}));
-			setJustUnlocked(label);
-			// TODO: Replace with Redux-based notification
-			setTimeout(() => setJustUnlocked(null), 3200);
-		}
-	};
+	const [justUnlocked, setJustUnlocked] = useState<
+		string | null
+	>(null);
 
 	useEffect(() => {
-		async function fetchAchievements() {
+		async function loadAchievements() {
 			setLoading(true);
-			const all = await fetch('/api/achievements').then(
-				(r) => r.json()
-			);
-			const mine = await fetch(
-				'/api/users/me/achievements'
-			).then((r) => r.json());
-			setAchievements(all);
-			setUnlocked(new Set(mine.map((a: any) => a.label)));
+			const mine = await fetchAchievements();
+			setAchievements(mine);
 			setLoading(false);
 		}
-		fetchAchievements();
+		loadAchievements();
 	}, [resetting]);
 
 	const handleReset = async () => {
@@ -66,11 +48,20 @@ const AchievementsPage: React.FC = () => {
 		)
 			return;
 		setResetting(true);
-		await fetch('/api/users/me/achievements', {
-			method: 'DELETE',
-		});
+		await resetAchievements();
+		setJustUnlocked(null);
 		setResetting(false);
 	};
+
+	if (!session) {
+		return (
+			<SignInModal
+				open={true}
+				onClose={() => {}}
+				onSignIn={() => signIn()}
+			/>
+		);
+	}
 
 	return (
 		<div
@@ -82,6 +73,10 @@ const AchievementsPage: React.FC = () => {
 				margin: '0 auto',
 			}}
 		>
+			<GoBackButton
+				className='back-icon-btn'
+				onClick={() => router.push('/')}
+			/>
 			<h1
 				style={{
 					fontSize: '2rem',
@@ -134,25 +129,24 @@ const AchievementsPage: React.FC = () => {
 						display: 'grid',
 						gridTemplateColumns: '1fr',
 						gap: 18,
+						overflowY: 'scroll',
 					}}
 				>
 					{achievements.map((ach) => (
 						<div
-							key={ach.label}
+							key={ach.id}
 							style={{
-								background: unlocked.has(ach.label)
+								background: ach.unlocked
 									? '#fbbf24'
 									: '#f1f5f9',
-								color: unlocked.has(ach.label)
-									? '#1e293b'
-									: '#64748b',
+								color: ach.unlocked ? '#1e293b' : '#64748b',
 								borderRadius: 10,
 								padding: 18,
-								boxShadow: unlocked.has(ach.label)
+								boxShadow: ach.unlocked
 									? '0 2px 12px 0 #fbbf2440'
 									: '0 1px 4px 0 #e0e7ef',
-								opacity: unlocked.has(ach.label) ? 1 : 0.7,
-								border: unlocked.has(ach.label)
+								opacity: ach.unlocked ? 1 : 0.7,
+								border: ach.unlocked
 									? '2px solid #fde047'
 									: '1.5px solid #e0e7ef',
 								display: 'flex',
@@ -169,17 +163,14 @@ const AchievementsPage: React.FC = () => {
 							</span>
 							<div>
 								<div
-									style={{
-										fontWeight: 700,
-										fontSize: 18,
-									}}
+									style={{ fontWeight: 700, fontSize: 18 }}
 								>
 									{ach.label}
 								</div>
 								<div style={{ fontSize: 14 }}>
 									{ach.description}
 								</div>
-								{unlocked.has(ach.label) && (
+								{ach.unlocked && (
 									<div
 										style={{
 											fontSize: 12,
@@ -195,11 +186,6 @@ const AchievementsPage: React.FC = () => {
 					))}
 				</div>
 			)}
-			<div style={{ marginTop: 36, textAlign: 'center' }}>
-				<SubmitButton onClick={() => router.push('/')}>
-					Back to Home
-				</SubmitButton>
-			</div>
 			{justUnlocked && (
 				<div
 					className='notification-toast'

@@ -9,9 +9,15 @@ import {
 	getShareTitle,
 	getShareText,
 } from '../utils/helpers';
+import { fetchCustomPuzzles } from '../services/customPuzzlesService';
+import type { Puzzle } from '../types/api';
+import { useSession, signIn } from 'next-auth/react';
+import SignInModal from '../components/ui-kit/modals/SignInModal';
 
 export default function Browse() {
 	const router = useRouter();
+	const { data: session } = useSession();
+	const [showSignIn, setShowSignIn] = React.useState(false);
 	const [customPuzzle, setCustomPuzzle] =
 		React.useState<any>(null);
 	const [customState, setCustomState] =
@@ -61,18 +67,7 @@ export default function Browse() {
 		async function fetchPuzzles() {
 			setLoading(true);
 			try {
-				let url = '';
-				if (tab === 'mine' && user) {
-					url = `/api/custom-puzzles?creatorId=${encodeURIComponent(
-						user.email
-					)}`;
-				} else {
-					url = '/api/custom-puzzles/public';
-				}
-				const res = await fetch(url);
-				if (!res.ok)
-					throw new Error('Failed to fetch puzzles');
-				const data = await res.json();
+				const data = await fetchCustomPuzzles(tab, user);
 				setTabPuzzles(data);
 			} catch {
 				setTabPuzzles([]);
@@ -82,9 +77,20 @@ export default function Browse() {
 		fetchPuzzles();
 	}, [tab, user]);
 
+	const handleSetTab = (newTab: 'community' | 'mine') => {
+		if (newTab === 'mine' && !session) {
+			setShowSignIn(true);
+			return;
+		}
+		setTab(newTab);
+	};
 	const handleSetMode = (
 		newMode: 'browse' | 'custom' | 'startup' | 'daily'
 	) => {
+		if (newMode === 'custom' && !session) {
+			setShowSignIn(true);
+			return;
+		}
 		if (newMode === 'browse' || newMode === 'custom') {
 			setMode(newMode);
 		}
@@ -127,162 +133,91 @@ export default function Browse() {
 	}
 
 	return (
-		<div
-			className='gridRoyale-container'
-			style={{
-				minHeight: '100vh',
-				padding: 24,
-				position: 'relative',
-			}}
-		>
-			<div className='browse-puzzles-header'>
-				<GoBackButton
-					onClick={() => router.push('/')}
-					className='back-icon-btn'
+		<>
+			{showSignIn && (
+				<SignInModal
+					open={showSignIn}
+					onClose={() => setShowSignIn(false)}
+					onSignIn={() => signIn()}
 				/>
-				<div
-					className='browse-puzzles-header-title'
-					style={{ flex: 1 }}
-				>
-					<h1 className='gridRoyale-title'>
-						Browse Custom Puzzles
-					</h1>
-					<div className='browse-puzzles-tabs'>
-						<button
-							onClick={() => setTab('community')}
-							className={
-								tab === 'community' ? 'active' : ''
-							}
-						>
-							Community Puzzles
-						</button>
-						<button
-							onClick={() => setTab('mine')}
-							className={tab === 'mine' ? 'active' : ''}
-						>
-							My Puzzles
-						</button>
+			)}
+			<div
+				className='gridRoyale-container'
+				style={{
+					minHeight: '100vh',
+					padding: 24,
+					position: 'relative',
+				}}
+			>
+				<div className='browse-puzzles-header'>
+					<GoBackButton
+						onClick={() => router.push('/')}
+						className='back-icon-btn'
+					/>
+					<div
+						className='browse-puzzles-header-title'
+						style={{ flex: 1 }}
+					>
+						<h1 className='gridRoyale-title'>
+							Browse Custom Puzzles
+						</h1>
+						<div className='browse-puzzles-tabs'>
+							<button
+								onClick={() => setTab('community')}
+								className={
+									tab === 'community' ? 'active' : ''
+								}
+							>
+								Community Puzzles
+							</button>
+							<button
+								onClick={() => setTab('mine')}
+								className={tab === 'mine' ? 'active' : ''}
+							>
+								My Puzzles
+							</button>
+						</div>
 					</div>
 				</div>
-			</div>
 
-			<div className='browse-puzzles-list'>
-				{loading ? (
-					<div>Loading...</div>
-				) : tabPuzzles.length === 0 ? (
-					<div style={{ marginTop: 32 }}>
-						No custom puzzles found.
-					</div>
-				) : (
-					<div
-						style={{
-							display: 'flex',
-							flexDirection: 'column',
-							gap: 16,
-						}}
-					>
-						{tabPuzzles.map((puzzle) => (
-							<div
-								key={puzzle._id}
-								style={{
-									border: '1px solid #e5e7eb',
-									borderRadius: 8,
-									padding: 16,
-									background: '#fff',
-									color: '#222',
-								}}
-							>
+				<div className='browse-puzzles-list'>
+					{loading ? (
+						<div>Loading...</div>
+					) : tabPuzzles.length === 0 ? (
+						<div style={{ marginTop: 32 }}>
+							No custom puzzles found.
+						</div>
+					) : (
+						<div
+							style={{
+								display: 'flex',
+								flexDirection: 'column',
+								gap: 16,
+							}}
+						>
+							{tabPuzzles.map((puzzle: Puzzle) => (
 								<div
-									style={{ fontWeight: 600, fontSize: 18 }}
+									key={puzzle.id}
+									className='browse-puzzle-card'
 								>
-									{puzzle.title || 'Untitled Puzzle'}
+									<div className='browse-puzzle-title'>
+										{puzzle.title || 'Untitled Puzzle'}
+									</div>
+									<div className='browse-puzzle-meta'>
+										{/* Optionally show author, date, stats, etc. */}
+									</div>
+									<div className='browse-puzzle-actions'>
+										<button className='browse-play-btn'>
+											Play
+										</button>
+										{/* Add more actions as needed */}
+									</div>
 								</div>
-								<div
-									style={{
-										fontSize: 14,
-										margin: '4px 0 8px 0',
-									}}
-								>
-									{puzzle.theme && (
-										<span>Theme: {puzzle.theme} | </span>
-									)}
-									Words: {puzzle.words?.length || 0} |
-									Wildcards:{' '}
-									{puzzle.wildcardsToggle ? 'On' : 'Off'}
-								</div>
-								<div
-									style={{
-										fontSize: 13,
-										color: '#64748b',
-										marginBottom: 6,
-									}}
-								>
-									By:{' '}
-									{puzzle.creatorName ||
-										puzzle.creatorId ||
-										'Anonymous'}{' '}
-									| {puzzle.date || ''}
-								</div>
-								<div
-									style={{
-										display: 'flex',
-										gap: 8,
-										alignItems: 'center',
-									}}
-								>
-									<button
-										className='gridRoyale-submit'
-										onClick={() => {
-											setCustomPuzzle(puzzle);
-											setMode('custom');
-											setCustomState(null);
-										}}
-										style={{ marginRight: 8 }}
-									>
-										Play
-									</button>
-									<button
-										className='gridRoyale-submit'
-										onClick={() => {
-											const url =
-												router.basePath +
-												'/play/custom/' +
-												puzzle._id;
-											navigator.clipboard.writeText(url);
-										}}
-										style={{
-											background:
-												'linear-gradient(90deg,#fbbf24 0%,#38bdf8 100%)',
-										}}
-									>
-										Copy Link
-									</button>
-									<span
-										style={{
-											marginLeft: 8,
-											color: '#0ea5e9',
-											fontSize: 18,
-										}}
-										title='Rating (coming soon)'
-									>
-										★
-									</span>
-									<span
-										style={{
-											marginLeft: 2,
-											color: '#64748b',
-											fontSize: 16,
-										}}
-										title='Favorite (coming soon)'
-									>
-										♡
-									</span>
-								</div>
-							</div>
-						))}
-					</div>
-				)}
+							))}
+						</div>
+					)}
+				</div>
 			</div>
-		</div>
+		</>
 	);
 }

@@ -1,30 +1,32 @@
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
-import CustomPuzzleModal from '../components/ui-kit/modals/CustomPuzzleModal';
-import { useRouter } from 'next/router';
 import io from 'socket.io-client';
+import { useRouter } from 'next/router';
+import {
+	fetchPuzzles,
+	deletePuzzle,
+} from '../services/puzzlesService';
+import { fetchMatches } from '../services/matchesService';
+import { fetchGlobalAnalytics } from '../services/analyticsService';
+import { fetchHealth } from '../services/healthService';
+import {
+	fetchAdminUsers,
+	banUser as adminBanUser,
+	approvePuzzle as adminApprovePuzzle,
+	runQADailyScenario,
+	runQACustomScenario,
+	fetchAdminLogs,
+	fetchAdminSockets,
+} from '../services/adminService';
+import type {
+	User,
+	Puzzle,
+	Match,
+	AnalyticsGlobal,
+} from '../types/api';
+import CustomPuzzleModal from '../components/ui-kit/modals/CustomPuzzleModal';
 import Modal from '../components/ui-kit/modals/Modal';
 
 // --- Types for admin data ---
-interface User {
-	id: string;
-	name?: string;
-	email?: string;
-}
-interface Puzzle {
-	id: string;
-	title?: string;
-}
-interface Achievement {
-	id: string;
-	label: string;
-	description: string;
-}
-interface LeaderboardEntry {
-	userId: string;
-	username: string;
-	score: number;
-}
 
 const TOP_NAV = [
 	'Dashboard',
@@ -200,21 +202,18 @@ export default function Admin() {
 	useEffect(() => {
 		async function fetchStats() {
 			try {
-				const res = await axios.get(
-					'/api/analytics/global'
-				);
+				const analytics: AnalyticsGlobal =
+					await fetchGlobalAnalytics();
 				setStats((s: any) => ({
 					...s,
-					totalUsers: res.data.userCount,
-					totalPuzzles: res.data.puzzleCount,
-					totalMatches: res.data.matchCount,
+					totalUsers: analytics.userCount,
+					totalPuzzles: analytics.puzzleCount,
+					totalMatches: analytics.matchCount,
 				}));
-				const health = await axios.get('/api/health');
+				const health = await fetchHealth();
 				setStats((s: any) => ({
 					...s,
-					systemHealth: health.data.ok
-						? 'Healthy'
-						: 'Unhealthy',
+					systemHealth: health.ok ? 'Healthy' : 'Unhealthy',
 				}));
 				// Optionally fetch recent activity from logs or events
 			} catch (e) {}
@@ -230,9 +229,8 @@ export default function Admin() {
 	useEffect(() => {
 		if (activeTab !== 'Puzzles') return;
 		setPuzzlesError(null);
-		axios
-			.get('/api/puzzles')
-			.then((res) => setPuzzles(res.data))
+		fetchPuzzles()
+			.then(setPuzzles)
 			.catch((err) => {
 				setPuzzlesError(
 					err?.response?.status === 404
@@ -243,9 +241,7 @@ export default function Admin() {
 			});
 	}, [activeTab]);
 	const handleApprovePuzzle = async (id: string) => {
-		await axios.post('/api/admin/approve-puzzle', {
-			puzzleId: id,
-		});
+		await adminApprovePuzzle(id);
 		setPuzzles((prev) =>
 			prev.map((p) =>
 				p.id === id ? { ...p, approved: true } : p
@@ -253,7 +249,7 @@ export default function Admin() {
 		);
 	};
 	const handleDeletePuzzle = async (id: string) => {
-		await axios.delete(`/api/puzzles/${id}`);
+		await deletePuzzle(id);
 		setPuzzles((prev) => prev.filter((p) => p.id !== id));
 	};
 
@@ -264,16 +260,15 @@ export default function Admin() {
 	};
 
 	// --- Users Data ---
-	const [users, setUsers] = useState<any[]>([]);
+	const [users, setUsers] = useState<User[]>([]);
 	const [usersError, setUsersError] = useState<
 		string | null
 	>(null);
 	useEffect(() => {
 		if (activeTab !== 'Users') return;
 		setUsersError(null);
-		axios
-			.get('/api/admin/users')
-			.then((res) => setUsers(res.data))
+		fetchAdminUsers()
+			.then(setUsers)
 			.catch((err) => {
 				setUsersError(
 					err?.response?.status === 404
@@ -284,7 +279,7 @@ export default function Admin() {
 			});
 	}, [activeTab]);
 	const handleBanUser = async (id: string) => {
-		await axios.post('/api/admin/ban-user', { userId: id });
+		await adminBanUser(id);
 		setUsers((prev) =>
 			prev.map((u) =>
 				u.id === id ? { ...u, banned: true } : u
@@ -293,16 +288,15 @@ export default function Admin() {
 	};
 
 	// --- Live Matches Data ---
-	const [matches, setMatches] = useState<any[]>([]);
+	const [matches, setMatches] = useState<Match[]>([]);
 	const [matchesError, setMatchesError] = useState<
 		string | null
 	>(null);
 	useEffect(() => {
 		if (activeTab !== 'Live Matches') return;
 		setMatchesError(null);
-		axios
-			.get('/api/matches')
-			.then((res) => setMatches(res.data))
+		fetchMatches()
+			.then(setMatches)
 			.catch((err) => {
 				setMatchesError(
 					err?.response?.status === 404
@@ -317,16 +311,18 @@ export default function Admin() {
 	const [sockets, setSockets] = useState<any[]>([]);
 	useEffect(() => {
 		if (activeTab !== 'Socket Monitor') return;
-		// TODO: Implement a real endpoint for sockets
-		// setSockets(await axios.get('/api/admin/sockets'));
+		fetchAdminSockets()
+			.then(setSockets)
+			.catch(() => setSockets([]));
 	}, [activeTab]);
 
 	// --- Logs ---
 	const [logs, setLogs] = useState<any[]>([]);
 	useEffect(() => {
 		if (activeTab !== 'Logs') return;
-		// TODO: Implement a real endpoint for logs
-		// setLogs(await axios.get('/api/admin/logs'));
+		fetchAdminLogs()
+			.then(setLogs)
+			.catch(() => setLogs([]));
 	}, [activeTab]);
 
 	// --- QA Tools ---
@@ -337,51 +333,38 @@ export default function Admin() {
 		try {
 			switch (qaSidebarAction) {
 				case 'daily-default': {
-					// Simulate starting the daily puzzle (default state)
-					await axios.post('/api/admin/qa/daily', {
-						scenario: 'default',
-						userId: users[0]?.id,
-					});
+					await runQADailyScenario('default', users[0]?.id);
 					alert(
 						'Daily Puzzle (Default) scenario triggered.'
 					);
 					break;
 				}
 				case 'daily-1group': {
-					await axios.post('/api/admin/qa/daily', {
-						scenario: '1group',
-						userId: users[0]?.id,
-					});
+					await runQADailyScenario('1group', users[0]?.id);
 					alert(
 						'Daily Puzzle (1 Group Solved) scenario triggered.'
 					);
 					break;
 				}
 				case 'daily-2group': {
-					await axios.post('/api/admin/qa/daily', {
-						scenario: '2group',
-						userId: users[0]?.id,
-					});
+					await runQADailyScenario('2group', users[0]?.id);
 					alert(
 						'Daily Puzzle (2 Groups Solved) scenario triggered.'
 					);
 					break;
 				}
 				case 'daily-3group': {
-					await axios.post('/api/admin/qa/daily', {
-						scenario: '3group',
-						userId: users[0]?.id,
-					});
+					await runQADailyScenario('3group', users[0]?.id);
 					alert(
 						'Daily Puzzle (3 Groups Solved) scenario triggered.'
 					);
 					break;
 				}
 				case 'daily-0attempts': {
-					await axios.post('/api/admin/qa/daily', {
-						scenario: '0attempts',
-						userId: users[0]?.id,
-					});
+					await runQADailyScenario(
+						'0attempts',
+						users[0]?.id
+					);
 					alert(
 						'Daily Puzzle (0 Attempts) scenario triggered.'
 					);
@@ -392,10 +375,10 @@ export default function Admin() {
 						'Enter Custom Puzzle ID:'
 					);
 					if (customId) {
-						await axios.post('/api/admin/qa/custom', {
-							puzzleId: customId,
-							userId: users[0]?.id,
-						});
+						await runQACustomScenario(
+							customId,
+							users[0]?.id
+						);
 						alert(
 							`Custom Puzzle by ID (${customId}) scenario triggered.`
 						);

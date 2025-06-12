@@ -28,6 +28,8 @@ import VSQuickChatBar from '../chat/VSQuickChatBar';
 import { playSound } from '../../../utils/sound';
 import { useRouter } from 'next/router';
 import io from 'socket.io-client';
+import { useSession, signIn } from 'next-auth/react';
+import SignInModal from '../modals/SignInModal';
 
 // Types for chat messages
 interface MatchChatMessage {
@@ -35,6 +37,9 @@ interface MatchChatMessage {
 }
 
 const VSMultiplayerGame: React.FC = (props) => {
+	const { data: session } = useSession();
+	const [showSignIn, setShowSignIn] = useState(false);
+
 	// TODO: Wire up real player/opponent data and game state
 	// Example puzzle data for visual layout
 	const player = {
@@ -170,6 +175,16 @@ const VSMultiplayerGame: React.FC = (props) => {
 	useEffect(() => {
 		setAttemptsLeft(gridSize.cols);
 	}, [gridSize.cols]);
+
+	if (!session) {
+		return (
+			<SignInModal
+				open={true}
+				onClose={() => setShowSignIn(false)}
+				onSignIn={() => signIn()}
+			/>
+		);
+	}
 
 	return (
 		<div

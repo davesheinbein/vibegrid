@@ -1,12 +1,17 @@
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
-import { useSelector, useDispatch } from 'react-redux';
-import { RootState } from '../store';
-import { equipItem } from '../store/customizationSlice';
 import clsx from 'clsx';
 import { GoBackButton } from '../components/ui-kit/buttons';
 import { CustomizationCategory } from '../components/ui-kit/customization';
 import { loadFont } from '../utils/fontLoader';
+import type { Customization } from '../types/api';
+import {
+	fetchInventory,
+	equipCustomization,
+	fetchAvailableCustomizations,
+} from '../services/customizationService';
+import { useSession, signIn } from 'next-auth/react';
+import SignInModal from '../components/ui-kit/modals/SignInModal';
 
 function setGlobalFontFamily(fontFamily: string) {
 	const styleTagId = 'customization-font-style';
@@ -21,21 +26,71 @@ function setGlobalFontFamily(fontFamily: string) {
 	styleTag.innerHTML = `*, *::before, *::after { font-family: ${fontFamily} !important; }`;
 }
 
+const LOCAL_STORAGE_KEY = 'vibegrid.customization';
+
 const CustomizationPage: React.FC = () => {
 	const router = useRouter();
-	const inventory = useSelector(
-		(state: RootState) => state.customization
-	);
-	const dispatch = useDispatch();
-
+	const { data: session } = useSession();
+	const user = session?.user;
+	const [inventory, setInventory] = useState({
+		themes: [],
+		emote: [],
+		font: [],
+		borders: [],
+		background: [],
+	});
+	const [available, setAvailable] = useState({
+		themes: [],
+		emote: [],
+		font: [],
+		borders: [],
+		background: [],
+	});
+	const [loading, setLoading] = useState(true);
+	const [showSignIn, setShowSignIn] = useState(false);
 	const [tab, setTab] = useState<
 		'themes' | 'emote' | 'font' | 'borders' | 'background'
 	>('themes');
+	const [guestSelection, setGuestSelection] = useState<any>(
+		{}
+	);
+
+	// On load, fetch available and inventory, and guest localStorage if not logged in
+	useEffect(() => {
+		async function loadAllCustomizations() {
+			setLoading(true);
+			try {
+				const [avail, inv] = await Promise.all([
+					fetchAvailableCustomizations(),
+					user?.id
+						? fetchInventory(user.id)
+						: Promise.resolve({
+								themes: [],
+								emote: [],
+								font: [],
+								borders: [],
+								background: [],
+						  }),
+				]);
+				setAvailable(avail);
+				setInventory(inv);
+				if (!user?.id) {
+					const local = localStorage.getItem(
+						LOCAL_STORAGE_KEY
+					);
+					if (local) setGuestSelection(JSON.parse(local));
+				}
+			} finally {
+				setLoading(false);
+			}
+		}
+		loadAllCustomizations();
+	}, [user?.id]);
 
 	// Apply equipped theme/background/font globally
 	useEffect(() => {
 		// THEME: Set CSS variables on :root for palette
-		const equippedTheme = inventory.themes.find(
+		const equippedTheme = (inventory?.themes ?? []).find(
 			(t: any) => t.equipped
 		);
 		if (equippedTheme) {
@@ -60,7 +115,7 @@ const CustomizationPage: React.FC = () => {
 		}
 
 		// FONT: Set font-family globally (body, html, *)
-		const equippedFont = inventory.font.find(
+		const equippedFont = (inventory?.font ?? []).find(
 			(f: any) => f.equipped
 		);
 		if (equippedFont) {
@@ -75,7 +130,7 @@ const CustomizationPage: React.FC = () => {
 		}
 
 		// BACKGROUND: Also set on html and #__next for full coverage
-		const equippedBg = inventory.background.find(
+		const equippedBg = (inventory?.background ?? []).find(
 			(b: any) => b.equipped
 		);
 		if (equippedBg && equippedBg.bg) {
@@ -87,7 +142,7 @@ const CustomizationPage: React.FC = () => {
 		}
 
 		// BORDER: Add class to body for border style
-		const equippedBorder = inventory.borders.find(
+		const equippedBorder = (inventory?.borders ?? []).find(
 			(b: any) => b.equipped
 		);
 		const borderClasses = [
@@ -120,10 +175,58 @@ const CustomizationPage: React.FC = () => {
 		inventory.borders,
 	]);
 
-	const handleEquip = (itemId: string) => {
-		dispatch(equipItem({ id: itemId, category: tab }));
-		// TODO: Optionally call backend to persist equipped item
+	// Helper to merge available and inventory for a category
+	function getMergedItems(
+		category: keyof typeof available
+	) {
+		const all = available[category] || [];
+		const owned = inventory[category] || [];
+		return all.map((item, idx) => {
+			const ownedItem = owned.find((i) => i.id === item.id);
+			const equipped = user?.id
+				? !!ownedItem?.equipped
+				: guestSelection[category] === item.id;
+			return {
+				...item,
+				unlocked: user?.id ? !!ownedItem : idx < 2,
+				equipped,
+			};
+		});
+	}
+
+	// Handler for equipping customization
+	const handleEquip = async (
+		slot: string,
+		itemId: string
+	) => {
+		if (!user?.id) {
+			// Guest: only allow first two, store in localStorage
+			const idx = (available[slot] || []).findIndex(
+				(i) => i.id === itemId
+			);
+			if (idx > 1) return; // Should be locked, ignore
+			const newSel = { ...guestSelection, [slot]: itemId };
+			setGuestSelection(newSel);
+			localStorage.setItem(
+				LOCAL_STORAGE_KEY,
+				JSON.stringify(newSel)
+			);
+			return;
+		}
+		await equipCustomization(slot, itemId, user.id);
+		const inv = await fetchInventory(user.id);
+		setInventory(inv);
 	};
+
+	// Handler for locked click (guests)
+	const handleLockedClick = () => setShowSignIn(true);
+
+	// For each tab, determine locked indices for guests
+	const lockedIndices = !user?.id
+		? available[tab]
+				?.map((_, idx) => (idx > 1 ? idx : -1))
+				.filter((i) => i >= 0) || []
+		: [];
 
 	return (
 		<div
@@ -233,48 +336,26 @@ const CustomizationPage: React.FC = () => {
 						))}
 					</div>
 					<div style={{ minHeight: 240, width: '100%' }}>
-						{tab === 'themes' && (
-							<CustomizationCategory
-								title='Themes'
-								items={inventory.themes}
-								onEquip={handleEquip}
-								ariaLabelPrefix='theme'
-							/>
-						)}
-						{tab === 'emote' && (
-							<CustomizationCategory
-								title='Emote Packs'
-								items={inventory.emote}
-								onEquip={handleEquip}
-								ariaLabelPrefix='emote pack'
-							/>
-						)}
-						{tab === 'font' && (
-							<CustomizationCategory
-								title='Fonts'
-								items={inventory.font}
-								onEquip={handleEquip}
-								ariaLabelPrefix='font'
-							/>
-						)}
-						{tab === 'borders' && (
-							<CustomizationCategory
-								title='Borders'
-								items={inventory.borders}
-								onEquip={handleEquip}
-								ariaLabelPrefix='border'
-							/>
-						)}
-						{tab === 'background' && (
-							<CustomizationCategory
-								title='Backgrounds'
-								items={inventory.background}
-								onEquip={handleEquip}
-								ariaLabelPrefix='background'
-							/>
-						)}
+						<CustomizationCategory
+							title={
+								tab.charAt(0).toUpperCase() + tab.slice(1)
+							}
+							items={getMergedItems(tab)}
+							onEquip={handleEquip}
+							ariaLabelPrefix={tab}
+							lockedIndices={lockedIndices}
+							onLockedClick={handleLockedClick}
+						/>
 					</div>
 				</div>
+				<SignInModal
+					open={showSignIn}
+					onClose={() => setShowSignIn(false)}
+					onSignIn={() => {
+						signIn();
+						setShowSignIn(false);
+					}}
+				/>
 			</div>
 		</div>
 	);

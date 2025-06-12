@@ -66,20 +66,15 @@ import {
 	clearSelectedWords,
 	setAttemptsValue,
 } from '../utils/helpers';
-import {
-	getDailyCompletion,
-	setDailyCompletion,
-	getDailyPuzzleProgress,
-	saveDailyPuzzleProgress,
-	clearDailyPuzzleProgress,
+import { dailyService } from '../services/dailyService';
+import type {
+	DailyCompletionRecord,
+	DailyPuzzleProgress,
 } from '../utils/dailyCompletion';
-import { useSession } from 'next-auth/react';
 import ShareModalContent from '../components/ui-kit/modals/ShareModalContent';
 import SolvedGroupsDisplay from '../components/ui-kit/grids/SolvedGroupsDisplay';
 import PregameGridLockout from '../components/ui-kit/grids/PregameGridLockout';
-
-// --- Helper functions for updating arrays in Redux state ---
-// (Now imported from src/utils/helpers.ts)
+import { useSession } from 'next-auth/react';
 
 interface DailyPageProps {
 	onBack?: () => void;
@@ -133,9 +128,7 @@ export default function Daily(props: DailyPageProps) {
 	>(null);
 	const [gameOver, setGameOver] = useState(false);
 	const [alreadyCompleted, setAlreadyCompleted] =
-		useState<null | ReturnType<typeof getDailyCompletion>>(
-			null
-		);
+		useState<null | DailyCompletionRecord>(null);
 
 	const { settings } = useContext(UserSettingsContext);
 	const router = useRouter();
@@ -508,119 +501,133 @@ export default function Daily(props: DailyPageProps) {
 
 	// On mount, check if daily puzzle is already completed for today
 	useEffect(() => {
-		const completion = getDailyCompletion();
-		const today = new Date();
-		const todayStr = today.toISOString().slice(0, 10); // YYYY-MM-DD
-		let completedToday = false;
-		if (
-			completion &&
-			completion.result &&
-			completion.result.finishTime > 0 &&
-			completion.result.timestamp
-		) {
-			const completedDate = new Date(
+		async function fetchCompletion() {
+			const completion = await dailyService.getCompletion();
+			const today = new Date();
+			const todayStr = today.toISOString().slice(0, 10); // YYYY-MM-DD
+			let completedToday = false;
+			if (
+				completion &&
+				completion.result &&
+				completion.result.finishTime > 0 &&
 				completion.result.timestamp
-			);
-			const completedStr = completedDate
-				.toISOString()
-				.slice(0, 10);
-			completedToday = completedStr === todayStr;
+			) {
+				const completedDate = new Date(
+					completion.result.timestamp
+				);
+				const completedStr = completedDate
+					.toISOString()
+					.slice(0, 10);
+				completedToday = completedStr === todayStr;
+			}
+			if (completedToday && completion) {
+				setAlreadyCompleted(completion);
+				setGameOver(true);
+				setFinishTime(completion.result.finishTime);
+			} else {
+				setAlreadyCompleted(null); // Not completed for today
+				setGameOver(false); // Allow play/resume
+			}
 		}
-		if (completedToday && completion) {
-			setAlreadyCompleted(completion);
-			setGameOver(true);
-			setFinishTime(completion.result.finishTime);
-		} else {
-			setAlreadyCompleted(null); // Not completed for today
-			setGameOver(false); // Allow play/resume
-		}
+		fetchCompletion();
 	}, []);
 
 	// When game is over and not already saved, save completion with timestamp only
 	useEffect(() => {
-		if (
-			gameOver &&
-			!alreadyCompleted &&
-			finishTime !== null &&
-			finishTime > 0 // Only save if the user actually played
-		) {
-			setDailyCompletion({
-				win: allGroupsSolved(),
-				score: getFinalScore(),
-				attemptsLeft,
-				burnBonus,
-				finishTime,
-				timestamp: Date.now(),
-			});
+		async function saveCompletion() {
+			if (
+				gameOver &&
+				!alreadyCompleted &&
+				finishTime !== null &&
+				finishTime > 0 // Only save if the user actually played
+			) {
+				await dailyService.setCompletion({
+					win: allGroupsSolved(),
+					score: getFinalScore(),
+					attemptsLeft,
+					burnBonus,
+					finishTime,
+					timestamp: Date.now(),
+				});
+			}
 		}
+		saveCompletion();
 	}, [gameOver, alreadyCompleted, finishTime]);
 
 	const todayStr = new Date().toISOString().slice(0, 10);
 
 	// Restore progress on mount
 	useEffect(() => {
-		const progress = getDailyPuzzleProgress();
-		if (
-			progress &&
-			progress.puzzleDate === todayStr &&
-			!progress.completed
-		) {
-			let restoredGroups: {
-				groupIdx: number;
-				words: string[];
-			}[] = [];
-			if (Array.isArray(progress.matchedGroups)) {
-				restoredGroups = progress.matchedGroups
-					.map((g: any) => {
-						if (
-							typeof g.groupIdx === 'number' &&
-							Array.isArray(g.words)
-						) {
-							return g;
-						} else if (Array.isArray(g)) {
-							const idx = activePuzzle.groups.findIndex(
-								(group: string[]) =>
-									group.length === g.length &&
-									group.every((w: string) => g.includes(w))
-							);
-							return { groupIdx: idx, words: g };
-						}
-						return null;
-					})
-					.filter(Boolean) as {
+		async function fetchProgress() {
+			const progress = await dailyService.getProgress();
+			if (
+				progress &&
+				progress.puzzleDate === todayStr &&
+				!progress.completed
+			) {
+				let restoredGroups: {
 					groupIdx: number;
 					words: string[];
-				}[];
+				}[] = [];
+				if (Array.isArray(progress.matchedGroups)) {
+					restoredGroups = progress.matchedGroups
+						.map((g: any) => {
+							if (
+								typeof g.groupIdx === 'number' &&
+								Array.isArray(g.words)
+							) {
+								return g;
+							} else if (Array.isArray(g)) {
+								const idx = activePuzzle.groups.findIndex(
+									(group: string[]) =>
+										group.length === g.length &&
+										group.every((w: string) =>
+											g.includes(w)
+										)
+								);
+								return { groupIdx: idx, words: g };
+							}
+							return null;
+						})
+						.filter(Boolean) as {
+						groupIdx: number;
+						words: string[];
+					};
+				}
+				setPendingSolvedGroups(restoredGroups);
+				setAttemptsValue(
+					dispatch,
+					progress.remainingAttempts ?? 4
+				);
+				setBurnedWildcards(progress.burnedWords || []);
+				setTimer(progress.elapsedTime || 0);
+				setBurnBonus(progress.burnBonus || 0);
+				// Optionally restore more state (selectedWords, etc)
+			} else {
+				await dailyService.clearProgress();
+				// Start fresh for today
 			}
-			setPendingSolvedGroups(restoredGroups);
-			setAttemptsValue(
-				dispatch,
-				progress.remainingAttempts ?? 4
-			);
-			setBurnedWildcards(progress.burnedWords || []);
-			setTimer(progress.elapsedTime || 0);
-			setBurnBonus(progress.burnBonus || 0);
-			// Optionally restore more state (selectedWords, etc)
-		} else {
-			clearDailyPuzzleProgress();
-			// Start fresh for today
 		}
+		fetchProgress();
 	}, []);
 
 	// Persist progress on every move (pendingSolvedGroups, attemptsLeft, burnedWildcards, timer, burnBonus)
 	useEffect(() => {
-		if (!gameOver && !alreadyCompleted) {
-			saveDailyPuzzleProgress({
-				puzzleDate: todayStr,
-				createdAt: new Date().toISOString(),
-				matchedGroups: pendingSolvedGroups,
-				remainingAttempts: attemptsLeft,
-				burnedWords: burnedWildcards,
-				elapsedTime: timer,
-				completed: false,
-				burnBonus,
-			});
+		async function persistProgress() {
+			if (!gameOver && !alreadyCompleted) {
+				await dailyService.saveProgress({
+					puzzleDate: todayStr,
+					createdAt: new Date().toISOString(),
+					matchedGroups: pendingSolvedGroups,
+					remainingAttempts: attemptsLeft,
+					burnedWords: burnedWildcards,
+					elapsedTime: timer,
+					completed: false,
+					burnBonus,
+				});
+			}
 		}
+		persistProgress();
 	}, [
 		pendingSolvedGroups,
 		attemptsLeft,
@@ -633,9 +640,12 @@ export default function Daily(props: DailyPageProps) {
 
 	// Clear progress on completion
 	useEffect(() => {
-		if (gameOver || alreadyCompleted) {
-			clearDailyPuzzleProgress();
+		async function clearProgressIfDone() {
+			if (gameOver || alreadyCompleted) {
+				await dailyService.clearProgress();
+			}
 		}
+		clearProgressIfDone();
 	}, [gameOver, alreadyCompleted]);
 
 	return (

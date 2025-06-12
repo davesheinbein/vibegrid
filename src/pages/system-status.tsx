@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useSession } from 'next-auth/react';
-import axios from 'axios';
+import { systemStatusService } from '../services/systemStatusService';
 
 interface StatusCheck {
 	name: string;
@@ -98,17 +98,18 @@ const SystemStatus: React.FC = () => {
 		// Backend Health
 		try {
 			const t0 = Date.now();
-			const res = await axios.get('/api/health');
+			const res =
+				await systemStatusService.getBackendHealth();
 			results.backend = {
 				name: 'Backend Health',
-				status: res.status === 200 ? 'pass' : 'fail',
-				message: `Uptime: ${res.data.uptime}s, Env: ${
-					res.data.env
-				}, Version: ${res.data.version}, Response: ${
+				status: res.success || res.ok ? 'pass' : 'fail',
+				message: `Uptime: ${res.uptime || '-'}s, Env: ${
+					res.env || '-'
+				}, Version: ${res.version || '-'}, Response: ${
 					Date.now() - t0
 				}ms`,
 				timestamp: now,
-				debug: res.data,
+				debug: res,
 			};
 		} catch (e: any) {
 			results.backend = {
@@ -121,17 +122,17 @@ const SystemStatus: React.FC = () => {
 		}
 		// DB Health
 		try {
-			const res = await axios.get('/api/health/db');
+			const res = await systemStatusService.getDbHealth();
 			results.db = {
 				name: 'Database Connection',
-				status: res.data.ok ? 'pass' : 'fail',
-				message: `Tables: ${res.data.tables.join(
+				status: res.ok ? 'pass' : 'fail',
+				message: `Tables: ${res.tables?.join(
 					', '
-				)}, Users: ${res.data.userCount}, Puzzles: ${
-					res.data.puzzleCount
-				}, Matches: ${res.data.matchCount}`,
+				)}, Users: ${res.userCount}, Puzzles: ${
+					res.puzzleCount
+				}, Matches: ${res.matchCount}`,
 				timestamp: now,
-				debug: res.data,
+				debug: res,
 			};
 		} catch (e: any) {
 			results.db = {
@@ -161,18 +162,19 @@ const SystemStatus: React.FC = () => {
 		];
 		for (const ep of apiEndpoints) {
 			try {
-				const res =
-					ep.method === 'post'
-						? await axios.post(ep.url, {})
-						: await axios.get(ep.url);
+				const data =
+					await systemStatusService.checkApiEndpoint(
+						ep.url,
+						ep.method || 'get'
+					);
 				results[ep.key] = {
 					name: ep.url,
-					status: res.status === 200 ? 'pass' : 'fail',
-					message: `Status: ${res.status}, Length: ${
-						Array.isArray(res.data) ? res.data.length : '-'
+					status: 'pass',
+					message: `Status: 200, Length: ${
+						Array.isArray(data) ? data.length : '-'
 					}`,
 					timestamp: now,
-					debug: res.data,
+					debug: data,
 				};
 			} catch (e: any) {
 				results[ep.key] = {

@@ -9,6 +9,7 @@ import {
 import { WordButton, CloseButton } from '../buttons';
 import { Modal } from './Modal';
 import { VSGrid } from '../grids';
+import { createPuzzle } from '../../../services/puzzlesService';
 
 interface CustomPuzzleModalProps {
 	open: boolean;
@@ -247,25 +248,14 @@ const CustomPuzzleModal: React.FC<
 		setLoading(true);
 		setError(null);
 		try {
-			const response = await fetch('/api/puzzles', {
-				method: 'POST',
-				headers: {
-					'Content-Type': 'application/json',
-				},
-				body: JSON.stringify(state),
-			});
-			if (!response.ok)
-				throw new Error('Network response was not ok');
-			const data = await response.json();
+			const data = await createPuzzle(state);
 			setJsonResult(data.puzzleJson);
 			setShareId(data.shareId);
 			setSaveStatus(
 				'Puzzle saved! You can now play or share it.'
 			);
-		} catch (err) {
-			setError(
-				'Failed to save puzzle. Please try again later.'
-			);
+		} catch (err: any) {
+			setError(err.message || 'Failed to save puzzle');
 		} finally {
 			setLoading(false);
 		}

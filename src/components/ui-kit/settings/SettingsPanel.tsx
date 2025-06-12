@@ -1,11 +1,25 @@
 import React, { useContext } from 'react';
 import { UserSettingsContext } from '../providers/UserSettingsProvider';
+import { useSession, signIn } from 'next-auth/react';
+import SignInModal from '../modals/SignInModal';
 import styles from '../../../styles/SettingsPanel.module.scss';
 
 const SettingsPanel: React.FC = () => {
 	const { settings, setSettings } = useContext(
 		UserSettingsContext
 	);
+	const { data: session } = useSession();
+
+	if (!session) {
+		return (
+			<SignInModal
+				open={true}
+				onClose={() => {}}
+				onSignIn={() => signIn()}
+			/>
+		);
+	}
+
 	return (
 		<div className={styles.settingsPanelContainer}>
 			<h2>User Settings</h2>

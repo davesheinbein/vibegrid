@@ -37,6 +37,7 @@ import { NotificationBanner } from '../banners';
 import ShareModalContent from '../modals/ShareModalContent';
 import axios from 'axios';
 import SolvedGroupsDisplay from './SolvedGroupsDisplay';
+import { postBotStats } from '../../../services/botStatsService';
 
 // VSBotGame: VS Mode board vs Bot, visually identical to Daily Puzzle with VS overlays
 const VSBotGame: React.FC<any> = ({
@@ -720,10 +721,7 @@ const VSBotGame: React.FC<any> = ({
 				((prev.completed || 0) + 1),
 		};
 		// Post to backend
-		const res = await axios.post(
-			`/api/bot-stats/${botDifficulty}`,
-			update
-		);
+		const res = await postBotStats(botDifficulty, update);
 		setPostMatchStats(res.data);
 		setShowStatsBanner(true);
 		setTimeout(() => setShowStatsBanner(false), 6000);

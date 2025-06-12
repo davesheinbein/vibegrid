@@ -28,6 +28,11 @@ import {
 	makeChallengeHandler,
 	makeRemoveHandler,
 } from '../../../utils/helpers';
+import {
+	fetchFriends,
+	fetchFriendRequests,
+	sendFriendRequest as sendFriendRequestApi,
+} from '../../../services/friendsService';
 
 interface FriendsSidebarProps {
 	isOpen: boolean;
@@ -58,6 +63,25 @@ const FriendsSidebar: React.FC<FriendsSidebarProps> = ({
 		recent: true,
 	});
 
+	// Fetch friends and requests on mount or when session changes
+	React.useEffect(() => {
+		if (!session?.user?.id) return;
+		(async () => {
+			try {
+				const friendsList = await fetchFriends(
+					session.user.id
+				);
+				dispatch(setFriends(friendsList));
+				const requests = await fetchFriendRequests(
+					session.user.id
+				);
+				dispatch(setRequests(requests));
+			} catch (e) {
+				// Optionally handle error
+			}
+		})();
+	}, [session?.user?.id, dispatch]);
+
 	const online = friends.filter((f: any) => f.online);
 	const offline = friends.filter((f: any) => !f.online);
 
@@ -67,10 +91,21 @@ const FriendsSidebar: React.FC<FriendsSidebarProps> = ({
 	const handleRemove = (id: string) => {
 		dispatch(removeFriend(id));
 	};
-	const handleAddFriend = (e: React.FormEvent) => {
+	const handleAddFriend = async (e: React.FormEvent) => {
 		e.preventDefault();
 		if (addUsername.trim()) {
-			dispatch(sendFriendRequest(addUsername.trim()));
+			try {
+				await sendFriendRequestApi(addUsername.trim());
+				// Optionally refetch requests
+				if (session?.user?.id) {
+					const requests = await fetchFriendRequests(
+						session.user.id
+					);
+					dispatch(setRequests(requests));
+				}
+			} catch (e) {
+				// Optionally handle error
+			}
 			setAddUsername('');
 		}
 	};

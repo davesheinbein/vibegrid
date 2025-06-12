@@ -1,6 +1,18 @@
-// --- Grid Royale Achievements Config ---
-// This file defines all achievements, their criteria, and metadata for the game.
-// Each achievement should have: label, description, icon, criteria (event/progress/streak/meta), and optional secret flag.
+/**
+ * @typedef {'bronze'|'silver'|'gold'|'platinum'|'secret'} AchievementTier
+ */
+
+/**
+ * @typedef {Object} AchievementDef
+ * @property {string} id
+ * @property {string} label
+ * @property {string} name
+ * @property {string} description
+ * @property {string} icon
+ * @property {string} category
+ * @property {AchievementTier=} tier
+ * @property {boolean=} secret
+ */
 
 module.exports = [
 	// 📚 Core Gameplay Achievements

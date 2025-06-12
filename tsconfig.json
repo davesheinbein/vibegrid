@@ -20,7 +20,10 @@
 			"@components/*": ["src/components/*"],
 			"@pages/*": ["src/pages_legacy/*"],
 			"@utils/*": ["src/utils/*"],
-			"@data/*": ["src/data/*"]
+			"@data/*": ["src/data/*"],
+			"@services/*": ["src/services/*"],
+			"@constants/*": ["src/constants/*"],
+			"@types/*": ["src/types/*"]
 		},
 		"types": [
 			"next",
