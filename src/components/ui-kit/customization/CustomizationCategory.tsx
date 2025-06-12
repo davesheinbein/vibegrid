@@ -1,23 +1,59 @@
 import React from 'react';
 import clsx from 'clsx';
 
-const CustomizationCategory: React.FC<{
+interface CustomizationCategoryProps {
 	title: string;
-	items: any[];
+	items: Array<
+		{
+			id: string;
+			name: string;
+			description?: string;
+			primaryColor?: string;
+			accentColor?: string;
+			secondaryColor?: string;
+			borderColor?: string;
+			swatchGradient?: string;
+			imageUrl?: string;
+			previewBorder?: string;
+			previewImage?: string;
+			backgroundColor?: string;
+			style?: string;
+			equipped?: boolean;
+		} & Record<string, any>
+	>;
 	onEquip: (id: string) => void;
 	ariaLabelPrefix: string;
-}> = ({ title, items, onEquip, ariaLabelPrefix }) => {
-	const isTheme = title === 'Themes';
-	const isEmote = title === 'Emotes';
-	const isFont = title === 'Fonts';
-	const isBorder = title === 'Borders';
-	const isBackground = title === 'Backgrounds';
+}
+
+function getCustomizationTypeFlags(title: string) {
+	const lowerTitle = title.toLowerCase();
+	return {
+		isEmote: lowerTitle.includes('emote'),
+		isFont: lowerTitle.includes('font'),
+		isTheme: lowerTitle.includes('theme'),
+		isBorder: lowerTitle.includes('border'),
+		isBackground: lowerTitle.includes('background'),
+		lowerTitle,
+	};
+}
+
+const CustomizationCategory: React.FC<
+	CustomizationCategoryProps
+> = ({ title, items, onEquip, ariaLabelPrefix }) => {
+	const {
+		isEmote,
+		isFont,
+		isTheme,
+		isBorder,
+		isBackground,
+		lowerTitle,
+	} = getCustomizationTypeFlags(title);
 
 	return (
 		<div
 			className={clsx(
 				'customization-category',
-				`customization-category-${title.toLowerCase()}`
+				`customization-category-${lowerTitle}`
 			)}
 		>
 			{items.length === 0 ? (
@@ -29,11 +65,11 @@ const CustomizationCategory: React.FC<{
 						marginTop: 32,
 					}}
 				>
-					No {title.toLowerCase()} unlocked yet.
+					No {lowerTitle} unlocked yet.
 				</div>
 			) : (
 				<div className='customization-grid'>
-					{items.map((item: any) => (
+					{items.map((item) => (
 						<button
 							key={item.id}
 							onClick={() => onEquip(item.id)}
@@ -176,7 +212,7 @@ const CustomizationCategory: React.FC<{
 											color: '#222',
 										}}
 									>
-										Aa
+										{item.previewText || 'Aa'}
 									</div>
 								)}
 								<span
@@ -184,6 +220,9 @@ const CustomizationCategory: React.FC<{
 										fontSize: 14,
 										fontWeight: 600,
 										marginTop: 2,
+										fontFamily: isFont
+											? item.name
+											: undefined,
 									}}
 								>
 									{item.name}
@@ -194,6 +233,9 @@ const CustomizationCategory: React.FC<{
 											fontSize: 10,
 											color: '#64748b',
 											marginTop: 2,
+											fontFamily: isFont
+												? item.name
+												: undefined,
 										}}
 									>
 										{item.description}

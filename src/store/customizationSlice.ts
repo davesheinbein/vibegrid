@@ -396,6 +396,13 @@ const initialState: CustomizationState = {
 	],
 	borders: [
 		{
+			id: 'border-none',
+			name: 'No Border',
+			description: 'No visible border',
+			equipped: false,
+			style: 'none',
+		},
+		{
 			id: 'clean-edge',
 			name: 'Clean Edge',
 			description: '1px solid low-opacity: Subtle, flat',
@@ -468,6 +475,48 @@ const initialState: CustomizationState = {
 				'Simple shadow frame: Elevated, card-like',
 			equipped: false,
 			style: 'shadow',
+		},
+		{
+			id: 'border-hidden',
+			name: 'Hidden Border',
+			description: 'Invisible, used for layout tricks',
+			equipped: false,
+			style: 'hidden',
+		},
+		{
+			id: 'border-dotted',
+			name: 'Dotted Line',
+			description: 'Series of dots',
+			equipped: false,
+			style: 'dotted',
+		},
+		{
+			id: 'border-groove',
+			name: 'Groove Border',
+			description: '3D grooved edge',
+			equipped: false,
+			style: 'groove',
+		},
+		{
+			id: 'border-ridge',
+			name: 'Ridge Border',
+			description: '3D ridged effect',
+			equipped: false,
+			style: 'ridge',
+		},
+		{
+			id: 'border-inset',
+			name: 'Inset Border',
+			description: 'Sunken-in appearance',
+			equipped: false,
+			style: 'inset',
+		},
+		{
+			id: 'border-outset',
+			name: 'Outset Border',
+			description: 'Raised-out appearance',
+			equipped: false,
+			style: 'outset',
 		},
 	],
 	background: [

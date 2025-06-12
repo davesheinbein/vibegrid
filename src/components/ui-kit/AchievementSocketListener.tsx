@@ -9,9 +9,11 @@ const AchievementSocketListener: React.FC = () => {
 	const { data: session } = useSession();
 
 	useEffect(() => {
-		if (!session?.user?.id) return;
+		const userIdentifier =
+			session?.user?.id || session?.user?.email;
+		if (!userIdentifier) return;
 		const socket = io('/achievements', {
-			query: { userId: session.user.id },
+			query: { userId: userIdentifier },
 		});
 		socket.on('achievement:unlocked', ({ achievement }) => {
 			dispatch(
@@ -27,7 +29,7 @@ const AchievementSocketListener: React.FC = () => {
 		return () => {
 			socket.disconnect();
 		};
-	}, [session?.user?.id, dispatch]);
+	}, [session?.user?.id, session?.user?.email, dispatch]);
 
 	return null;
 };

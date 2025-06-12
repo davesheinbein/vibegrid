@@ -6,6 +6,20 @@ import { equipItem } from '../store/customizationSlice';
 import clsx from 'clsx';
 import { GoBackButton } from '../components/ui-kit/buttons';
 import { CustomizationCategory } from '../components/ui-kit/customization';
+import { loadFont } from '../utils/fontLoader';
+
+function setGlobalFontFamily(fontFamily: string) {
+	const styleTagId = 'customization-font-style';
+	let styleTag = document.getElementById(
+		styleTagId
+	) as HTMLStyleElement | null;
+	if (!styleTag) {
+		styleTag = document.createElement('style');
+		styleTag.id = styleTagId;
+		document.head.appendChild(styleTag);
+	}
+	styleTag.innerHTML = `*, *::before, *::after { font-family: ${fontFamily} !important; }`;
+}
 
 const CustomizationPage: React.FC = () => {
 	const router = useRouter();
@@ -20,61 +34,84 @@ const CustomizationPage: React.FC = () => {
 
 	// Apply equipped theme/background/font globally
 	useEffect(() => {
+		// THEME: Set CSS variables on :root for palette
 		const equippedTheme = inventory.themes.find(
 			(t: any) => t.equipped
 		);
 		if (equippedTheme) {
-			if (equippedTheme.bg) {
-				document.body.style.background = equippedTheme.bg;
-			}
-			if (equippedTheme.font) {
-				document.body.style.color = equippedTheme.font;
-			}
-			// Example: set CSS variables for theme colors
 			if (equippedTheme.color) {
 				document.documentElement.style.setProperty(
 					'--primary-color',
 					equippedTheme.color
 				);
 			}
+			if (equippedTheme.bg) {
+				document.body.style.background = equippedTheme.bg;
+				document.documentElement.style.background =
+					equippedTheme.bg;
+				const next = document.getElementById('__next');
+				if (next) next.style.background = equippedTheme.bg;
+			}
+			if (equippedTheme.font) {
+				document.body.style.color = equippedTheme.font;
+				document.documentElement.style.color =
+					equippedTheme.font;
+			}
 		}
+
+		// FONT: Set font-family globally (body, html, *)
 		const equippedFont = inventory.font.find(
 			(f: any) => f.equipped
 		);
 		if (equippedFont) {
-			document.body.style.fontFamily = equippedFont.name;
+			const fontFamily =
+				extractFontFamily(equippedFont.style) ||
+				equippedFont.name;
+			document.body.style.fontFamily = fontFamily;
+			document.documentElement.style.fontFamily =
+				fontFamily;
+			setGlobalFontFamily(fontFamily); // * selector with !important
+			loadFont(fontFamily);
 		}
+
+		// BACKGROUND: Also set on html and #__next for full coverage
 		const equippedBg = inventory.background.find(
 			(b: any) => b.equipped
 		);
 		if (equippedBg && equippedBg.bg) {
 			document.body.style.background = equippedBg.bg;
+			document.documentElement.style.background =
+				equippedBg.bg;
+			const next = document.getElementById('__next');
+			if (next) next.style.background = equippedBg.bg;
 		}
-		// Borders and other granular customizations can be handled via class on body or root
+
+		// BORDER: Add class to body for border style
 		const equippedBorder = inventory.borders.find(
 			(b: any) => b.equipped
 		);
+		const borderClasses = [
+			'border-style-solid',
+			'border-style-dashed',
+			'border-style-dotted',
+			'border-style-double',
+			'border-style-groove',
+		];
+		document.body.classList.remove(...borderClasses);
 		if (equippedBorder && equippedBorder.style) {
-			document.body.classList.remove(
-				'border-style-solid',
-				'border-style-dashed',
-				'border-style-dotted',
-				'border-style-double',
-				'border-style-groove'
-			);
 			document.body.classList.add(
 				`border-style-${equippedBorder.style}`
 			);
 		}
+
 		// Clean up on unmount
 		return () => {
-			document.body.classList.remove(
-				'border-style-solid',
-				'border-style-dashed',
-				'border-style-dotted',
-				'border-style-double',
-				'border-style-groove'
+			document.body.classList.remove(...borderClasses);
+			// Optionally remove font style tag
+			const styleTag = document.getElementById(
+				'customization-font-style'
 			);
+			if (styleTag) styleTag.remove();
 		};
 	}, [
 		inventory.themes,
@@ -242,5 +279,25 @@ const CustomizationPage: React.FC = () => {
 		</div>
 	);
 };
+
+// Helper to extract font-family from style string
+function extractFontFamily(
+	style: string
+): string | undefined {
+	const match = style.match(
+		/font-family:\s*(["']?)([\w\s-]+)(?:\1)?/i
+	);
+	if (match) {
+		return match[2];
+	}
+	// fallback: try to extract quoted family
+	const quoted = style.match(
+		/font-family:\s*(["'][^"']+["'])/i
+	);
+	if (quoted) {
+		return quoted[1].replace(/['"]/g, '');
+	}
+	return undefined;
+}
 
 export default CustomizationPage;
