@@ -51,6 +51,7 @@ model User {
   userCustomizations UserCustomization[]
   userLoadouts       UserLoadout[]
   botStats          BotStats[]
+  settings          Json?
 }
 
 model Friend {

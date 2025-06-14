@@ -3,7 +3,7 @@ import {
 	PayloadAction,
 } from '@reduxjs/toolkit';
 import { AppDispatch } from './index';
-import { io, Socket } from 'socket.io-client';
+// import { io, Socket } from 'socket.io-client'; // Disabled until Socket.IO server is set up
 
 export interface Friend {
 	id: string;
@@ -103,33 +103,45 @@ const friendsSlice = createSlice({
 // Thunks for async/socket actions
 export const sendFriendRequest =
 	(username: string) => (dispatch: AppDispatch) => {
-		// Example: emit socket event (replace with actual socket logic)
+		// Socket.IO disabled until server is implemented
+		console.log('sendFriendRequest called for:', username);
+		// TODO: Implement REST API call or Socket.IO when server is ready
+		/* 
 		const socket: Socket = io(
 			process.env.NEXT_PUBLIC_SOCKET_URL ||
 				'http://localhost:4000'
 		);
 		socket.emit('sendFriendRequest', { username });
 		socket.disconnect();
+		*/
 	};
 
 export const sendChallenge =
 	(friendId: string) => (dispatch: AppDispatch) => {
+		// Socket.IO disabled until server is implemented
+		console.log('sendChallenge called for:', friendId);
+		/* 
 		const socket: Socket = io(
 			process.env.NEXT_PUBLIC_SOCKET_URL ||
 				'http://localhost:4000'
 		);
 		socket.emit('sendChallenge', { friendId });
 		socket.disconnect();
+		*/
 	};
 
 export const removeFriend =
 	(friendId: string) => (dispatch: AppDispatch) => {
+		// Socket.IO disabled until server is implemented
+		console.log('removeFriend called for:', friendId);
+		/* 
 		const socket: Socket = io(
 			process.env.NEXT_PUBLIC_SOCKET_URL ||
 				'http://localhost:4000'
 		);
 		socket.emit('removeFriend', { friendId });
 		socket.disconnect();
+		*/
 	};
 
 export const {

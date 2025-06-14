@@ -2,8 +2,8 @@
   "/_app": "pages/_app.js",
   "/_error": "pages/_error.js",
   "/_document": "pages/_document.js",
-  "/api/customization": "pages/api/customization.js",
   "/api/auth/[...nextauth]": "pages/api/auth/[...nextauth].js",
-  "/customization": "pages/customization.js",
-  "/": "pages/index.js"
+  "/": "pages/index.js",
+  "/api/socket": "pages/api/socket.js",
+  "/api/users/[id]/friends": "pages/api/users/[id]/friends.js"
 }

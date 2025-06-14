@@ -1,1 +1,1 @@
-self.__REACT_LOADABLE_MANIFEST="{\"utils/fontLoader.ts -> webfontloader\":{\"id\":\"utils/fontLoader.ts -> webfontloader\",\"files\":[\"static/chunks/_pages-dir-browser_node_modules_webfontloader_webfontloader_js.js\"]}}"
+self.__REACT_LOADABLE_MANIFEST="{}"

@@ -1,46 +1,172 @@
-# Getting Started with Create React App
+# Grid Royale
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+_Created by David Sheinbein. All rights reserved by Noble Beasts Corporation._
 
-## Available Scripts
+[GitHub Repository](https://github.com/davesheinbein/vibegrid.git)
 
-In the project directory, you can run:
+Grid Royale is a collaborative and competitive word grouping puzzle game inspired by the "Connections" genre. Players must group words into sets based on hidden relationships, with daily puzzles, custom puzzles, and real-time multiplayer VS modes.
 
-### `npm start`
+## How to Play
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in the browser.
+- Each puzzle presents a grid of words. The number of words and sets can vary, but there are always an even number of groups, and the number of sets is determined by the grid's rows and columns.
+- Your goal is to group the words into sets, where each set shares a hidden connection (such as synonyms, categories, or themes).
+- Select or drag words to form a group, then submit your guess. You receive feedback on whether your group is correct, partially correct, or incorrect.
+- Continue grouping until all sets are found.
 
-The page will reload if you make edits.\
-You will also see any lint errors in the console.
+## Game Modes & Rules
 
-### `npm test`
+### Daily Puzzle
 
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+- One new puzzle is released each day for all players.
+- Everyone solves the same puzzle and can compare results.
+- You have a limited number of mistakes before the puzzle locks for the day.
 
-### `npm run build`
+### Custom Puzzles
 
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
+- Create your own puzzles and share them with friends or the community.
+- Custom puzzles can have any valid grid size and group structure.
+- No mistake limit unless set by the puzzle creator.
 
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
+### VS Mode
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+- Compete in real-time against friends or bots.
+- Both players solve the same puzzle simultaneously.
+- The first to correctly group all sets wins, or the player with the most correct groups when time runs out.
+- Incorrect guesses may incur a time penalty.
 
-### `npm run eject`
+### Practice
 
-**Note: this is a one-way operation. Once you `eject`, you can’t go back!**
+- Play unlimited solo puzzles, either randomly generated or user-created.
+- No mistake or time limits.
+- Great for learning and improving your skills.
 
-If you aren’t satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
+## Core Features
 
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you’re on your own.
+- **Word Grouping:** Drag or select words to form groups. Submit when you think a group is correct.
+- **Feedback:** Get feedback on correct/incorrect groups, partial matches, and streaks.
+- **Achievements:** Unlock badges for milestones and special feats.
+- **Leaderboards:** Track top players globally, by season, and among friends.
+- **Notifications:** Receive updates for achievements, friend activity, and system events.
+- **Admin Tools:** Manage users, approve puzzles, and monitor live matches.
 
-You don’t have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn’t feel obligated to use this feature. However we understand that this tool wouldn’t be useful if you couldn’t customize it when you are ready for it.
+## Entity Relationship Diagram (ERD)
 
-## Learn More
+```
+User ─────────────┬─────────────┬─────────────┬─────────────┬─────────────┬─────────────┬─────────────┐
+                 │             │             │             │             │             │             │
+           (1)  Progression    │        Achievement        Friend        Notification  Customization  Match
+                 │             │             │             │             │             │             │
+                 ▼             ▼             ▼             ▼             ▼             ▼             ▼
+              Progression   Achievement   Friend         Notification  Customization  Match         Puzzle
 
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
+User
+- id (PK)
+- email
+- name
+- xp
+- level
+- settings (Json)
+- stats (Json)
+- ...
 
-To learn React, check out the [React documentation](https://reactjs.org/).
+Achievement
+- id (PK)
+- label
+- description
+- tier
+- ...
+
+UserAchievement
+- id (PK)
+- userId (FK)
+- achievementId (FK)
+- unlockedAt
+
+Friend
+- id (PK)
+- userId (FK)
+- friendId (FK)
+- status (pending/accepted)
+- createdAt
+
+Notification
+- id (PK)
+- userId (FK)
+- type
+- message
+- read
+- createdAt
+
+Customization
+- id (PK)
+- userId (FK)
+- slot (theme, font, emote, border, background)
+- itemId
+- equipped
+
+Match
+- id (PK)
+- player1Id (FK)
+- player2Id (FK)
+- winnerId (FK)
+- puzzleId (FK)
+- startedAt
+- endedAt
+- moves (Json)
+
+Puzzle
+- id (PK)
+- authorId (FK)
+- words (Json)
+- groups (Json)
+- difficulty
+- isDaily
+- createdAt
+
+Progression
+- id (PK)
+- userId (FK)
+- xp
+- level
+- streak
+```
+
+## Tech Stack
+
+- Next.js (API routes, SSR, frontend)
+- TypeScript
+- Prisma ORM (PostgreSQL)
+- React, Redux
+- Socket.IO (real-time multiplayer)
+- Web Push (notifications)
+
+## Development
+
+- All backend logic is in `/src/pages/api/` and `/src/lib/`.
+- Database access via Prisma client in `/src/server/prismaClient.ts`.
+- See `/prisma/schema.prisma` for the full DB schema.
+
+## Running Locally
+
+1. Clone the repo:
+   ```sh
+   git clone https://github.com/davesheinbein/vibegrid.git
+   cd vibegrid
+   ```
+2. Install dependencies:
+   ```sh
+   npm install
+   ```
+3. Start the development server:
+   ```sh
+   npm run dev
+   ```
+   The app will be available at http://localhost:3000
+4. Open Prisma Studio to view and edit the database:
+   ```sh
+   npx prisma studio
+   ```
+
+---
+
+For more, see the code and comments in `/src/pages/api/` and `/src/lib/`.

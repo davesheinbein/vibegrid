@@ -2,24 +2,16 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '../../../auth/[...nextauth]';
-
-const MOCK_USER_FRIEND_REQUESTS: Record<string, any[]> = {
-	'1': [
-		{
-			id: 'req1',
-			from: '2',
-			to: '1',
-			status: 'pending',
-			createdAt: new Date().toISOString(),
-		},
-	],
-	'2': [],
-};
+import prisma from '../../../../server/prismaClient';
 
 export default async function handler(
 	req: NextApiRequest,
 	res: NextApiResponse
 ) {
+	if (req.method !== 'GET') {
+		res.setHeader('Allow', ['GET']);
+		return res.status(405).end('Method Not Allowed');
+	}
 	const session = await getServerSession(
 		req,
 		res,
@@ -38,6 +30,23 @@ export default async function handler(
 		res.status(400).json({ error: 'Invalid user id' });
 		return;
 	}
-	const requests = MOCK_USER_FRIEND_REQUESTS[id] || [];
-	res.status(200).json(requests);
+	try {
+		const requests = await prisma.friendRequest.findMany({
+			where: { toUserId: id, status: 'pending' },
+			include: {
+				fromUser: {
+					select: {
+						id: true,
+						username: true,
+						photoUrl: true,
+					},
+				},
+			},
+		});
+		res.status(200).json(requests);
+	} catch (err) {
+		res
+			.status(500)
+			.json({ error: 'Failed to fetch requests' });
+	}
 }

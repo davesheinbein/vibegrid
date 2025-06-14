@@ -1,15 +1,86 @@
-// Mock: Bot stats POST endpoint for difficulty
 import type { NextApiRequest, NextApiResponse } from 'next';
+import prisma from '../../../server/prismaClient';
 
-export default function handler(
+// TODO: Replace with real session user extraction
+declare type SessionUser = { id: string };
+const getSessionUser = (
+	req: NextApiRequest
+): SessionUser | null => {
+	// Implement your session logic here
+	return null;
+};
+
+export default async function handler(
 	req: NextApiRequest,
 	res: NextApiResponse
 ) {
 	const { difficulty } = req.query;
-	if (req.method === 'POST') {
-		// Accept and ignore posted stats for now
-		res.status(200).json({ success: true, difficulty });
+	const user = getSessionUser(req);
+	if (!user || typeof difficulty !== 'string') {
+		return res
+			.status(401)
+			.json({
+				error: 'Unauthorized or missing difficulty',
+			});
+	}
+	if (req.method === 'GET') {
+		try {
+			let stats = await prisma.botStats.findUnique({
+				where: {
+					userId_botDifficulty: {
+						userId: user.id,
+						botDifficulty: difficulty,
+					},
+				},
+			});
+			if (!stats) {
+				stats = await prisma.botStats.create({
+					data: {
+						userId: user.id,
+						botDifficulty: difficulty,
+					},
+				});
+			}
+			res.json(stats);
+		} catch (e: any) {
+			res.status(500).json({ error: e.message });
+		}
+	} else if (req.method === 'POST') {
+		try {
+			const update = req.body;
+			let stats = await prisma.botStats.findUnique({
+				where: {
+					userId_botDifficulty: {
+						userId: user.id,
+						botDifficulty: difficulty,
+					},
+				},
+			});
+			if (!stats) {
+				stats = await prisma.botStats.create({
+					data: {
+						userId: user.id,
+						botDifficulty: difficulty,
+						...update,
+					},
+				});
+			} else {
+				stats = await prisma.botStats.update({
+					where: {
+						userId_botDifficulty: {
+							userId: user.id,
+							botDifficulty: difficulty,
+						},
+					},
+					data: update,
+				});
+			}
+			res.json(stats);
+		} catch (e: any) {
+			res.status(500).json({ error: e.message });
+		}
 	} else {
-		res.status(405).json({ error: 'Method not allowed' });
+		res.setHeader('Allow', ['GET', 'POST']);
+		res.status(405).end(`Method ${req.method} Not Allowed`);
 	}
 }

@@ -1,23 +1,31 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
+import { getServerSession } from 'next-auth/next';
+import { authOptions } from '../auth/[...nextauth]';
+import prisma from '../../../server/prismaClient';
 
-// This endpoint is now replaced by /api/users/[id]/customization/equip.ts and can be deleted.
-// Mock: Equip a customization item for the user
-export default function handler(
+// POST: /api/customization/equip
+export default async function handler(
 	req: NextApiRequest,
 	res: NextApiResponse
 ) {
 	if (req.method !== 'POST') {
-		return res
-			.status(405)
-			.json({ error: 'Method not allowed' });
+		res.setHeader('Allow', ['POST']);
+		return res.status(405).end('Method Not Allowed');
 	}
-	// In a real app, you would validate the session, check ownership, and update the equipped item
-	// For mock, just return success
+	const session = await getServerSession(
+		req,
+		res,
+		authOptions
+	);
+	const userId =
+		(session as any)?.user?.id || (session as any)?.id;
+	if (!session || !userId)
+		return res.status(401).json({ error: 'Unauthorized' });
 	const { slot, itemId } = req.body;
-	if (!slot || !itemId) {
+	if (!slot || !itemId)
 		return res
 			.status(400)
 			.json({ error: 'Missing slot or itemId' });
-	}
-	res.status(200).json({ success: true });
+	// TODO: Validate ownership, update user equipped field
+	res.json({ success: true });
 }

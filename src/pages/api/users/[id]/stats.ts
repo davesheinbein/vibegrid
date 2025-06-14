@@ -1,12 +1,8 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { getServerSession } from 'next-auth/next';
-import { authOptions } from '../../auth/[...nextauth]';
-
-// Mock: User stats
-const MOCK_USER_STATS: Record<string, any> = {
-	'1': { totalGames: 42, winRate: 0.67, fastestTime: 58 },
-	'2': { totalGames: 18, winRate: 0.44, fastestTime: 102 },
-};
+import authOptions from '../../auth/[...nextauth]';
+import { getUserStats } from '../../../../lib/stats';
+import prisma from '../../../../server/prismaClient';
 
 export default async function handler(
 	req: NextApiRequest,
@@ -18,10 +14,9 @@ export default async function handler(
 		authOptions
 	);
 	const { id } = req.query;
-	if (
-		!session ||
-		(session.user && (session.user as any).id !== id)
-	) {
+	const sessionUserId =
+		(session as any)?.user?.id || (session as any)?.id;
+	if (!session || sessionUserId !== id) {
 		return res
 			.status(401)
 			.json({ error: 'Not authenticated' });
@@ -30,10 +25,16 @@ export default async function handler(
 		res.status(400).json({ error: 'Invalid user id' });
 		return;
 	}
-	const stats = MOCK_USER_STATS[id] || {
-		totalGames: 0,
-		winRate: 0,
-		fastestTime: null,
-	};
-	res.status(200).json(stats);
+	if (req.method === 'GET') {
+		try {
+			const stats = await getUserStats(id);
+			res.status(200).json(stats || {});
+		} catch (e) {
+			res
+				.status(500)
+				.json({ error: 'Failed to fetch stats' });
+		}
+	} else {
+		res.status(405).json({ error: 'Method not allowed' });
+	}
 }

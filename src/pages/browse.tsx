@@ -2,7 +2,7 @@ import React, { useContext } from 'react';
 import { useRouter } from 'next/router';
 import { CustomPuzzleModal } from '../components/ui-kit/modals';
 import { GoBackButton } from '../components/ui-kit/buttons';
-import { MatchChatWindow } from '../components/ui-kit/chat';
+import { MatchChatWindow } from '../components/ui-kit/chats';
 import { UserSettingsContext } from '../components/ui-kit/providers';
 import {
 	getShareUrl,

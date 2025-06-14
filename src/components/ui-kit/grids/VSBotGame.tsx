@@ -6,7 +6,7 @@ import React, {
 } from 'react';
 import { UserSettingsContext } from '../providers';
 import VSStatusBar from './VSStatusBar';
-import VSQuickChatBar from '../chat/VSQuickChatBar';
+import VSQuickChatBar from '../chats/VSQuickChatBar';
 import {
 	PrimaryButton,
 	SecondaryButton,

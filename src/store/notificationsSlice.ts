@@ -4,7 +4,7 @@ import {
 } from '@reduxjs/toolkit';
 
 export interface Notification {
-	id: string;
+	id?: string;
 	message: string;
 	type:
 		| 'info'
@@ -15,8 +15,9 @@ export interface Notification {
 		| 'system'
 		| 'burn'
 		| 'taunt';
-	createdAt: string;
-	read: boolean;
+	read?: boolean;
+	timestamp?: string;
+	data?: any; // Allow custom payload for notifications
 }
 
 export interface NotificationsState {

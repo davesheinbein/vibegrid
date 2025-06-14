@@ -30,7 +30,7 @@ const LOCAL_STORAGE_KEY = 'vibegrid.customization';
 
 const CustomizationPage: React.FC = () => {
 	const router = useRouter();
-	const { data: session } = useSession();
+	const { data: session, status } = useSession();
 	const user = session?.user;
 	const [inventory, setInventory] = useState({
 		themes: [],
@@ -57,6 +57,9 @@ const CustomizationPage: React.FC = () => {
 
 	// On load, fetch available and inventory, and guest localStorage if not logged in
 	useEffect(() => {
+		// Don't fetch until we know the session status
+		if (status === 'loading') return;
+
 		async function loadAllCustomizations() {
 			setLoading(true);
 			try {
@@ -80,12 +83,17 @@ const CustomizationPage: React.FC = () => {
 					);
 					if (local) setGuestSelection(JSON.parse(local));
 				}
+			} catch (error) {
+				console.error(
+					'Failed to load customizations:',
+					error
+				);
 			} finally {
 				setLoading(false);
 			}
 		}
 		loadAllCustomizations();
-	}, [user?.id]);
+	}, [user?.id, status]);
 
 	// Apply equipped theme/background/font globally
 	useEffect(() => {
